@@ -1,0 +1,10 @@
+stages:
+  - lint
+
+# run linting checks with pre-commit
+lint:
+  stage: lint
+  image: python:3.9
+  script:
+    - python -m pip install pre-commit
+    - pre-commit run --all-files

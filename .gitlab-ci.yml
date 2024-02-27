@@ -4,7 +4,21 @@ stages:
 # run linting checks with pre-commit
 lint:
   stage: lint
-  image: python:3.9
+  image: python:3.10
   script:
     - python -m pip install pre-commit
     - pre-commit run --all-files
+
+pytest:
+  image: python:3.10
+  before_script:
+    # 1. Install pdm
+    - curl -sSL https://pdm.fming.dev/install-pdm.py | python3 -
+    - export PATH="$HOME/.local/bin:$PATH"
+    - export CI_TMP_ENV=gitlab-ci-test-${CI_COMMIT_SHA}
+  script:
+    # Install project dependencies using pdm
+    - pdm install
+    - pdm install --dev
+    # Run pytest
+    - pdm run pytest

@@ -1,42 +1,70 @@
-sampling_dim: time
+schema_version: v0.1.0
+dataset_version: v0.1.0
 
-arch_dims: [time, grid_index, feature]
+arch:
+  sampling_dim: time
+  input_dims: [time, grid_index, feature]
+  input_range:
+    time:
+      start: 2000-01-01T00:00
+      end: 2001-01-01T00:00
+      step: PT1H
+  input_variables:
+    static: [grid_index, feature]
+    state: [time, grid_index, feature]
+    forcing: [time, grid_index, feature]
 
 inputs:
 - name: danra_height_levels
   path: /data/danra/height_levels.zarr
-  dims: [analysis_time, x, y, height_level]
+  attributes:
+    version: v0.3.0
+  dims: [analysis_time, x, y, altitude]
   variables:
     u:
-      height_level: [50, 100, 200, 300, 500, 700, 850, 1000]
+      altitude:
+        values: [50, 100, 200, 300, 500, 700, 850, 1000]
+        units: m
     v:
-      height_level: [50, 100, 200, 300, 500, 700, 850, 1000]
+      altitude:
+        values: [50, 100, 200, 300, 500, 700, 850, 1000]
+        units: m
     t:
-      height_level: [50, 100, 200, 300, 500, 700, 850, 1000]
+      altitude:
+        values: [50, 100, 200, 300, 500, 700, 850, 1000]
+        units: m
   dim_mapping:
     time: analysis_time
     feature:
       map_variables_to_var_name: True
-      dims: [height_level]
-      name: f"{var_name}_{height_level}"
+      dims: [altitude]
+      name: f"{var_name}_{altitude}"
     grid_index: x, y
+  target: state
 
 - name: danra_pressure_levels
   path: /data/danra/pressure_levels.zarr
-  dims: [analysis_time, x, y, pressure_level]
+  attributes:
+    version: v0.3.0
+  dims: [analysis_time, x, y, pressure]
   variables:
     u:
-      pressure_level: [1000, 850, 700, 500, 300, 200, 100]
+      pressure:
+        values: [1000, 850, 700, 500, 300, 200, 100]
+        units: hPa
   dim_mapping:
     time: analysis_time
     feature:
       map_variables_to_var_name: True
-      dims: [pressure_level]
-      name: f"{var_name}_{pressure_level}"
+      dims: [pressure]
+      name: f"{var_name}_{pressure}"
     grid_index: x, y
+  target: state
 
 - name: danra_single_levels
   path: /data/danra/single_levels.zarr
+  attributes:
+    version: v0.3.0
   dims: [analysis_time, x, y]
   variables: u10m, v10m, t2m
   dim_mapping:
@@ -45,13 +73,31 @@ inputs:
       map_variables_to_var_name: True
       name: f"{var_name}"
     grid_index: x, y
+  target: state
+
+- name: danra_single_levels_forcings
+  path: /data/danra/single_levels.zarr
+  attributes:
+    version: v0.3.0
+  dims: [analysis_time, x, y]
+  variables: nswlr
+  dim_mapping:
+    time: analysis_time
+    feature:
+      map_variables_to_var_name: True
+      name: f"{var_name}"
+    grid_index: x, y
+  target: forcing
       
 - name: danra_static2d
   path: /data/danra/static2d.zarr
+  attributes:
+    version: v0.3.0
   dims: [x, y]
   variables: [topography_height, land_area_fraction]
   dim_mapping:
     grid_index: x, y
+  target: static
 
 - name: meps_ensemble_forecasts
   path: /data/meps/ensemble_forecasts.zarr
@@ -63,8 +109,9 @@ inputs:
   sub_sampling:
     analysis_time:
       time: 0
-
     ensemble_member: "random"
+  target: state
+
 
 - name: dini_forecast
   path: /data/dini_forecasts_2000_2010.zarr
@@ -76,3 +123,4 @@ inputs:
   sub_sampling:
     analysis_time:
       time: 0
+  target: state

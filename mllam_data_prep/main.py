@@ -1,5 +1,5 @@
-import yaml
 import xarray as xr
+import yaml
 
 EXAMPLE_CONFIG = """
 schema_version: v0.1.0
@@ -92,7 +92,7 @@ inputs:
       name: f"{var_name}"
     grid_index: x, y
   target: forcing
-      
+
 - name: danra_static2d
   path: /data/danra/static2d.zarr
   attributes:
@@ -145,7 +145,7 @@ def _load_and_subset_dataset(fp, variables):
         with keys as the variable names and values with entries for each
         coordinate and coordinate values to extract
     """
-    
+
     ds = xr.open_zarr(fp)
     ds_subset = xr.Dataset()
     ds_subset.attrs.update(ds.attrs)
@@ -164,15 +164,16 @@ def _load_and_subset_dataset(fp, variables):
         ds_subset[var] = da
     return ds_subset
 
+
 def _stack_variables_by_coord_values(ds, level_dim, name_format):
     """
     combine all levels of all variables into a single dataset
-    
+
     for a set of variables in a file, e.g. [u, v, t], and a set of levels [50, 100]
     the output will combine all variables into a single xr.DataArray with
     coordinate values given by the name_format e.g. [u_l50, u_l100, v_l50,
     v_l100, t_l50, t_l100] if the format was "{var_name}_l{level}"
-    
+
     Parameters
     ----------
     ds : xr.Dataset
@@ -182,7 +183,7 @@ def _stack_variables_by_coord_values(ds, level_dim, name_format):
     name_format : str
         format string to construct the new coordinate values for the
         stacked levels
-        
+
     Returns
     -------
     da_combined : xr.DataArray
@@ -193,10 +194,12 @@ def _stack_variables_by_coord_values(ds, level_dim, name_format):
     for var in list(ds.data_vars):
         da = ds[var]
         coord_values = da.coords[level_dim].values
-        new_coord_values = [name_format.format(var_name=var, **{level_dim: val}) for val in coord_values]
+        new_coord_values = [
+            name_format.format(var_name=var, **{level_dim: val}) for val in coord_values
+        ]
         da = da.assign_coords({level_dim: new_coord_values})
         datasets.append(da)
-        
+
     da_combined = xr.concat(datasets, dim=level_dim)
 
     return da_combined
@@ -207,7 +210,7 @@ def map_dims_and_variables(ds, input_dim_map, arch_dim):
     Map the input dimensions to the architecture dimensions
     using the `input_dim_map`. The method of mapping is determined
     by the type of the `input_dim_map` variable.
-    
+
     The mapping method can be one of the following:
     - A string: The name of the dimension in the input dataset to map to
     - A list: The list of dimensions in the input dataset to stack to
@@ -255,35 +258,38 @@ def map_dims_and_variables(ds, input_dim_map, arch_dim):
         # given in the 'name' key
         # optionally we can also set the 'map_variables_to_var_name' key
         # to True to map the variables to the new coordinate values
-        dims = input_dim_map.get('dims', None)
+        dims = input_dim_map.get("dims", None)
         if dims is None:
             if len(dims) > 1:
                 ds = ds.stack({arch_dim: dims})
 
-        name_format = input_dim_map['name']
+        name_format = input_dim_map["name"]
         dim = dims[0]
         for value in ds[dim].values:
             new_coord = name_format.format(var_name=dim, **{dim: value})
             da_coord_value = ds[dim].sel({dim: value})
+            assert da_coord_value is not None
             ds = ds.assign_coords({arch_dim: new_coord})
-            if input_dim_map.get('map_variables_to_var_name', False):
+            if input_dim_map.get("map_variables_to_var_name", False):
                 ds = ds.rename({dim: new_coord})
+
 
 def main(fp_config):
     config = yaml.load(fp_config)
-    
-    arch_dims = config['arch_dims']
-    
+
+    arch_dims = config["arch_dims"]
+
     datasets = []
 
-    for dataset_config in config['inputs']:
-        path = dataset_config['path']
-        variables = dataset_config['variables']
-        dataset_name = dataset_config['name']
+    for dataset_config in config["inputs"]:
+        path = dataset_config["path"]
+        variables = dataset_config["variables"]
+        dataset_name = dataset_config["name"]
         ds = _load_and_subset_dataset(path=path, variables=variables)
-        
-        dim_mapping = dataset_config['dim_mapping']
-        
+        assert ds is not None
+
+        dim_mapping = dataset_config["dim_mapping"]
+
         # check that there is an entry for each arch dimension
         # in the dim_mapping so that we know how to construct the
         # final dataset
@@ -295,7 +301,9 @@ def main(fp_config):
                 " a mapping for all architecture dimensions in"
                 " using the 'dim_mapping' key in the input dataset"
             )
-        
+
         # Do the dimension and variable mapping
         for arch_dim, input_dim_map in dim_mapping.items():
-            pass
+            datasets.append(None)
+            assert arch_dim in arch_dims
+            assert input_dim_map

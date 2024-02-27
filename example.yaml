@@ -87,7 +87,7 @@ inputs:
       name: f"{var_name}"
     grid_index: x, y
   target: forcing
-      
+
 - name: danra_static2d
   path: /data/danra/static2d.zarr
   attributes:

@@ -1,0 +1,78 @@
+sampling_dim: time
+
+arch_dims: [time, grid_index, feature]
+
+inputs:
+- name: danra_height_levels
+  path: /data/danra/height_levels.zarr
+  dims: [analysis_time, x, y, height_level]
+  variables:
+    u:
+      height_level: [50, 100, 200, 300, 500, 700, 850, 1000]
+    v:
+      height_level: [50, 100, 200, 300, 500, 700, 850, 1000]
+    t:
+      height_level: [50, 100, 200, 300, 500, 700, 850, 1000]
+  dim_mapping:
+    time: analysis_time
+    feature:
+      map_variables_to_var_name: True
+      dims: [height_level]
+      name: f"{var_name}_{height_level}"
+    grid_index: x, y
+
+- name: danra_pressure_levels
+  path: /data/danra/pressure_levels.zarr
+  dims: [analysis_time, x, y, pressure_level]
+  variables:
+    u:
+      pressure_level: [1000, 850, 700, 500, 300, 200, 100]
+  dim_mapping:
+    time: analysis_time
+    feature:
+      map_variables_to_var_name: True
+      dims: [pressure_level]
+      name: f"{var_name}_{pressure_level}"
+    grid_index: x, y
+
+- name: danra_single_levels
+  path: /data/danra/single_levels.zarr
+  dims: [analysis_time, x, y]
+  variables: u10m, v10m, t2m
+  dim_mapping:
+    time: analysis_time
+    feature:
+      map_variables_to_var_name: True
+      name: f"{var_name}"
+    grid_index: x, y
+      
+- name: danra_static2d
+  path: /data/danra/static2d.zarr
+  dims: [x, y]
+  variables: [topography_height, land_area_fraction]
+  dim_mapping:
+    grid_index: x, y
+
+- name: meps_ensemble_forecasts
+  path: /data/meps/ensemble_forecasts.zarr
+  variables: [u, v, t]
+  dims: [analysis_time, forecast_time, ensemble_member, x, y]
+  dim_mapping:
+    time: forecast_time
+    grid_index: x, y
+  sub_sampling:
+    analysis_time:
+      time: 0
+
+    ensemble_member: "random"
+
+- name: dini_forecast
+  path: /data/dini_forecasts_2000_2010.zarr
+  variables: [u, v, t]
+  dims: [analysis_time, forecast_time, x, y]
+  dim_mapping:
+    time: forecast_time
+    grid_index: x, y
+  sub_sampling:
+    analysis_time:
+      time: 0

@@ -1,5 +1,6 @@
 stages:
   - lint
+  - test
 
 # run linting checks with pre-commit
 lint:

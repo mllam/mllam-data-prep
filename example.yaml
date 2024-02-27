@@ -3,16 +3,15 @@ dataset_version: v0.1.0
 
 arch:
   sampling_dim: time
-  input_dims: [time, grid_index, feature]
+  input_variables:
+    static: [grid_index, feature]
+    state: [time, grid_index, feature]
+    forcing: [time, grid_index, feature]
   input_range:
     time:
       start: 2000-01-01T00:00
       end: 2001-01-01T00:00
       step: PT1H
-  input_variables:
-    static: [grid_index, feature]
-    state: [time, grid_index, feature]
-    forcing: [time, grid_index, feature]
 
 inputs:
 - name: danra_height_levels
@@ -23,15 +22,15 @@ inputs:
   variables:
     u:
       altitude:
-        values: [50, 100, 200, 300, 500, 700, 850, 1000]
+        sel: [50, 100, 200, 300, 500, 700, 850, 1000]
         units: m
     v:
       altitude:
-        values: [50, 100, 200, 300, 500, 700, 850, 1000]
+        sel: [50, 100, 200, 300, 500, 700, 850, 1000]
         units: m
     t:
       altitude:
-        values: [50, 100, 200, 300, 500, 700, 850, 1000]
+        sel: [50, 100, 200, 300, 500, 700, 850, 1000]
         units: m
   dim_mapping:
     time: analysis_time
@@ -50,7 +49,7 @@ inputs:
   variables:
     u:
       pressure:
-        values: [1000, 850, 700, 500, 300, 200, 100]
+        sel: [1000, 850, 700, 500, 300, 200, 100]
         units: hPa
   dim_mapping:
     time: analysis_time

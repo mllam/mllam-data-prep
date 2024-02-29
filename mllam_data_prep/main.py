@@ -2,6 +2,7 @@ from collections import defaultdict
 
 import xarray as xr
 import yaml
+from loguru import logger
 
 from .ops.loading import load_and_subset_dataset
 from .ops.mapping import map_dims_and_variables
@@ -28,6 +29,25 @@ def _check_dataset_attributes(ds, expected_attributes, dataset_name):
         )
 
 
+def _check_dataarrays_for_coincident_coords(dataarrays, skip_dim=None):
+    # check that the dataarrays have the same dimensions apart from the concat_dim
+    # first find all the dimension names used
+    unique_dims = set()
+    for da in dataarrays:
+        unique_dims.update(da.dims)
+
+    if skip_dim is not None:
+        unique_dims.remove(skip_dim)
+
+    for d in unique_dims:
+        coord_values = {}
+        for da in dataarrays:
+            if d in da.dims:
+                coord_values[da.source_dataset] = da[d].values
+
+        # group the dataarrays by the unique set of coordinate values
+
+
 def _merge_dataarrays_by_target(dataarrays_by_target):
     dataarrays = {}
     for target, das in dataarrays_by_target.items():
@@ -43,8 +63,14 @@ def _merge_dataarrays_by_target(dataarrays_by_target):
                     f"Dataarrays for target {target} have different 'variables_mapping_dim' attributes: {d} != {concat_dim}"
                 )
             concat_dim = d
+
+        _check_dataarrays_for_coincident_coords(dataarrays=das, skip_dim=concat_dim)
         dataarrays[target] = xr.concat(das, dim=concat_dim)
 
+    # before combining into a single dataset, we need to check that the
+    # dataarrays have the same dimensions and coordinates
+
+    _check_dataarrays_for_coincident_coords(dataarrays=das)
     ds = xr.Dataset(dataarrays)
     return ds
 
@@ -66,6 +92,7 @@ def main(fp_config):
 
         arch_dims = architecture_config["input_variables"][target_arch_var]
 
+        logger.info(f"Loading dataset {dataset_name} from {path}")
         try:
             ds = load_and_subset_dataset(fp=path, variables=variables)
         except Exception as ex:
@@ -90,7 +117,11 @@ def main(fp_config):
                 " using the 'dim_mapping' key in the input dataset"
             )
 
+        logger.info(
+            f"Mapping dimensions and variables for dataset {dataset_name} to {target_arch_var}"
+        )
         da_target = map_dims_and_variables(ds=ds, dim_mapping=dim_mapping)
+        da_target.attrs["source_dataset"] = dataset_name
         dataarrays_by_target[target_arch_var].append(da_target)
 
     ds = _merge_dataarrays_by_target(dataarrays_by_target=dataarrays_by_target)

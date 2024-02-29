@@ -1,7 +1,8 @@
 import numpy as np
 import xarray as xr
 
-import mllam_data_prep.main as mdp
+from mllam_data_prep.ops import mapping as mdp_mapping
+from mllam_data_prep.ops import stacking as mdp_stacking
 
 
 def test_stack_variables_along_coord():
@@ -36,7 +37,7 @@ def test_stack_variables_along_coord():
     )
 
     combined_dim_name = "feature"
-    da_stacked = mdp._stack_variables_by_coord_values(
+    da_stacked = mdp_stacking.stack_variables_by_coord_values(
         ds=ds,
         coord="level",
         name_format=name_format,
@@ -98,7 +99,7 @@ def test_stack_xy_coords():
         ),
     )
 
-    da_stacked = mdp.map_dims_and_variables(ds=ds, dim_mapping=dim_mapping)
+    da_stacked = mdp_mapping.map_dims_and_variables(ds=ds, dim_mapping=dim_mapping)
 
     assert set(da_stacked.dims) == set(("grid_index", "feature"))
     assert da_stacked.coords["grid_index"].shape == (nx * ny,)

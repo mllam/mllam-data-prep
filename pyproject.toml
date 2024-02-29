@@ -10,6 +10,8 @@ dependencies = [
     "zarr>=2.17.0",
     "dask>=2024.2.1",
     "pyyaml>=6.0.1",
+    "loguru>=0.7.2",
+    "isodate>=0.6.1",
 ]
 requires-python = ">=3.10"
 readme = "README.md"

@@ -33,8 +33,8 @@ def test_merging_static_and_surface_analysis():
                 forcing=["time", "grid_index", "feature"],
             ),
         ),
-        inputs=[
-            dict(
+        inputs=dict(
+            danra_surface=dict(
                 name="danra_surface",
                 path=datasets["surface_analysis"],
                 dims=["time", "x", "y"],
@@ -49,7 +49,7 @@ def test_merging_static_and_surface_analysis():
                 ),
                 target="forcing",
             ),
-            dict(
+            danra_static=dict(
                 name="danra_static",
                 path=datasets["static"],
                 dims=["x", "y"],
@@ -63,7 +63,7 @@ def test_merging_static_and_surface_analysis():
                 ),
                 target="static",
             ),
-        ],
+        ),
     )
 
     # write yaml config to file
@@ -120,9 +120,8 @@ def test_time_selection(source_data_contains_time_range, time_stepsize):
                 )
             ),
         ),
-        inputs=[
-            dict(
-                name="danra_surface",
+        inputs=dict(
+            danra_surface=dict(
                 path=datasets["surface_analysis"],
                 dims=["time", "x", "y"],
                 variables=testdata.DEFAULT_SURFACE_ANALYSIS_VARS,
@@ -136,7 +135,7 @@ def test_time_selection(source_data_contains_time_range, time_stepsize):
                 ),
                 target="forcing",
             ),
-        ],
+        ),
     )
 
     # write yaml config to file

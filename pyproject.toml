@@ -29,6 +29,7 @@ package-type = "library"
 dev = [
     "pytest>=8.0.2",
     "ipdb>=0.13.13",
+    "rich>=13.7.1",
 ]
 
 [tool.isort]

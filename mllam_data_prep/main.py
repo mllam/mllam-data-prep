@@ -1,9 +1,9 @@
 from collections import defaultdict
 
 import xarray as xr
-import yaml
 from loguru import logger
 
+from .config import load as load_config
 from .ops.loading import load_and_subset_dataset
 from .ops.mapping import map_dims_and_variables
 from .ops.selection import select_by_kwargs
@@ -77,20 +77,18 @@ def _merge_dataarrays_by_target(dataarrays_by_target):
 
 
 def main(fp_config):
-    with open(fp_config, "r") as fh:
-        config = yaml.load(fh, Loader=yaml.FullLoader)
+    config = load_config(fp_config=fp_config)
 
     architecture_config = config["architecture"]
     architecture_input_ranges = architecture_config.get("input_range", {})
 
     dataarrays_by_target = defaultdict(list)
 
-    for dataset_config in config["inputs"]:
-        path = dataset_config["path"]
-        variables = dataset_config["variables"]
-        dataset_name = dataset_config["name"]
-        target_arch_var = dataset_config["target"]
-        expected_input_attributes = dataset_config.get("attributes", {})
+    for dataset_name, input_config in config["inputs"].items():
+        path = input_config["path"]
+        variables = input_config["variables"]
+        target_arch_var = input_config["target"]
+        expected_input_attributes = input_config.get("attributes", {})
 
         arch_dims = architecture_config["input_variables"][target_arch_var]
 
@@ -105,7 +103,7 @@ def main(fp_config):
             dataset_name=dataset_name,
         )
 
-        dim_mapping = dataset_config["dim_mapping"]
+        dim_mapping = input_config["dim_mapping"]
 
         # check that there is an entry for each arch dimension
         # in the dim_mapping so that we know how to construct the

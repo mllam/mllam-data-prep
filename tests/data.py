@@ -5,9 +5,12 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
+NX, NY = 10, 8
+NT_ANALYSIS, NT_FORECAST = 5, 12
+NZ = 3
 DT_ANALYSIS = isodate.parse_duration("PT6H")
 DT_FORECAST = isodate.parse_duration("PT1H")
-T_START = isodate.parse_datetime("2000-01-01T00:00:00Z")
+T_START = isodate.parse_datetime("2000-01-01T00:00")
 DEFAULT_FORECAST_VARS = ["u", "v", "t", "precip"]
 DEFAULT_ATMOSPHERIC_ANALYSIS_VARS = ["u", "v", "t"]
 DEFAULT_SURFACE_ANALYSIS_VARS = [
@@ -30,8 +33,12 @@ def create_surface_forecast_dataset(
     Create a fake forecast dataset with `nt_analysis` analysis times, `nt_forecast`
     forecast times, `nx` grid points in x-direction and `ny` grid points in y-direction.
     """
-    ts_analysis = pd.date_range(T_START, periods=nt_analysis, freq=DT_ANALYSIS)
-    ts_forecast = pd.date_range(T_START, periods=nt_forecast, freq=DT_FORECAST)
+    ts_analysis = pd.date_range(
+        T_START, periods=nt_analysis, freq=DT_ANALYSIS
+    ).tz_localize(None)
+    ts_forecast = pd.date_range(
+        T_START, periods=nt_forecast, freq=DT_FORECAST
+    ).tz_localize(None)
 
     x = np.arange(nx)
     y = np.arange(ny)
@@ -61,7 +68,9 @@ def create_surface_analysis_dataset(
     Create a fake analysis dataset with `nt_analysis` analysis times, `nx` grid points
     in x-direction and `ny` grid points in y-direction.
     """
-    ts_analysis = pd.date_range(T_START, periods=nt_analysis, freq=DT_ANALYSIS)
+    ts_analysis = pd.date_range(
+        T_START, periods=nt_analysis, freq=DT_ANALYSIS
+    ).tz_localize(None)
 
     x = np.arange(nx)
     y = np.arange(ny)
@@ -108,7 +117,9 @@ def create_analysis_dataset_on_levels(
     level_dim : str, optional
         Name of the level dimension, by default "altitude"
     """
-    ts_analysis = pd.date_range(T_START, periods=nt_analysis, freq=DT_ANALYSIS)
+    ts_analysis = pd.date_range(
+        T_START, periods=nt_analysis, freq=DT_ANALYSIS
+    ).tz_localize(None)
 
     x = np.arange(nx)
     y = np.arange(ny)
@@ -162,8 +173,12 @@ def create_forecast_dataset_on_levels(
         Name of the level dimension, by default "altitude"
     """
 
-    ts_analysis = pd.date_range(T_START, periods=nt_analysis, freq=DT_ANALYSIS)
-    ts_forecast = pd.date_range(T_START, periods=nt_forecast, freq=DT_FORECAST)
+    ts_analysis = pd.date_range(
+        T_START, periods=nt_analysis, freq=DT_ANALYSIS
+    ).tz_localize(None)
+    ts_forecast = pd.date_range(
+        T_START, periods=nt_forecast, freq=DT_FORECAST
+    ).tz_localize(None)
 
     x = np.arange(nx)
     y = np.arange(ny)
@@ -231,9 +246,6 @@ def create_data_collection(data_kinds, fp_root):
         and value being the path to the saved dataset
     """
     datasets = {}
-    nx, ny = 10, 8
-    nt_analysis, nt_forecast = 5, 12
-    nz = 3
 
     # check that non of the data_kinds are repeated
     if len(data_kinds) != len(set(data_kinds)):
@@ -243,19 +255,17 @@ def create_data_collection(data_kinds, fp_root):
 
     for data_kind in data_kinds:
         if data_kind == "surface_forecast":
-            ds = create_surface_forecast_dataset(nt_analysis, nt_forecast, nx, ny)
+            ds = create_surface_forecast_dataset(NT_ANALYSIS, NT_FORECAST, NX, NY)
         elif data_kind == "surface_analysis":
-            ds = create_surface_analysis_dataset(nt_analysis, nx, ny)
+            ds = create_surface_analysis_dataset(NT_ANALYSIS, NX, NY)
         elif data_kind == "analysis_on_levels":
-            ds = create_analysis_dataset_on_levels(nt_analysis, nx, ny, nz)
+            ds = create_analysis_dataset_on_levels(NT_ANALYSIS, NX, NY, NZ)
         elif data_kind == "forecast_on_levels":
-            ds = create_forecast_dataset_on_levels(nt_analysis, nt_forecast, nx, ny, nz)
+            ds = create_forecast_dataset_on_levels(NT_ANALYSIS, NT_FORECAST, NX, NY, NZ)
         elif data_kind == "static":
-            ds = create_static_dataset(nx, ny)
+            ds = create_static_dataset(NX, NY)
         else:
             raise ValueError(f"Unknown data kind: {data_kind}")
-
-        # make a unique identifier using uuid
 
         identifier = str(uuid.uuid4())
         dataset_name = f"{data_kind}_{identifier}"

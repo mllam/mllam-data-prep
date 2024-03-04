@@ -6,6 +6,7 @@ from loguru import logger
 
 from .ops.loading import load_and_subset_dataset
 from .ops.mapping import map_dims_and_variables
+from .ops.selection import select_by_kwargs
 
 
 def _check_dataset_attributes(ds, expected_attributes, dataset_name):
@@ -80,6 +81,7 @@ def main(fp_config):
         config = yaml.load(fh, Loader=yaml.FullLoader)
 
     architecture_config = config["architecture"]
+    architecture_input_ranges = architecture_config.get("input_range", {})
 
     dataarrays_by_target = defaultdict(list)
 
@@ -122,6 +124,10 @@ def main(fp_config):
         )
         da_target = map_dims_and_variables(ds=ds, dim_mapping=dim_mapping)
         da_target.attrs["source_dataset"] = dataset_name
+
+        if architecture_input_ranges is not None:
+            da_target = select_by_kwargs(da_target, **architecture_input_ranges)
+
         dataarrays_by_target[target_arch_var].append(da_target)
 
     ds = _merge_dataarrays_by_target(dataarrays_by_target=dataarrays_by_target)

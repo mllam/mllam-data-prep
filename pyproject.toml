@@ -28,6 +28,7 @@ package-type = "library"
 [tool.pdm.dev-dependencies]
 dev = [
     "pytest>=8.0.2",
+    "ipdb>=0.13.13",
 ]
 
 [tool.isort]

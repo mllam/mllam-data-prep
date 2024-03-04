@@ -153,3 +153,77 @@ def test_time_selection(source_data_contains_time_range, time_stepsize):
         )
         with pytest.raises(ValueError):
             mdp.main(fp_config=fp_config)
+
+
+@pytest.mark.parametrize("use_common_feature_var_name", [True, False])
+def test_feature_collision(use_common_feature_var_name):
+    """
+    Use to arch target variables which have a different number of features and
+    therefore need a unique feature dimension for each target. This should raise
+    a ValueError if the feature coordinates have the same name
+    """
+    tmpdir = tempfile.TemporaryDirectory()
+    datasets = testdata.create_data_collection(
+        data_kinds=["surface_analysis", "static"], fp_root=tmpdir.name
+    )
+
+    if use_common_feature_var_name:
+        static_feature_var_name = state_feature_var_name = "feature"
+    else:
+        static_feature_var_name = "static_feature"
+        state_feature_var_name = "state_feature"
+
+    config = dict(
+        schema_version="v0.1.0",
+        dataset_version="v0.1.0",
+        architecture=dict(
+            sampling_dim="time",
+            input_variables=dict(
+                static=["grid_index", static_feature_var_name],
+                state=["time", "grid_index", state_feature_var_name],
+            ),
+        ),
+        inputs=dict(
+            danra_surface=dict(
+                name="danra_surface",
+                path=datasets["surface_analysis"],
+                dims=["time", "x", "y"],
+                variables=testdata.DEFAULT_SURFACE_ANALYSIS_VARS,
+                dim_mapping={
+                    "time": "analysis_time",
+                    "grid_index": ["x", "y"],
+                    state_feature_var_name: dict(
+                        stack_variables_by_var_name=True,
+                        name="{var_name}",
+                    ),
+                },
+                target="state",
+            ),
+            danra_static=dict(
+                name="danra_static",
+                path=datasets["static"],
+                dims=["x", "y"],
+                variables=testdata.DEFAULT_STATIC_VARS,
+                dim_mapping={
+                    "grid_index": ["x", "y"],
+                    static_feature_var_name: dict(
+                        stack_variables_by_var_name=True,
+                        name="{var_name}",
+                    ),
+                },
+                target="static",
+            ),
+        ),
+    )
+
+    # write yaml config to file
+    fn_config = "config.yaml"
+    fp_config = Path(tmpdir.name) / fn_config
+    with open(fp_config, "w") as f:
+        yaml.dump(config, f)
+
+    if use_common_feature_var_name:
+        with pytest.raises(ValueError):
+            mdp.main(fp_config=fp_config)
+    else:
+        mdp.main(fp_config=fp_config)

@@ -89,6 +89,7 @@ def main(fp_config):
         variables = input_config["variables"]
         target_arch_var = input_config["target"]
         expected_input_attributes = input_config.get("attributes", {})
+        expected_input_var_dims = input_config["dims"]
 
         arch_dims = architecture_config["input_variables"][target_arch_var]
 
@@ -120,7 +121,11 @@ def main(fp_config):
         logger.info(
             f"Mapping dimensions and variables for dataset {dataset_name} to {target_arch_var}"
         )
-        da_target = map_dims_and_variables(ds=ds, dim_mapping=dim_mapping)
+        da_target = map_dims_and_variables(
+            ds=ds,
+            dim_mapping=dim_mapping,
+            expected_input_var_dims=expected_input_var_dims,
+        )
         da_target.attrs["source_dataset"] = dataset_name
 
         if architecture_input_ranges is not None:

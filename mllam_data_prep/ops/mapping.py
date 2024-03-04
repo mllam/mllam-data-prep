@@ -8,12 +8,13 @@ def _check_for_malformed_list_arg(s):
         )
 
 
-def map_dims_and_variables(ds, dim_mapping):
+def map_dims_and_variables(ds, dim_mapping, expected_input_var_dims):
     """
     Map the input dimensions to the architecture dimensions
     using the `dim_mapping` dictionary. Each key in the `dim_mapping`
     describes the name of the architecture dimension to map to and the values
-    describe what to map from (the `input_dim_map`).
+    describe what to map from (the `input_dim_map`). Finally, the function checks
+    that each variable has the dimensions of `expected_input_var_dims`.
 
     The method of mapping is determined by the type of `input_dim_map`:
 
@@ -44,6 +45,9 @@ def map_dims_and_variables(ds, dim_mapping):
         of the `input_dim_map` variable.
     arch_dim : str
         The name of the architecture dimension to map to
+    expected_input_var_dims : list
+        The list of dimensions that each variable in the input dataset
+        should have
 
     Returns
     -------
@@ -67,6 +71,16 @@ def map_dims_and_variables(ds, dim_mapping):
         )
     elif len(variable_dim_mappings) == 0:
         raise Exception("At least one mapping should be defined for stacking variables")
+
+    # check that none of the variables have dims that are not in the expected_input_var_dims
+    for var_name in ds.data_vars:
+        if not set(ds[var_name].dims).issubset(expected_input_var_dims):
+            extra_dims = set(ds[var_name].dims) - set(expected_input_var_dims)
+            raise ValueError(
+                f"The variable {var_name} has dimensions {ds[var_name].dims} however the"
+                f" dimensions `{extra_dims}` are not in "
+                f" the `dims` defined for this input dataset: {expected_input_var_dims}"
+            )
 
     # handle those mappings that involve just renaming or stacking dimensions
     for arch_dim, input_dim_map in dim_mapping.items():

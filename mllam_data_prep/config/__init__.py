@@ -1,1 +1,1 @@
-from .storage import ConfigDict, InvalidConfig, load
+from .storage import ConfigDict, InvalidConfig

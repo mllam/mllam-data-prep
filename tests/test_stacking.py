@@ -14,24 +14,11 @@ def test_stack_variables_along_coord():
     """
     name_format = "{var_name}_l{level}"
     nx, ny, nz = 10, 6, 3
+    dims = ["x", "y", "level"]
     ds = xr.Dataset(
         {
-            "var1": xr.DataArray(
-                np.random.random((nx, ny, nz)),
-                dims=(
-                    "x",
-                    "y",
-                    "level",
-                ),
-            ),
-            "var2": xr.DataArray(
-                np.random.random((nx, ny, nz)),
-                dims=(
-                    "x",
-                    "y",
-                    "level",
-                ),
-            ),
+            "var1": xr.DataArray(np.random.random((nx, ny, nz)), dims=dims),
+            "var2": xr.DataArray(np.random.random((nx, ny, nz)), dims=dims),
         },
         coords={"level": np.arange(nz)},
     )
@@ -70,25 +57,12 @@ def test_stack_xy_coords():
     example (x, y) grid coordinates to a single grid_index coordinate
     """
     nx, ny, nz = 10, 6, 3
+    dims = ["x", "y", "level"]
 
     ds = xr.Dataset(
         {
-            "var1": xr.DataArray(
-                np.random.random((nx, ny, nz)),
-                dims=(
-                    "x",
-                    "y",
-                    "level",
-                ),
-            ),
-            "var2": xr.DataArray(
-                np.random.random((nx, ny, nz)),
-                dims=(
-                    "x",
-                    "y",
-                    "level",
-                ),
-            ),
+            "var1": xr.DataArray(np.random.random((nx, ny, nz)), dims=dims),
+            "var2": xr.DataArray(np.random.random((nx, ny, nz)), dims=dims),
         },
         coords={"level": np.arange(nz)},
     )
@@ -99,7 +73,9 @@ def test_stack_xy_coords():
         ),
     )
 
-    da_stacked = mdp_mapping.map_dims_and_variables(ds=ds, dim_mapping=dim_mapping)
+    da_stacked = mdp_mapping.map_dims_and_variables(
+        ds=ds, dim_mapping=dim_mapping, expected_input_var_dims=dims
+    )
 
     assert set(da_stacked.dims) == set(("grid_index", "feature"))
     assert da_stacked.coords["grid_index"].shape == (nx * ny,)

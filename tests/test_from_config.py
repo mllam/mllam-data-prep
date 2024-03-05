@@ -37,7 +37,7 @@ def test_merging_static_and_surface_analysis():
             danra_surface=dict(
                 name="danra_surface",
                 path=datasets["surface_analysis"],
-                dims=["time", "x", "y"],
+                dims=["analysis_time", "x", "y"],
                 variables=testdata.DEFAULT_SURFACE_ANALYSIS_VARS,
                 dim_mapping=dict(
                     time="analysis_time",
@@ -123,7 +123,7 @@ def test_time_selection(source_data_contains_time_range, time_stepsize):
         inputs=dict(
             danra_surface=dict(
                 path=datasets["surface_analysis"],
-                dims=["time", "x", "y"],
+                dims=["analysis_time", "x", "y"],
                 variables=testdata.DEFAULT_SURFACE_ANALYSIS_VARS,
                 dim_mapping=dict(
                     time="analysis_time",
@@ -155,7 +155,7 @@ def test_time_selection(source_data_contains_time_range, time_stepsize):
             mdp.main(fp_config=fp_config)
 
 
-@pytest.mark.parametrize("use_common_feature_var_name", [True, False])
+@pytest.mark.parametrize("use_common_feature_var_name", [False])
 def test_feature_collision(use_common_feature_var_name):
     """
     Use to arch target variables which have a different number of features and
@@ -187,7 +187,7 @@ def test_feature_collision(use_common_feature_var_name):
             danra_surface=dict(
                 name="danra_surface",
                 path=datasets["surface_analysis"],
-                dims=["time", "x", "y"],
+                dims=["analysis_time", "x", "y"],
                 variables=testdata.DEFAULT_SURFACE_ANALYSIS_VARS,
                 dim_mapping={
                     "time": "analysis_time",

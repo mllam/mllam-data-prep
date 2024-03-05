@@ -13,17 +13,17 @@ def _get_nested_from_spec(data: dict = FIELD_DESCRIPTIONS, path=[]):
     allowing for a nested structure to be traversed. A special value named `_values_` is used to indicate
     that any key can be used at this level of the dictionary.
     """
-    if len(path) == 1:
-        return data[path[0]]
+    key = path[0]
+    if key in data:
+        children = data[key]
+    elif "_values_" in data:
+        children = data["_values_"]
     else:
-        key = path[0]
-        if key in data:
-            children = data[key]
-        elif "_values_" in data:
-            children = data["_values_"]
-        else:
-            raise KeyError(f"Key {key} not found in {data}")
+        raise KeyError(f"Key {key} not found in {data}")
 
+    if len(path) == 1:
+        return children
+    else:
         return _get_nested_from_spec(children, path=path[1:])
 
 
@@ -80,8 +80,8 @@ class ConfigDict(dict):
 
         raise InvalidConfig(f"Missing config variable `{path_joined}` ({field_desc})")
 
-
-def load(fp_config):
-    with open(fp_config, "r") as fh:
-        config_dict = yaml.load(fh, Loader=yaml.FullLoader)
-        return ConfigDict(config_dict)
+    @classmethod
+    def load(cls, fp_config):
+        with open(fp_config, "r") as fh:
+            config_dict = yaml.load(fh, Loader=yaml.FullLoader)
+            return cls(config_dict)

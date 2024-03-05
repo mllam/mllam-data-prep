@@ -3,7 +3,7 @@ from collections import defaultdict
 import xarray as xr
 from loguru import logger
 
-from .config import load as load_config
+from .config import ConfigDict
 from .ops.loading import load_and_subset_dataset
 from .ops.mapping import map_dims_and_variables
 from .ops.selection import select_by_kwargs
@@ -77,7 +77,7 @@ def _merge_dataarrays_by_target(dataarrays_by_target):
 
 
 def main(fp_config):
-    config = load_config(fp_config=fp_config)
+    config = ConfigDict.load(fp_config=fp_config)
 
     architecture_config = config["architecture"]
     architecture_input_ranges = architecture_config.get("input_range", {})

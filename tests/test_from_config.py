@@ -7,6 +7,7 @@ import yaml
 
 import mllam_data_prep.main as mdp
 import tests.data as testdata
+from mllam_data_prep.config import InvalidConfigException
 
 
 def test_gen_data():
@@ -223,7 +224,7 @@ def test_feature_collision(use_common_feature_var_name):
         yaml.dump(config, f)
 
     if use_common_feature_var_name:
-        with pytest.raises(mdp.InvalidConfigException):
+        with pytest.raises(InvalidConfigException):
             mdp.main(fp_config=fp_config)
     else:
         mdp.main(fp_config=fp_config)

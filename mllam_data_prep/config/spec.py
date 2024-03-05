@@ -17,6 +17,12 @@ FIELD_DESCRIPTIONS = dict(
                 step="step size of the range",
             ),
         ),
+        chunking=dict(
+            _doc_="Chunking for dimensions of the input variables",
+            _values_=dict(
+                _doc_="Chunking for a single input variable dimension",
+            ),
+        ),
     ),
     inputs=dict(
         _doc_="Input datasets for the model",

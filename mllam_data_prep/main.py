@@ -142,8 +142,10 @@ def main(fp_config):
     # need to drop the encoding so that we can write to zarr with new chunksizes
     ds = ds.drop_encoding()
 
-    # default to making a single chunk for each dimension, this should be configurable eventually
-    chunks = {d: int(ds[d].count()) for d in ds.dims}
+    # default to making a single chunk for each dimension if chunksize is not specified
+    # in the config
+    config_chunking = architecture_config.get("chunking", {})
+    chunks = {d: config_chunking.get(d, int(ds[d].count())) for d in ds.dims}
     ds = ds.chunk(chunks)
 
     print(ds)

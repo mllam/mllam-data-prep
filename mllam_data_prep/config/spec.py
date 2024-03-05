@@ -24,6 +24,7 @@ FIELD_DESCRIPTIONS = dict(
             _doc_="single input dataset",
             path="path to the dataset",
             dims="dimensions of the dataset",
+            attributes="attributes the dataset should have",
             variables=dict(
                 _doc_="variables to select from the dataset",
                 _values_=dict(

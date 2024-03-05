@@ -4,6 +4,20 @@ from .spec import FIELD_DESCRIPTIONS
 
 
 class InvalidConfigException(Exception):
+    """Raised for general config errors"""
+
+    pass
+
+
+class InvalidConfigVariableException(Exception):
+    """Raised when a config variable is present but is not part of the config spec"""
+
+    pass
+
+
+class MissingConfigVariableException(Exception):
+    """Raised when a config variable is missing from the config file that is required"""
+
     pass
 
 
@@ -65,12 +79,13 @@ class ConfigDict(dict):
             field_desc = _get_nested_from_spec(path=field_path)
             if "_doc_" in field_desc:
                 field_desc = field_desc["_doc_"]
+
             if found_value:
                 return value
 
         except KeyError as ex:
             if found_value:
-                raise InvalidConfigException(
+                raise InvalidConfigVariableException(
                     f"Although a value for {path_joined} does exist ({value})"
                     " this parameter shouldn't be included in the configuration"
                     " as it is not part of the config spec."
@@ -78,9 +93,15 @@ class ConfigDict(dict):
             else:
                 raise KeyError(f"Unknown config variable `{path_joined}`") from ex
 
-        raise InvalidConfigException(
+        raise MissingConfigVariableException(
             f"Missing config variable `{path_joined}` ({field_desc})"
         )
+
+    def get(self, key, default=None):
+        try:
+            return self[key]
+        except MissingConfigVariableException:
+            return default
 
     @classmethod
     def load(cls, fp_config):

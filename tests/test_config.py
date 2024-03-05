@@ -1,7 +1,11 @@
 import pytest
 import yaml
 
-from mllam_data_prep.config import ConfigDict, InvalidConfigException
+from mllam_data_prep.config import (
+    ConfigDict,
+    InvalidConfigVariableException,
+    MissingConfigVariableException,
+)
 
 EXAMPLE_CONFIG_YAML = """
 schema_version: v0.1.0
@@ -61,11 +65,11 @@ def test_get_config():
 
     assert config["schema_version"] is not None
     # raise `InvalidConfig` because `dataset_version` is in the spec, but isn't defined in the config
-    with pytest.raises(InvalidConfigException):
+    with pytest.raises(MissingConfigVariableException):
         config["dataset_version"]
 
     # raise `InvalidConfig` because although `foobar` is defined in the config, it shouldn't be as it isn't part of the spec
-    with pytest.raises(InvalidConfigException):
+    with pytest.raises(InvalidConfigVariableException):
         config["foobar"]
 
 

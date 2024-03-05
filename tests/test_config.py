@@ -1,7 +1,7 @@
 import pytest
 import yaml
 
-from mllam_data_prep.config import Config, InvalidConfig
+from mllam_data_prep.config import ConfigDict, InvalidConfig
 
 EXAMPLE_CONFIG_YAML = """
 schema_version: v0.1.0
@@ -57,15 +57,20 @@ inputs:
 
 
 def test_get_config():
-    config = Config(dict(schema_version="v0.1.0"))
+    config = ConfigDict(dict(schema_version="v0.1.0", foobar=42))
 
     assert config["schema_version"] is not None
+    # raise `InvalidConfig` because `dataset_version` is in the spec, but isn't defined in the config
     with pytest.raises(InvalidConfig):
         config["dataset_version"]
 
+    # raise `InvalidConfig` because although `foobar` is defined in the config, it shouldn't be as it isn't part of the spec
+    with pytest.raises(InvalidConfig):
+        config["foobar"]
 
-def test_get_config2():
-    config = Config(yaml.load(EXAMPLE_CONFIG_YAML, Loader=yaml.FullLoader))
+
+def test_get_config_nested():
+    config = ConfigDict(yaml.load(EXAMPLE_CONFIG_YAML, Loader=yaml.FullLoader))
 
     for dataset_name, input_config in config["inputs"].items():
         assert input_config["path"] is not None

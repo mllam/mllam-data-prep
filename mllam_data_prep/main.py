@@ -3,7 +3,7 @@ from collections import defaultdict
 import xarray as xr
 from loguru import logger
 
-from .config import ConfigDict
+from .config import ConfigDict, InvalidConfigException
 from .ops.loading import load_and_subset_dataset
 from .ops.mapping import map_dims_and_variables
 from .ops.selection import select_by_kwargs
@@ -30,27 +30,9 @@ def _check_dataset_attributes(ds, expected_attributes, dataset_name):
         )
 
 
-def _check_dataarrays_for_coincident_coords(dataarrays, skip_dim=None):
-    # check that the dataarrays have the same dimensions apart from the concat_dim
-    # first find all the dimension names used
-    unique_dims = set()
-    for da in dataarrays:
-        unique_dims.update(da.dims)
-
-    if skip_dim is not None:
-        unique_dims.remove(skip_dim)
-
-    for d in unique_dims:
-        coord_values = {}
-        for da in dataarrays:
-            if d in da.dims:
-                coord_values[da.source_dataset] = da[d].values
-
-        # group the dataarrays by the unique set of coordinate values
-
-
 def _merge_dataarrays_by_target(dataarrays_by_target):
-    dataarrays = {}
+    attrs_to_keep = ["source_dataset"]
+    dataarrays = []
     for target, das in dataarrays_by_target.items():
         concat_dim = None
         for da in das:
@@ -65,14 +47,35 @@ def _merge_dataarrays_by_target(dataarrays_by_target):
                 )
             concat_dim = d
 
-        _check_dataarrays_for_coincident_coords(dataarrays=das, skip_dim=concat_dim)
-        dataarrays[target] = xr.concat(das, dim=concat_dim)
+        for da in das:
+            for attr in attrs_to_keep:
+                # create a aux coord for each attribute we want to keep
+                # (for example the name of the source dataset)
+                # so that we have this in the resulting dataset
+                da.coords[f"{concat_dim}_{attr}"] = xr.DataArray(
+                    [da.attrs.pop(attr)] * int(da[concat_dim].count()),
+                    dims=[concat_dim],
+                )
 
-    # before combining into a single dataset, we need to check that the
-    # dataarrays have the same dimensions and coordinates
+        da_target = xr.concat(das, dim=concat_dim)
+        da_target.name = target
+        dataarrays.append(da_target)
 
-    _check_dataarrays_for_coincident_coords(dataarrays=das)
-    ds = xr.Dataset(dataarrays)
+    # by doing a merge with join="exact" we make sure that the dataarrays
+    # are aligned along the same dimensions, and that the coordinates are
+    # the same for all dataarrays. Otherwise xarray will fill in with NaNs
+    # for any missing coordinate values
+    try:
+        ds = xr.merge(dataarrays, join="exact")
+    except ValueError as ex:
+        if ex.args[0].startswith("cannot align objects with join='exact'"):
+            raise InvalidConfigException(
+                f"Couldn't merge together the dataarrays for all targets ({', '.join(dataarrays_by_target.keys())})"
+                f" This is likely because the dataarrays have different dimensions or coordinates."
+                " Maybe you need to give the 'feature' dimension a unique name for each target variable?"
+            ) from ex
+        else:
+            raise ex
     return ds
 
 

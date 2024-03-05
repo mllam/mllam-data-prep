@@ -3,7 +3,7 @@ import yaml
 from .spec import FIELD_DESCRIPTIONS
 
 
-class InvalidConfig(Exception):
+class InvalidConfigException(Exception):
     pass
 
 
@@ -70,7 +70,7 @@ class ConfigDict(dict):
 
         except KeyError as ex:
             if found_value:
-                raise InvalidConfig(
+                raise InvalidConfigException(
                     f"Although a value for {path_joined} does exist ({value})"
                     " this parameter shouldn't be included in the configuration"
                     " as it is not part of the config spec."
@@ -78,7 +78,9 @@ class ConfigDict(dict):
             else:
                 raise KeyError(f"Unknown config variable `{path_joined}`") from ex
 
-        raise InvalidConfig(f"Missing config variable `{path_joined}` ({field_desc})")
+        raise InvalidConfigException(
+            f"Missing config variable `{path_joined}` ({field_desc})"
+        )
 
     @classmethod
     def load(cls, fp_config):

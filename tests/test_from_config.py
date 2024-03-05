@@ -28,9 +28,9 @@ def test_merging_static_and_surface_analysis():
         architecture=dict(
             sampling_dim="time",
             input_variables=dict(
-                static=["grid_index", "feature"],
-                state=["time", "grid_index", "feature"],
-                forcing=["time", "grid_index", "feature"],
+                static=["grid_index", "static_feature"],
+                state=["time", "grid_index", "state_feature"],
+                forcing=["time", "grid_index", "forcing_feature"],
             ),
         ),
         inputs=dict(
@@ -42,7 +42,7 @@ def test_merging_static_and_surface_analysis():
                 dim_mapping=dict(
                     time="analysis_time",
                     grid_index=["x", "y"],
-                    feature=dict(
+                    forcing_feature=dict(
                         stack_variables_by_var_name=True,
                         name="{var_name}",
                     ),
@@ -56,7 +56,7 @@ def test_merging_static_and_surface_analysis():
                 variables=testdata.DEFAULT_STATIC_VARS,
                 dim_mapping=dict(
                     grid_index=["x", "y"],
-                    feature=dict(
+                    static_feature=dict(
                         stack_variables_by_var_name=True,
                         name="{var_name}",
                     ),
@@ -155,7 +155,7 @@ def test_time_selection(source_data_contains_time_range, time_stepsize):
             mdp.main(fp_config=fp_config)
 
 
-@pytest.mark.parametrize("use_common_feature_var_name", [False])
+@pytest.mark.parametrize("use_common_feature_var_name", [True, False])
 def test_feature_collision(use_common_feature_var_name):
     """
     Use to arch target variables which have a different number of features and
@@ -223,7 +223,7 @@ def test_feature_collision(use_common_feature_var_name):
         yaml.dump(config, f)
 
     if use_common_feature_var_name:
-        with pytest.raises(ValueError):
+        with pytest.raises(mdp.InvalidConfigException):
             mdp.main(fp_config=fp_config)
     else:
         mdp.main(fp_config=fp_config)

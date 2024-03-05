@@ -96,7 +96,7 @@ def map_dims_and_variables(ds, dim_mapping, expected_input_var_dims):
             # architecture dimension, this is for example used for flatting the
             # spatial dimensions into a single dimension representing the grid
             # index
-            ds = ds.stack({arch_dim: input_dim_map})
+            ds = ds.stack({arch_dim: input_dim_map}).reset_index(arch_dim)
 
     # Finally, we handle the stacking of variables to coordinate values. We
     # might want to deal with variables that exist on multiple coordinate

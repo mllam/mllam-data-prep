@@ -35,15 +35,15 @@ inputs:
       grid_index: [x, y]
     target: state
 
-  danra_surface:
-    path: ~/Desktop/mldev/single_levels.zarr
-    dims: [time, x, y]
-    variables:
-      - pres_seasurface
-    dim_mapping:
-      time: time
-      grid_index: [x, y]
-      forcing_feature:
-        stack_variables_by_var_name: True
-        name: f"{var_name}"
-    target: forcing
+  #danra_surface:
+    #path: ~/Desktop/mldev/single_levels.zarr
+    #dims: [time, x, y]
+    #variables:
+      #- pres_seasurface
+    #dim_mapping:
+      #time: time
+      #grid_index: [x, y]
+      #forcing_feature:
+        #stack_variables_by_var_name: True
+        #name: f"{var_name}"
+    #target: forcing

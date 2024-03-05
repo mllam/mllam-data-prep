@@ -1,4 +1,6 @@
+import shutil
 from collections import defaultdict
+from pathlib import Path
 
 import xarray as xr
 from loguru import logger
@@ -137,14 +139,28 @@ def main(fp_config):
         dataarrays_by_target[target_arch_var].append(da_target)
 
     ds = _merge_dataarrays_by_target(dataarrays_by_target=dataarrays_by_target)
+    # need to drop the encoding so that we can write to zarr with new chunksizes
+    ds = ds.drop_encoding()
+
+    # default to making a single chunk for each dimension, this should be configurable eventually
+    chunks = {d: int(ds[d].count()) for d in ds.dims}
+    ds = ds.chunk(chunks)
+
     print(ds)
+
+    fp_out = fp_config.parent / fp_config.name.replace(".yaml", ".zarr")
+    if fp_out.exists():
+        logger.info(f"Removing existing dataset at {fp_out}")
+        shutil.rmtree(fp_out)
+    ds.to_zarr(fp_out)
+    logger.info(f"Wrote training-ready dataset to {fp_out}")
 
 
 if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("config", help="Path to the config file")
+    parser.add_argument("config", help="Path to the config file", type=Path)
     args = parser.parse_args()
 
     main(fp_config=args.config)

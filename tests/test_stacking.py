@@ -67,9 +67,14 @@ def test_stack_xy_coords():
         coords={"level": np.arange(nz)},
     )
     dim_mapping = dict(
-        grid_index=["x", "y"],
+        grid_index=dict(
+            method="flatten",
+            dims=["x", "y"],
+        ),
         feature=dict(
-            dims=["level"], stack_variables_by_var_name=True, name="{level}_{var_name}"
+            method="stack_variables_by_var_name",
+            dims=["level"],
+            name_format="{level}_{var_name}",
         ),
     )
 

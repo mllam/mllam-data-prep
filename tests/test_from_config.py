@@ -5,7 +5,7 @@ import isodate
 import pytest
 import yaml
 
-import mllam_data_prep.main as mdp
+import mllam_data_prep.create_dataset as mdp
 import tests.data as testdata
 from mllam_data_prep.config import InvalidConfigException
 
@@ -42,10 +42,13 @@ def test_merging_static_and_surface_analysis():
                 variables=testdata.DEFAULT_SURFACE_ANALYSIS_VARS,
                 dim_mapping=dict(
                     time="analysis_time",
-                    grid_index=["x", "y"],
+                    grid_index=dict(
+                        method="flatten",
+                        dims=["x", "y"],
+                    ),
                     forcing_feature=dict(
-                        stack_variables_by_var_name=True,
-                        name="{var_name}",
+                        method="stack_variables_by_var_name",
+                        name_format="{var_name}",
                     ),
                 ),
                 target="forcing",
@@ -56,10 +59,13 @@ def test_merging_static_and_surface_analysis():
                 dims=["x", "y"],
                 variables=testdata.DEFAULT_STATIC_VARS,
                 dim_mapping=dict(
-                    grid_index=["x", "y"],
+                    grid_index=dict(
+                        method="flatten",
+                        dims=["x", "y"],
+                    ),
                     static_feature=dict(
-                        stack_variables_by_var_name=True,
-                        name="{var_name}",
+                        method="stack_variables_by_var_name",
+                        name_format="{var_name}",
                     ),
                 ),
                 target="static",
@@ -128,10 +134,13 @@ def test_time_selection(source_data_contains_time_range, time_stepsize):
                 variables=testdata.DEFAULT_SURFACE_ANALYSIS_VARS,
                 dim_mapping=dict(
                     time="analysis_time",
-                    grid_index=["x", "y"],
+                    grid_index=dict(
+                        method="flatten",
+                        dims=["x", "y"],
+                    ),
                     feature=dict(
-                        stack_variables_by_var_name=True,
-                        name="{var_name}",
+                        method="stack_variables_by_var_name",
+                        name_format="{var_name}",
                     ),
                 ),
                 target="forcing",
@@ -192,10 +201,13 @@ def test_feature_collision(use_common_feature_var_name):
                 variables=testdata.DEFAULT_SURFACE_ANALYSIS_VARS,
                 dim_mapping={
                     "time": "analysis_time",
-                    "grid_index": ["x", "y"],
+                    "grid_index": dict(
+                        method="flatten",
+                        dims=["x", "y"],
+                    ),
                     state_feature_var_name: dict(
-                        stack_variables_by_var_name=True,
-                        name="{var_name}",
+                        method="stack_variables_by_var_name",
+                        name_format="{var_name}",
                     ),
                 },
                 target="state",
@@ -206,10 +218,14 @@ def test_feature_collision(use_common_feature_var_name):
                 dims=["x", "y"],
                 variables=testdata.DEFAULT_STATIC_VARS,
                 dim_mapping={
-                    "grid_index": ["x", "y"],
+                    "grid_index": dict(
+                        dims=["x", "y"],
+                        method="flatten",
+                    ),
                     static_feature_var_name: dict(
+                        method="stack_variables_by_var_name",
                         stack_variables_by_var_name=True,
-                        name="{var_name}",
+                        name_format="{var_name}",
                     ),
                 },
                 target="static",

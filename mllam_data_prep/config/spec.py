@@ -46,9 +46,9 @@ FIELD_DESCRIPTIONS = dict(
                 _doc_="mapping of the dimensions in the dataset to the dimensions of the architecture's input variables",
                 _values_=dict(
                     _doc_="mapping of the dimensions in the input dataset to the architecture's input variables",
-                    stack_variables_by_var_name="stack variables by variable name",
+                    method="method by which mapping is done (e.g. 'flatten', 'stack_variables_by_var_name')",
                     dims="dimensions in the source dataset to map from",
-                    name="string-format for mapped variable (used when stacking variables to coordinate values)",
+                    name_format="string-format for mapped variable (used when stacking variables to coordinate values)",
                 ),
             ),
             target="name of variable in the output that the given input should stored in",

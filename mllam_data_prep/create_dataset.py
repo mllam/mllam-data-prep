@@ -1,6 +1,5 @@
 import shutil
 from collections import defaultdict
-from pathlib import Path
 
 import xarray as xr
 from loguru import logger
@@ -119,18 +118,25 @@ def main(fp_config):
             raise ValueError(
                 f"Missing dimension mapping for {missing_dims}"
                 f" for input dataset {dataset_name}, please provide"
-                " a mapping for all architecture dimensions in"
+                " a mapping for all architecture dimensions by"
                 " using the 'dim_mapping' key in the input dataset"
             )
 
         logger.info(
             f"Mapping dimensions and variables for dataset {dataset_name} to {target_arch_var}"
         )
-        da_target = map_dims_and_variables(
-            ds=ds,
-            dim_mapping=dim_mapping,
-            expected_input_var_dims=expected_input_var_dims,
-        )
+        try:
+            da_target = map_dims_and_variables(
+                ds=ds,
+                dim_mapping=dim_mapping,
+                expected_input_var_dims=expected_input_var_dims,
+            )
+        except Exception as ex:
+            raise Exception(
+                f"There was an issue stacking dimensions and variables to"
+                f" produce variable {target_arch_var} from dataset {dataset_name}"
+            ) from ex
+
         da_target.attrs["source_dataset"] = dataset_name
 
         if architecture_input_ranges is not None:
@@ -156,13 +162,3 @@ def main(fp_config):
         shutil.rmtree(fp_out)
     ds.to_zarr(fp_out)
     logger.info(f"Wrote training-ready dataset to {fp_out}")
-
-
-if __name__ == "__main__":
-    import argparse
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("config", help="Path to the config file", type=Path)
-    args = parser.parse_args()
-
-    main(fp_config=args.config)

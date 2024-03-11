@@ -31,10 +31,12 @@ inputs:
     dim_mapping:
       time: time
       state_feature:
-        stack_variables_by_var_name: True
+        method: stack_variables_by_var_name
         dims: [altitude]
-        name: f"{var_name}{altitude}m"
-      grid_index: [x, y]
+        name_format: f"{var_name}{altitude}m"
+      grid_index:
+        method: flatten
+        dims: [x, y]
     target: state
 
   danra_surface:
@@ -44,8 +46,10 @@ inputs:
       - pres_seasurface
     dim_mapping:
       time: time
-      grid_index: [x, y]
+      grid_index:
+        method: flatten
+        dims: [x, y]
       forcing_feature:
-        stack_variables_by_var_name: True
-        name: f"{var_name}"
+        method: stack_variables_by_var_name
+        name_format: f"{var_name}"
     target: forcing

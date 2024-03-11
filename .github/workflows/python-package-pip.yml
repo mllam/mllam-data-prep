@@ -1,0 +1,17 @@
+name: mllam-data-prep (pip install)
+on: [push, pull_request]
+
+jobs:
+  test:
+    name: Test pip install python ${{ matrix.python-version }} on ${{ matrix.os }}
+
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        python-version: [3.7]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install package with pip
+        run: |
+          pip install .

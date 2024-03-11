@@ -51,7 +51,7 @@ FIELD_DESCRIPTIONS = dict(
                     name_format="string-format for mapped variable (used when stacking variables to coordinate values)",
                 ),
             ),
-            target="name of variable in the output that the given input should stored in",
+            target_architecture_variable="name of variable in the output that the given input should stored in",
         ),
     ),
 )

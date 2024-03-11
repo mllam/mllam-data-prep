@@ -51,7 +51,7 @@ def test_merging_static_and_surface_analysis():
                         name_format="{var_name}",
                     ),
                 ),
-                target="forcing",
+                target_architecture_variable="forcing",
             ),
             danra_static=dict(
                 name="danra_static",
@@ -68,7 +68,7 @@ def test_merging_static_and_surface_analysis():
                         name_format="{var_name}",
                     ),
                 ),
-                target="static",
+                target_architecture_variable="static",
             ),
         ),
     )
@@ -143,7 +143,7 @@ def test_time_selection(source_data_contains_time_range, time_stepsize):
                         name_format="{var_name}",
                     ),
                 ),
-                target="forcing",
+                target_architecture_variable="forcing",
             ),
         ),
     )
@@ -168,8 +168,8 @@ def test_time_selection(source_data_contains_time_range, time_stepsize):
 @pytest.mark.parametrize("use_common_feature_var_name", [True, False])
 def test_feature_collision(use_common_feature_var_name):
     """
-    Use to arch target variables which have a different number of features and
-    therefore need a unique feature dimension for each target. This should raise
+    Use to arch target_architecture_variable variables which have a different number of features and
+    therefore need a unique feature dimension for each target_architecture_variable. This should raise
     a ValueError if the feature coordinates have the same name
     """
     tmpdir = tempfile.TemporaryDirectory()
@@ -210,7 +210,7 @@ def test_feature_collision(use_common_feature_var_name):
                         name_format="{var_name}",
                     ),
                 },
-                target="state",
+                target_architecture_variable="state",
             ),
             danra_static=dict(
                 name="danra_static",
@@ -228,7 +228,7 @@ def test_feature_collision(use_common_feature_var_name):
                         name_format="{var_name}",
                     ),
                 },
-                target="static",
+                target_architecture_variable="static",
             ),
         ),
     )

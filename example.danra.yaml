@@ -37,7 +37,7 @@ inputs:
       grid_index:
         method: flatten
         dims: [x, y]
-    target: state
+    target_architecture_variable: state
 
   danra_surface:
     path: ~/Desktop/mldev/single_levels.zarr
@@ -52,4 +52,4 @@ inputs:
       forcing_feature:
         method: stack_variables_by_var_name
         name_format: f"{var_name}"
-    target: forcing
+    target_architecture_variable: forcing

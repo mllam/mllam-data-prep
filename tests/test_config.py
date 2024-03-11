@@ -39,11 +39,13 @@ inputs:
     dim_mapping:
       time: time
       state_feature:
-        stack_variables_by_var_name: True
+        method: stack_variables_by_var_name
         dims: [altitude]
         name: f"{var_name}{altitude}m"
-      grid_index: [x, y]
-    target: state
+      grid_index:
+        method: flatten
+        dims: [x, y]
+    target_architecture_variable: state
 
   danra_surface:
     path: ~/Desktop/mldev/single_levels.zarr
@@ -52,11 +54,13 @@ inputs:
       - pres_seasurface
     dim_mapping:
       time: time
-      grid_index: [x, y]
+      grid_index:
+        method: flatten
+        dims: [x, y]
       forcing_feature:
-        stack_variables_by_var_name: True
+        method: stack_variables_by_var_name
         name: f"{var_name}"
-    target: forcing
+    target_architecture_variable: forcing
 """
 
 
@@ -79,7 +83,7 @@ def test_get_config_nested():
     for dataset_name, input_config in config["inputs"].items():
         assert input_config["path"] is not None
         assert input_config["variables"] is not None
-        assert input_config["target"] is not None
+        assert input_config["target_architecture_variable"] is not None
         with pytest.raises(KeyError):
             # `name` is given by the key, so isn't expected to be its own field
             input_config["name"]

@@ -91,7 +91,7 @@ def main(fp_config):
     for dataset_name, input_config in config["inputs"].items():
         path = input_config["path"]
         variables = input_config["variables"]
-        target_arch_var = input_config["target"]
+        target_arch_var = input_config["target_architecture_variable"]
         expected_input_attributes = input_config.get("attributes", {})
         expected_input_var_dims = input_config["dims"]
 

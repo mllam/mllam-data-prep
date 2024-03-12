@@ -24,10 +24,6 @@ inputs:
         altitude:
           sel: [100, ]
           units: m
-      v:
-        altitude:
-          sel: [100, ]
-          units: m
     dim_mapping:
       time: time
       state_feature:
@@ -37,13 +33,21 @@ inputs:
       grid_index:
         method: flatten
         dims: [x, y]
+    subsetting:
+      type: latlon-bbox
+      coordinates:
+        # give WESN bounding box around Denmark in degrees
+        wesn: [6, 18, 52, 60]
     target_architecture_variable: state
 
-  danra_surface:
-    path: ~/Desktop/mldev/single_levels.zarr
+  era_height_levels:
+    path: ~/Desktop/mldev/era5.zarr
     dims: [time, x, y]
     variables:
-      - pres_seasurface
+      u:
+        altitude:
+          sel: [100, ]
+          units: m
     dim_mapping:
       time: time
       grid_index:
@@ -52,4 +56,11 @@ inputs:
       forcing_feature:
         method: stack_variables_by_var_name
         name_format: f"{var_name}"
-    target_architecture_variable: forcing
+    subsetting:
+      method: latlon-bbox-frame
+      coordinates:
+        # give WESN bounding box around Denmark in degrees
+        wesn: [6, 18, 52, 60]
+        # width in degrees
+        latlonwidth: 1.0
+    target_architecture_variable: state

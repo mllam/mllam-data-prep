@@ -17,7 +17,7 @@ architecture:
 
 inputs:
   danra_height_levels:
-    path: ~/Desktop/mldev/height_levels.zarr
+    path: https://mllam-test-data.s3.eu-north-1.amazonaws.com/height_levels.zarr
     dims: [time, x, y, altitude]
     variables:
       u:
@@ -40,7 +40,7 @@ inputs:
     target_architecture_variable: state
 
   danra_surface:
-    path: ~/Desktop/mldev/single_levels.zarr
+    path: https://mllam-test-data.s3.eu-north-1.amazonaws.com/single_levels.zarr
     dims: [time, x, y]
     variables:
       - pres_seasurface

@@ -139,8 +139,13 @@ def main(fp_config):
 
         da_target.attrs["source_dataset"] = dataset_name
 
+        # only need to do selection for the coordinates that the input dataset actually has
         if architecture_input_ranges is not None:
-            da_target = select_by_kwargs(da_target, **architecture_input_ranges)
+            selection_kwargs = {}
+            for dim in arch_dims:
+                if dim in architecture_input_ranges:
+                    selection_kwargs[dim] = architecture_input_ranges[dim]
+            da_target = select_by_kwargs(da_target, **selection_kwargs)
 
         dataarrays_by_target[target_arch_var].append(da_target)
 

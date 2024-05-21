@@ -244,3 +244,8 @@ def test_feature_collision(use_common_feature_var_name):
             mdp.main(fp_config=fp_config)
     else:
         mdp.main(fp_config=fp_config)
+
+
+def test_danra_example():
+    fp_config = Path(__file__).parent.parent / "example.danra.yaml"
+    mdp.main(fp_config=fp_config)

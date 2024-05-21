@@ -1,4 +1,4 @@
-name: mllam-data-prep (pip install)
+name: pytest
 on: [push, pull_request]
 
 jobs:
@@ -15,3 +15,7 @@ jobs:
       - name: Install package with pip
         run: |
           pip install .
+
+      - name: Run tests
+        run: |
+          python -m pytest tests/

@@ -57,7 +57,7 @@ inputs:
     target_architecture_variable: forcing
 
   danra_lsm:
-    path: /dmidata/projects/cloudphysics/danra/data/lsm.zarr
+    path: https://mllam-test-data.s3.eu-north-1.amazonaws.com/lsm.zarr
     dims: [x, y]
     variables:
       - lsm

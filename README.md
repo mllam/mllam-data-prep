@@ -12,13 +12,37 @@ The full configuration file specification is given in [mllam_data_prep/config/sp
 
 ## Installation
 
-The easiest way to install the package is to clone the repository and install it using pip:
+To simply use `mllam-data-prep` you can install the most recent tagged version from pypi with pip:
 
 ```bash
-git clone https://github.com/mllam/mllam-data-prep
-cd mllam-data-prep
-pip install .
+python -m pip install mllam-data-prep
 ```
+
+## Developing `mllam-data-prep`
+
+To work on developing `mllam-data-prep` it easiest to install and manage the dependencies with [pdm](https://pdm.fming.dev/). To get started clone your fork of [the main repo](https://github.com/mllam/mllam-data-prep) locally:
+
+```bash
+git clone https://github.com/<your-github-username>/mllam-data-prep
+cd mllam-data-prep
+```
+
+Use pdm to create and use a virtualenv:
+
+```bash
+pdm venv create
+pdm use --venv in-project
+pdm install
+```
+
+All the linting is handelled by `pre-commit` which can be setup to automatically be run on each `git commit` by installing the git commit hook:
+
+```bash
+pdm run pre-commit install
+```
+
+The branch, commit, push and make a pull-request :)
+
 
 ## Usage
 

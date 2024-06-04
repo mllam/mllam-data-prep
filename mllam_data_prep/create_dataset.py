@@ -149,6 +149,8 @@ def create_dataset(config: ConfigDict):
 
     ds = _merge_dataarrays_by_target(dataarrays_by_target=dataarrays_by_target)
 
+    return ds
+
 
 def main(fp_config):
     config = ConfigDict.load(fp_config=fp_config)

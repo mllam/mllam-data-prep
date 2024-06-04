@@ -149,6 +149,9 @@ def create_dataset(config: ConfigDict):
 
     ds = _merge_dataarrays_by_target(dataarrays_by_target=dataarrays_by_target)
 
+    # need to drop the encoding so that we can write to zarr with new chunksizes
+    ds = ds.drop_encoding()
+
     return ds
 
 
@@ -160,9 +163,6 @@ def main(fp_config):
     chunking_config = config["architecture"].get("chunking", {})
 
     if chunking_config != {}:
-        # need to drop the encoding so that we can write to zarr with new chunksizes
-        ds = ds.drop_encoding()
-
         # default to making a single chunk for each dimension if chunksize is not specified
         # in the config
         chunks = {d: chunking_config.get(d, int(ds[d].count())) for d in ds.dims}

@@ -80,9 +80,7 @@ def _merge_dataarrays_by_target(dataarrays_by_target):
     return ds
 
 
-def main(fp_config):
-    config = ConfigDict.load(fp_config=fp_config)
-
+def create_dataset(config: ConfigDict):
     architecture_config = config["architecture"]
     architecture_input_ranges = architecture_config.get("input_range", {})
 
@@ -150,14 +148,23 @@ def main(fp_config):
         dataarrays_by_target[target_arch_var].append(da_target)
 
     ds = _merge_dataarrays_by_target(dataarrays_by_target=dataarrays_by_target)
-    # need to drop the encoding so that we can write to zarr with new chunksizes
-    ds = ds.drop_encoding()
 
-    # default to making a single chunk for each dimension if chunksize is not specified
-    # in the config
-    config_chunking = architecture_config.get("chunking", {})
-    chunks = {d: config_chunking.get(d, int(ds[d].count())) for d in ds.dims}
-    ds = ds.chunk(chunks)
+
+def main(fp_config):
+    config = ConfigDict.load(fp_config=fp_config)
+
+    ds = create_dataset(config=config)
+
+    chunking_config = config["architecture"].get("chunking", {})
+
+    if chunking_config != {}:
+        # need to drop the encoding so that we can write to zarr with new chunksizes
+        ds = ds.drop_encoding()
+
+        # default to making a single chunk for each dimension if chunksize is not specified
+        # in the config
+        chunks = {d: chunking_config.get(d, int(ds[d].count())) for d in ds.dims}
+        ds = ds.chunk(chunks)
 
     print(ds)
 

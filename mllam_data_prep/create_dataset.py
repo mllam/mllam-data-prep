@@ -152,6 +152,12 @@ def create_dataset(config: ConfigDict):
     # need to drop the encoding so that we can write to zarr with new chunksizes
     ds = ds.drop_encoding()
 
+    # default to making a single chunk for each dimension if chunksize is not specified
+    # in the config
+    chunking_config = config["architecture"].get("chunking", {})
+    chunks = {d: chunking_config.get(d, int(ds[d].count())) for d in ds.dims}
+    ds = ds.chunk(chunks)
+
     return ds
 
 
@@ -159,16 +165,6 @@ def main(fp_config):
     config = ConfigDict.load(fp_config=fp_config)
 
     ds = create_dataset(config=config)
-
-    chunking_config = config["architecture"].get("chunking", {})
-
-    if chunking_config != {}:
-        # default to making a single chunk for each dimension if chunksize is not specified
-        # in the config
-        chunks = {d: chunking_config.get(d, int(ds[d].count())) for d in ds.dims}
-        ds = ds.chunk(chunks)
-
-    print(ds)
 
     fp_out = fp_config.parent / fp_config.name.replace(".yaml", ".zarr")
     if fp_out.exists():

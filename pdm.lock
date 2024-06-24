@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["cross_platform"]
 lock_version = "4.4.1"
-content_hash = "sha256:6f1e3aac9edfa92b330cc0d3c226074fab5100b4443f1c6f243a8b162588138e"
+content_hash = "sha256:9e46b81bc7aa5819ddf2f92f969e98719f2185eb92382ff97ee0b666998a2691"
 
 [[package]]
 name = "aiohttp"
@@ -238,6 +238,15 @@ dependencies = [
 files = [
     {file = "dask-2024.2.1-py3-none-any.whl", hash = "sha256:a13fcdeead3bab3576495023f83097adcffe2f03c371c241b5a1f0b232b35b38"},
     {file = "dask-2024.2.1.tar.gz", hash = "sha256:9504a1e9f5d8e5403fae931f9f1660d41f510f48895ccefce856ec6a4c2198d8"},
+]
+
+[[package]]
+name = "dataclass-wizard"
+version = "0.22.3"
+summary = "Marshal dataclasses to/from JSON. Use field properties with initial values. Construct a dataclass schema with JSON input."
+files = [
+    {file = "dataclass-wizard-0.22.3.tar.gz", hash = "sha256:4c46591782265058f1148cfd1f54a3a91221e63986fdd04c9d59f4ced61f4424"},
+    {file = "dataclass_wizard-0.22.3-py2.py3-none-any.whl", hash = "sha256:63751203e54b9b9349212cc185331da73c1adc99c51312575eb73bb5c00c1962"},
 ]
 
 [[package]]

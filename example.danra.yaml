@@ -29,7 +29,9 @@ inputs:
           sel: [100, ]
           units: m
     dim_mapping:
-      time: time
+      time:
+        method: rename
+        dim: time
       state_feature:
         method: stack_variables_by_var_name
         dims: [altitude]
@@ -45,7 +47,6 @@ inputs:
     variables:
       - pres_seasurface
     dim_mapping:
-      time: time
       grid_index:
         method: flatten
         dims: [x, y]

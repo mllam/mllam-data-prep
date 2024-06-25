@@ -79,7 +79,7 @@ def test_merging_static_and_surface_analysis():
     with open(fp_config, "w") as f:
         yaml.dump(config, f)
 
-    mdp.main(fp_config=fp_config)
+    mdp.create_dataset_zarr(fp_config=fp_config)
 
 
 @pytest.mark.parametrize("source_data_contains_time_range", [True, False])
@@ -156,13 +156,13 @@ def test_time_selection(source_data_contains_time_range, time_stepsize):
 
     # run the main function
     if source_data_contains_time_range and time_stepsize == testdata.DT_ANALYSIS:
-        mdp.main(fp_config=fp_config)
+        mdp.create_dataset_zarr(fp_config=fp_config)
     else:
         print(
             f"Expecting ValueError for source_data_contains_time_range={source_data_contains_time_range} and time_stepsize={time_stepsize}"
         )
         with pytest.raises(ValueError):
-            mdp.main(fp_config=fp_config)
+            mdp.create_dataset_zarr(fp_config=fp_config)
 
 
 @pytest.mark.parametrize("use_common_feature_var_name", [True, False])
@@ -241,11 +241,11 @@ def test_feature_collision(use_common_feature_var_name):
 
     if use_common_feature_var_name:
         with pytest.raises(InvalidConfigException):
-            mdp.main(fp_config=fp_config)
+            mdp.create_dataset_zarr(fp_config=fp_config)
     else:
-        mdp.main(fp_config=fp_config)
+        mdp.create_dataset_zarr(fp_config=fp_config)
 
 
 def test_danra_example():
     fp_config = Path(__file__).parent.parent / "example.danra.yaml"
-    mdp.main(fp_config=fp_config)
+    mdp.create_dataset_zarr(fp_config=fp_config)

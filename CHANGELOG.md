@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [unreleased](https://github.com/mllam/mllam-data-prep/compare/v0.1.0...HEAD)
+
+- split dataset creation and storage to zarr into separate functions `mllam_data_prep.create_dataset(...)` and `mllam_data_prep.create_dataset_zarr(...)` respectively ![\#7](https://github.com/mllam/mllam-data-prep/pull/7)
+
 ## [v0.1.0](https://github.com/mllam/mllam-data-prep/releases/tag/v0.1.0)
 
 First tagged release of `mllam-data-prep` which includes functionality to

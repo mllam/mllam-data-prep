@@ -81,6 +81,19 @@ def _merge_dataarrays_by_target(dataarrays_by_target):
 
 
 def create_dataset(config: ConfigDict):
+    """
+    Create a dataset from the input datasets specified in the config file.
+
+    Parameters
+    ----------
+    config : ConfigDict
+        The configuration file.
+
+    Returns
+    -------
+    xr.Dataset
+        The dataset created from the input datasets with a variable for each target architecture variable.
+    """
     architecture_config = config["architecture"]
     architecture_input_ranges = architecture_config.get("input_range", {})
 
@@ -161,7 +174,16 @@ def create_dataset(config: ConfigDict):
     return ds
 
 
-def main(fp_config):
+def create_dataset_zarr(fp_config):
+    """
+    Create a dataset from the input datasets specified in the config file and write it to a zarr file.
+    The path to the zarr file is the same as the config file, but with the extension changed to '.zarr'.
+
+    Parameters
+    ----------
+    fp_config : Path
+        The path to the configuration file.
+    """
     config = ConfigDict.load(fp_config=fp_config)
 
     ds = create_dataset(config=config)

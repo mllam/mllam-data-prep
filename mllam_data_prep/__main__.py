@@ -2,7 +2,7 @@ from pathlib import Path
 
 from dask.diagnostics import ProgressBar
 
-from .create_dataset import main
+from .create_dataset import create_dataset_zarr
 
 if __name__ == "__main__":
     import argparse
@@ -17,4 +17,4 @@ if __name__ == "__main__":
     if args.show_progress:
         ProgressBar().register()
 
-    main(fp_config=args.config)
+    create_dataset_zarr(fp_config=args.config)

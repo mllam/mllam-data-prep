@@ -1,6 +1,7 @@
 import numpy as np
 import xarray as xr
 
+from mllam_data_prep.config import DimMapping
 from mllam_data_prep.ops import mapping as mdp_mapping
 from mllam_data_prep.ops import stacking as mdp_stacking
 
@@ -67,11 +68,11 @@ def test_stack_xy_coords():
         coords={"level": np.arange(nz)},
     )
     dim_mapping = dict(
-        grid_index=dict(
-            method="flatten",
+        grid_index=DimMapping(
+            method="stack",
             dims=["x", "y"],
         ),
-        feature=dict(
+        feature=DimMapping(
             method="stack_variables_by_var_name",
             dims=["level"],
             name_format="{level}_{var_name}",

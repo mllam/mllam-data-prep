@@ -7,7 +7,6 @@ import yaml
 
 import mllam_data_prep as mdp
 import tests.data as testdata
-from mllam_data_prep.config import InvalidConfigException
 
 
 def test_gen_data():
@@ -24,26 +23,34 @@ def test_merging_static_and_surface_analysis():
     )
 
     config = dict(
-        schema_version="v0.1.0",
+        schema_version="v0.2.0",
         dataset_version="v0.1.0",
         architecture=dict(
-            sampling_dim="time",
             input_variables=dict(
                 static=["grid_index", "static_feature"],
                 state=["time", "grid_index", "state_feature"],
                 forcing=["time", "grid_index", "forcing_feature"],
             ),
+            input_coord_ranges=dict(
+                time=dict(
+                    start=testdata.T_START.isoformat(),
+                    end=testdata.T_END_ANALYSIS.isoformat(),
+                    step=isodate.duration_isoformat(testdata.DT_ANALYSIS),
+                )
+            ),
         ),
         inputs=dict(
             danra_surface=dict(
-                name="danra_surface",
                 path=datasets["surface_analysis"],
                 dims=["analysis_time", "x", "y"],
                 variables=testdata.DEFAULT_SURFACE_ANALYSIS_VARS,
                 dim_mapping=dict(
-                    time="analysis_time",
+                    time=dict(
+                        method="rename",
+                        dim="analysis_time",
+                    ),
                     grid_index=dict(
-                        method="flatten",
+                        method="stack",
                         dims=["x", "y"],
                     ),
                     forcing_feature=dict(
@@ -54,13 +61,12 @@ def test_merging_static_and_surface_analysis():
                 target_architecture_variable="forcing",
             ),
             danra_static=dict(
-                name="danra_static",
                 path=datasets["static"],
                 dims=["x", "y"],
                 variables=testdata.DEFAULT_STATIC_VARS,
                 dim_mapping=dict(
                     grid_index=dict(
-                        method="flatten",
+                        method="stack",
                         dims=["x", "y"],
                     ),
                     static_feature=dict(
@@ -110,16 +116,15 @@ def test_time_selection(source_data_contains_time_range, time_stepsize):
         t_end_config = t_end_dataset + testdata.DT_ANALYSIS
 
     config = dict(
-        schema_version="v0.1.0",
+        schema_version="v0.2.0",
         dataset_version="v0.1.0",
         architecture=dict(
-            sampling_dim="time",
             input_variables=dict(
                 static=["grid_index", "feature"],
                 state=["time", "grid_index", "feature"],
                 forcing=["time", "grid_index", "feature"],
             ),
-            input_range=dict(
+            input_coord_ranges=dict(
                 time=dict(
                     start=t_start_config.isoformat(),
                     end=t_end_config.isoformat(),
@@ -133,9 +138,12 @@ def test_time_selection(source_data_contains_time_range, time_stepsize):
                 dims=["analysis_time", "x", "y"],
                 variables=testdata.DEFAULT_SURFACE_ANALYSIS_VARS,
                 dim_mapping=dict(
-                    time="analysis_time",
+                    time=dict(
+                        method="rename",
+                        dim="analysis_time",
+                    ),
                     grid_index=dict(
-                        method="flatten",
+                        method="stack",
                         dims=["x", "y"],
                     ),
                     feature=dict(
@@ -184,10 +192,9 @@ def test_feature_collision(use_common_feature_var_name):
         state_feature_var_name = "state_feature"
 
     config = dict(
-        schema_version="v0.1.0",
+        schema_version="v0.2.0",
         dataset_version="v0.1.0",
         architecture=dict(
-            sampling_dim="time",
             input_variables=dict(
                 static=["grid_index", static_feature_var_name],
                 state=["time", "grid_index", state_feature_var_name],
@@ -195,14 +202,16 @@ def test_feature_collision(use_common_feature_var_name):
         ),
         inputs=dict(
             danra_surface=dict(
-                name="danra_surface",
                 path=datasets["surface_analysis"],
                 dims=["analysis_time", "x", "y"],
                 variables=testdata.DEFAULT_SURFACE_ANALYSIS_VARS,
                 dim_mapping={
-                    "time": "analysis_time",
+                    "time": dict(
+                        method="rename",
+                        dim="analysis_time",
+                    ),
                     "grid_index": dict(
-                        method="flatten",
+                        method="stack",
                         dims=["x", "y"],
                     ),
                     state_feature_var_name: dict(
@@ -213,18 +222,16 @@ def test_feature_collision(use_common_feature_var_name):
                 target_architecture_variable="state",
             ),
             danra_static=dict(
-                name="danra_static",
                 path=datasets["static"],
                 dims=["x", "y"],
                 variables=testdata.DEFAULT_STATIC_VARS,
                 dim_mapping={
                     "grid_index": dict(
                         dims=["x", "y"],
-                        method="flatten",
+                        method="stack",
                     ),
                     static_feature_var_name: dict(
                         method="stack_variables_by_var_name",
-                        stack_variables_by_var_name=True,
                         name_format="{var_name}",
                     ),
                 },
@@ -240,7 +247,7 @@ def test_feature_collision(use_common_feature_var_name):
         yaml.dump(config, f)
 
     if use_common_feature_var_name:
-        with pytest.raises(InvalidConfigException):
+        with pytest.raises(mdp.InvalidConfigException):
             mdp.create_dataset_zarr(fp_config=fp_config)
     else:
         mdp.create_dataset_zarr(fp_config=fp_config)
@@ -248,4 +255,5 @@ def test_feature_collision(use_common_feature_var_name):
 
 def test_danra_example():
     fp_config = Path(__file__).parent.parent / "example.danra.yaml"
-    mdp.create_dataset_zarr(fp_config=fp_config)
+    with tempfile.TemporaryDirectory(suffix=".zarr") as tmpdir:
+        mdp.create_dataset_zarr(fp_config=fp_config, fp_zarr=tmpdir)

@@ -1,10 +1,11 @@
 import shutil
 from collections import defaultdict
+from pathlib import Path
 
 import xarray as xr
 from loguru import logger
 
-from .config import ConfigDict, InvalidConfigException
+from .config import Config, InvalidConfigException
 from .ops.loading import load_and_subset_dataset
 from .ops.mapping import map_dims_and_variables
 from .ops.selection import select_by_kwargs
@@ -35,6 +36,7 @@ def _merge_dataarrays_by_target(dataarrays_by_target):
     attrs_to_keep = ["source_dataset"]
     dataarrays = []
     for target, das in dataarrays_by_target.items():
+        logger.info(f"Merging dataarrays for target variable `{target}`")
         concat_dim = None
         for da in das:
             d = da.attrs.get("variables_mapping_dim", None)
@@ -80,7 +82,7 @@ def _merge_dataarrays_by_target(dataarrays_by_target):
     return ds
 
 
-def create_dataset(config: ConfigDict):
+def create_dataset(config: Config):
     """
     Create a dataset from the input datasets specified in the config file.
 
@@ -94,19 +96,19 @@ def create_dataset(config: ConfigDict):
     xr.Dataset
         The dataset created from the input datasets with a variable for each target architecture variable.
     """
-    architecture_config = config["architecture"]
-    architecture_input_ranges = architecture_config.get("input_range", {})
+    architecture_config = config.architecture
+    architecture_coord_ranges = architecture_config.input_coord_ranges
 
     dataarrays_by_target = defaultdict(list)
 
-    for dataset_name, input_config in config["inputs"].items():
-        path = input_config["path"]
-        variables = input_config["variables"]
-        target_arch_var = input_config["target_architecture_variable"]
-        expected_input_attributes = input_config.get("attributes", {})
-        expected_input_var_dims = input_config["dims"]
+    for dataset_name, input_config in config.inputs.items():
+        path = input_config.path
+        variables = input_config.variables
+        target_arch_var = input_config.target_architecture_variable
+        expected_input_attributes = input_config.attributes or {}
+        expected_input_var_dims = input_config.dims
 
-        arch_dims = architecture_config["input_variables"][target_arch_var]
+        arch_dims = architecture_config.input_variables[target_arch_var]
 
         logger.info(f"Loading dataset {dataset_name} from {path}")
         try:
@@ -119,7 +121,7 @@ def create_dataset(config: ConfigDict):
             dataset_name=dataset_name,
         )
 
-        dim_mapping = input_config["dim_mapping"]
+        dim_mapping = input_config.dim_mapping
 
         # check that there is an entry for each arch dimension
         # in the dim_mapping so that we know how to construct the
@@ -151,11 +153,11 @@ def create_dataset(config: ConfigDict):
         da_target.attrs["source_dataset"] = dataset_name
 
         # only need to do selection for the coordinates that the input dataset actually has
-        if architecture_input_ranges is not None:
+        if architecture_coord_ranges is not None:
             selection_kwargs = {}
             for dim in arch_dims:
-                if dim in architecture_input_ranges:
-                    selection_kwargs[dim] = architecture_input_ranges[dim]
+                if dim in architecture_coord_ranges:
+                    selection_kwargs[dim] = architecture_coord_ranges[dim]
             da_target = select_by_kwargs(da_target, **selection_kwargs)
 
         dataarrays_by_target[target_arch_var].append(da_target)
@@ -167,14 +169,15 @@ def create_dataset(config: ConfigDict):
 
     # default to making a single chunk for each dimension if chunksize is not specified
     # in the config
-    chunking_config = config["architecture"].get("chunking", {})
+    chunking_config = config.architecture.chunking or {}
+    logger.info(f"Chunking dataset with {chunking_config}")
     chunks = {d: chunking_config.get(d, int(ds[d].count())) for d in ds.dims}
     ds = ds.chunk(chunks)
 
     return ds
 
 
-def create_dataset_zarr(fp_config):
+def create_dataset_zarr(fp_config, fp_zarr: str = None):
     """
     Create a dataset from the input datasets specified in the config file and write it to a zarr file.
     The path to the zarr file is the same as the config file, but with the extension changed to '.zarr'.
@@ -183,14 +186,26 @@ def create_dataset_zarr(fp_config):
     ----------
     fp_config : Path
         The path to the configuration file.
+    fp_zarr : Path, optional
+        The path to the zarr file to write the dataset to. If not provided, the zarr file will be written
+        to the same directory as the config file with the extension changed to '.zarr'.
     """
-    config = ConfigDict.load(fp_config=fp_config)
+    config = Config.from_yaml_file(file=fp_config)
+
+    assert (
+        config.schema_version == "v0.2.0"
+    ), f"Expected schema version v0.2.0, got {config.schema_version}"
 
     ds = create_dataset(config=config)
 
-    fp_out = fp_config.parent / fp_config.name.replace(".yaml", ".zarr")
-    if fp_out.exists():
-        logger.info(f"Removing existing dataset at {fp_out}")
-        shutil.rmtree(fp_out)
-    ds.to_zarr(fp_out)
-    logger.info(f"Wrote training-ready dataset to {fp_out}")
+    logger.info("Writing dataset to zarr")
+    if fp_zarr is None:
+        fp_zarr = fp_config.parent / fp_config.name.replace(".yaml", ".zarr")
+    else:
+        fp_zarr = Path(fp_zarr)
+
+    if fp_zarr.exists():
+        logger.info(f"Removing existing dataset at {fp_zarr}")
+        shutil.rmtree(fp_zarr)
+    ds.to_zarr(fp_zarr)
+    logger.info(f"Wrote training-ready dataset to {fp_zarr}")

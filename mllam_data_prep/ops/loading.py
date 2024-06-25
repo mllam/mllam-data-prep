@@ -9,21 +9,26 @@ def load_and_subset_dataset(fp, variables):
     Parameters
     ----------
     fp : str
-        Filepath to the zarr dataset
+        Filepath to the source dataset, for example the path to a zarr dataset
+        or a netCDF file (anything that is supported by `xarray.open_dataset` will work)
     variables : dict
         Dictionary with the variables to subset
         with keys as the variable names and values with entries for each
         coordinate and coordinate values to extract
     """
 
-    ds = xr.open_zarr(fp)
+    try:
+        ds = xr.open_zarr(fp)
+    except ValueError:
+        ds = xr.open_dataset(fp)
+
     ds_subset = xr.Dataset()
     ds_subset.attrs.update(ds.attrs)
     if isinstance(variables, dict):
         for var, coords_to_sample in variables.items():
             da = ds[var]
             for coord, sampling in coords_to_sample.items():
-                coord_values = sampling["sel"]
+                coord_values = sampling.values
                 try:
                     da = da.sel(**{coord: coord_values})
                 except KeyError as ex:
@@ -31,7 +36,7 @@ def load_and_subset_dataset(fp, variables):
                         f"Could not find the all coordinate values `{coord_values}` in "
                         f"coordinate `{coord}` in the dataset"
                     ) from ex
-                expected_units = sampling.get("units", None)
+                expected_units = sampling.units
                 coord_units = da[coord].attrs.get("units", None)
                 if coord_units is not None and coord_units != expected_units:
                     raise ValueError(

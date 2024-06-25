@@ -5,7 +5,7 @@ import isodate
 import pytest
 import yaml
 
-import mllam_data_prep.create_dataset as mdp
+import mllam_data_prep as mdp
 import tests.data as testdata
 from mllam_data_prep.config import InvalidConfigException
 

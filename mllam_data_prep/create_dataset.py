@@ -80,9 +80,20 @@ def _merge_dataarrays_by_target(dataarrays_by_target):
     return ds
 
 
-def main(fp_config):
-    config = ConfigDict.load(fp_config=fp_config)
+def create_dataset(config: ConfigDict):
+    """
+    Create a dataset from the input datasets specified in the config file.
 
+    Parameters
+    ----------
+    config : ConfigDict
+        The configuration file.
+
+    Returns
+    -------
+    xr.Dataset
+        The dataset created from the input datasets with a variable for each target architecture variable.
+    """
     architecture_config = config["architecture"]
     architecture_input_ranges = architecture_config.get("input_range", {})
 
@@ -139,22 +150,43 @@ def main(fp_config):
 
         da_target.attrs["source_dataset"] = dataset_name
 
+        # only need to do selection for the coordinates that the input dataset actually has
         if architecture_input_ranges is not None:
-            da_target = select_by_kwargs(da_target, **architecture_input_ranges)
+            selection_kwargs = {}
+            for dim in arch_dims:
+                if dim in architecture_input_ranges:
+                    selection_kwargs[dim] = architecture_input_ranges[dim]
+            da_target = select_by_kwargs(da_target, **selection_kwargs)
 
         dataarrays_by_target[target_arch_var].append(da_target)
 
     ds = _merge_dataarrays_by_target(dataarrays_by_target=dataarrays_by_target)
+
     # need to drop the encoding so that we can write to zarr with new chunksizes
     ds = ds.drop_encoding()
 
     # default to making a single chunk for each dimension if chunksize is not specified
     # in the config
-    config_chunking = architecture_config.get("chunking", {})
-    chunks = {d: config_chunking.get(d, int(ds[d].count())) for d in ds.dims}
+    chunking_config = config["architecture"].get("chunking", {})
+    chunks = {d: chunking_config.get(d, int(ds[d].count())) for d in ds.dims}
     ds = ds.chunk(chunks)
 
-    print(ds)
+    return ds
+
+
+def create_dataset_zarr(fp_config):
+    """
+    Create a dataset from the input datasets specified in the config file and write it to a zarr file.
+    The path to the zarr file is the same as the config file, but with the extension changed to '.zarr'.
+
+    Parameters
+    ----------
+    fp_config : Path
+        The path to the configuration file.
+    """
+    config = ConfigDict.load(fp_config=fp_config)
+
+    ds = create_dataset(config=config)
 
     fp_out = fp_config.parent / fp_config.name.replace(".yaml", ".zarr")
     if fp_out.exists():

@@ -40,7 +40,13 @@ def load_and_subset_dataset(fp, variables):
                     )
             ds_subset[var] = da
     elif isinstance(variables, list):
-        ds_subset = ds[variables]
+        try:
+            ds_subset = ds[variables]
+        except KeyError as ex:
+            raise KeyError(
+                f"Could not find the all variables `{variables}` in the dataset. "
+                f"The available variables are {list(ds.data_vars)}"
+            ) from ex
     else:
         raise ValueError("The `variables` argument should be a list or a dictionary")
     return ds_subset

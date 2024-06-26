@@ -29,7 +29,7 @@ def map_dims_and_variables(ds, dim_mapping, expected_input_var_dims):
             the architecture dimension, the 'name' key should be the string
             format to construct the new coordinate values for the architecture
             dimension. Exactly one of this type of mapping should be used.
-        - 'flatten':
+        - 'stack':
             used to map variables to the architecture dimension by stacking
             the along the `dims` provided.
         - 'rename' (or if the input_dim_map is a string naming the dimension to rename):
@@ -63,16 +63,13 @@ def map_dims_and_variables(ds, dim_mapping, expected_input_var_dims):
     dim_mapping = dim_mapping.copy()
     variable_dim_mappings = {}
     for arch_dim in list(dim_mapping.keys()):
-        if (
-            isinstance(dim_mapping[arch_dim], dict)
-            and dim_mapping[arch_dim].get("method") == "stack_variables_by_var_name"
-        ):
+        if dim_mapping[arch_dim].method == "stack_variables_by_var_name":
             variable_dim_mappings[arch_dim] = dim_mapping.pop(arch_dim)
     if len(variable_dim_mappings) > 1:
         raise ValueError(
             "Only one mapping which requires stacking variables"
             " into a single dataarray is allowed, found ones targeting"
-            " the following arch dimensions: {list(variable_dim_mappings.keys())}"
+            f" the following arch dimensions: {list(variable_dim_mappings.keys())}"
         )
     elif len(variable_dim_mappings) == 0:
         raise Exception(
@@ -92,35 +89,20 @@ def map_dims_and_variables(ds, dim_mapping, expected_input_var_dims):
 
     # handle those mappings that involve just renaming or stacking dimensions
     for arch_dim, input_dim_map in dim_mapping.items():
-        if isinstance(input_dim_map, str):
-            method = "rename"
-        else:
-            method = input_dim_map.get("method")
+        method = input_dim_map.method
 
         if method == "rename":
-            if isinstance(input_dim_map, str):
-                source_dim = input_dim_map
-            else:
-                source_dims = input_dim_map["dims"]
-                if len(source_dims) != 1:
-                    raise ValueError(
-                        "Exactly one dimension must be given when mapping with the"
-                        f" `rename` method. Instead got: {source_dims}"
-                    )
-                source_dim = source_dims[0]
-            _check_for_malformed_list_arg(input_dim_map)
-            # if the input_dims is a string, we assume that it is the
-            # name of the dimension in the input dataset and we rename
-            # it to the architecture dimension
+            source_dim = input_dim_map.dim
             ds = ds.rename({source_dim: arch_dim})
-        elif method == "flatten":
-            source_dims = input_dim_map["dims"]
-            # if the input_dims is a list, we assume that it is a list of
-            # dimensions in the input dataset that we want to stack to create the
-            # architecture dimension, this is for example used for flatting the
-            # spatial dimensions into a single dimension representing the grid
-            # index
+        elif method == "stack":
+            source_dims = input_dim_map.dims
+            # when stacking we assume that the input_dims is a list of dimensions
+            # in the input dataset that we want to stack to create the architecture
+            # dimension, this is for example used for flatting the spatial dimensions
+            # into a single dimension representing the grid index
             ds = ds.stack({arch_dim: source_dims}).reset_index(arch_dim)
+        else:
+            raise NotImplementedError(method)
 
     # Finally, we handle the stacking of variables to coordinate values. We
     # might want to deal with variables that exist on multiple coordinate
@@ -129,9 +111,9 @@ def map_dims_and_variables(ds, dim_mapping, expected_input_var_dims):
     # format to construct the new coordinate values is given in the 'name' key.
     try:
         arch_dim, variable_dim_map = variable_dim_mappings.popitem()
-        dims = variable_dim_map.get("dims", [])
+        dims = variable_dim_map.dims or []
         _check_for_malformed_list_arg(dims)
-        name_format = variable_dim_map["name_format"]
+        name_format = variable_dim_map.name_format
         if len(dims) == 0:
             da = stack_variables_as_coord_values(
                 ds=ds, name_format=name_format, combined_dim_name=arch_dim

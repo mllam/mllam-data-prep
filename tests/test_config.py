@@ -1,18 +1,45 @@
 import pytest
-import yaml
+from dataclass_wizard.errors import MissingFields, UnknownJSONKey
 
-from mllam_data_prep.config import (
-    ConfigDict,
-    InvalidConfigVariableException,
-    MissingConfigVariableException,
-)
+import mllam_data_prep as mdp
 
-EXAMPLE_CONFIG_YAML = """
+INVALID_EXTRA_FIELDS_CONFIG_YAML = """
 schema_version: v0.1.0
 dataset_version: v0.1.0
 
 architecture:
-  sampling_dim: time
+  input_variables:
+    static: [grid_index, feature]
+  input_range:
+    time:
+      start: 1990-09-03T00:00
+      end: 1990-09-04T00:00
+      step: PT3H
+
+inputs: {}
+foobar: 42
+"""
+
+MISSING_FIELDS_CONFIG_YAML = """
+schema_version: v0.1.0
+dataset_version: v0.1.0
+"""
+
+
+def test_get_config_issues():
+    """Test that the Config class raises the correct exceptions when the YAML file is invalid."""
+    with pytest.raises(UnknownJSONKey):
+        mdp.Config.from_yaml(INVALID_EXTRA_FIELDS_CONFIG_YAML)
+
+    with pytest.raises(MissingFields):
+        mdp.Config.from_yaml(MISSING_FIELDS_CONFIG_YAML)
+
+
+VALID_EXAMPLE_CONFIG_YAML = """
+schema_version: v0.1.0
+dataset_version: v0.1.0
+
+architecture:
   input_variables:
     static: [grid_index, feature]
     state: [time, grid_index, state_feature]
@@ -30,18 +57,20 @@ inputs:
     variables:
       u:
         altitude:
-          sel: [100, ]
+          values: [100, ]
           units: m
       v:
         altitude:
-          sel: [100, ]
+          values: [100, ]
           units: m
     dim_mapping:
-      time: time
+      time:
+        method: rename
+        dim: time
       state_feature:
         method: stack_variables_by_var_name
         dims: [altitude]
-        name: f"{var_name}{altitude}m"
+        name_format: f"{var_name}{altitude}m"
       grid_index:
         method: flatten
         dims: [x, y]
@@ -53,37 +82,25 @@ inputs:
     variables:
       - pres_seasurface
     dim_mapping:
-      time: time
+      time:
+        method: rename
+        dim: time
       grid_index:
         method: flatten
         dims: [x, y]
       forcing_feature:
         method: stack_variables_by_var_name
-        name: f"{var_name}"
+        name_format: f"{var_name}"
     target_architecture_variable: forcing
 """
 
 
-def test_get_config():
-    config = ConfigDict(dict(schema_version="v0.1.0", foobar=42))
-
-    assert config["schema_version"] is not None
-    # raise `InvalidConfig` because `dataset_version` is in the spec, but isn't defined in the config
-    with pytest.raises(MissingConfigVariableException):
-        config["dataset_version"]
-
-    # raise `InvalidConfig` because although `foobar` is defined in the config, it shouldn't be as it isn't part of the spec
-    with pytest.raises(InvalidConfigVariableException):
-        config["foobar"]
-
-
 def test_get_config_nested():
-    config = ConfigDict(yaml.load(EXAMPLE_CONFIG_YAML, Loader=yaml.FullLoader))
+    config = mdp.Config.from_yaml(VALID_EXAMPLE_CONFIG_YAML)
 
-    for dataset_name, input_config in config["inputs"].items():
-        assert input_config["path"] is not None
-        assert input_config["variables"] is not None
-        assert input_config["target_architecture_variable"] is not None
-        with pytest.raises(KeyError):
-            # `name` is given by the key, so isn't expected to be its own field
-            input_config["name"]
+    for dataset_name, input_config in config.inputs.items():
+        assert input_config.path is not None
+        assert input_config.variables is not None
+        assert input_config.target_architecture_variable is not None
+        with pytest.raises(AttributeError):
+            input_config.foobarfield

@@ -2,6 +2,8 @@ import datetime
 
 import pandas as pd
 
+from ..config import Range
+
 
 def _normalize_slice_startstop(s):
     if isinstance(s, pd.Timestamp):
@@ -55,33 +57,35 @@ def select_by_kwargs(ds, **config_dict):
     for coord, selection in config_dict.items():
         if coord not in ds.coords:
             raise ValueError(f"Coordinate {coord} not found in dataset")
-        if isinstance(selection, dict):
-            if "start" not in selection and "end" not in selection:
+        if isinstance(selection, Range):
+            if selection.start is None and selection.end is None:
                 raise ValueError(
                     f"Selection for coordinate {coord} must have either 'start' and 'end' given"
                 )
-            start = _normalize_slice_startstop(selection.get("start"))
-            end = _normalize_slice_startstop(selection.get("end"))
-            step = _normalize_slice_step(selection.get("step"))
+            sel_start = _normalize_slice_startstop(selection.start)
+            sel_end = _normalize_slice_startstop(selection.end)
+            sel_step = _normalize_slice_step(selection.step)
 
-            ds_orig = ds
+            assert sel_start != sel_end, "Start and end cannot be the same"
 
-            ds = ds.sel({coord: slice(start, end)})
+            # we don't select with the step size for now, but simply check (below) that
+            # the step size in the data is the same as the requested step size
+            ds = ds.sel({coord: slice(sel_start, sel_end)})
 
             # check that the start and end are in the data
-            coord_minmax = ds_orig[coord].min().values, ds_orig[coord].max().values
-            if start is not None and start not in ds[coord].values:
+            coord_minmax = ds[coord].min().values, ds[coord].max().values
+            if sel_start is not None and sel_start not in ds[coord].values:
                 raise ValueError(
-                    f"Provided start value for coordinate {coord} ({start}) is not in the data."
+                    f"Provided start value for coordinate {coord} ({sel_start}) is not in the data."
                     f"Coord {coord} spans [{coord_minmax[0]}, {coord_minmax[1]}]"
                 )
-            if end is not None and end not in ds[coord].values:
+            if sel_end is not None and sel_end not in ds[coord].values:
                 raise ValueError(
-                    f"Provided end value for coordinate {coord} ({end}) is not in the data. "
+                    f"Provided end value for coordinate {coord} ({sel_end}) is not in the data. "
                     f"Coord {coord} spans [{coord_minmax[0]}, {coord_minmax[1]}]"
                 )
 
-            if step is not None:
+            if sel_step is not None:
                 # check that the step requested is exactly what the data has
                 all_steps = ds[coord].diff(dim=coord).values
                 first_step = (
@@ -92,9 +96,9 @@ def select_by_kwargs(ds, **config_dict):
                     raise ValueError(
                         f"Step size for coordinate {coord} is not constant: {all_steps}"
                     )
-                if step != first_step:
+                if sel_step != first_step:
                     raise ValueError(
-                        f"Step size for coordinate {coord} is not the same as requested: {first_step} != {step}"
+                        f"Step size for coordinate {coord} is not the same as requested: {first_step} != {sel_step}"
                     )
 
         elif isinstance(selection, list):

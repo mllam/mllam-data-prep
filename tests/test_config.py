@@ -49,6 +49,20 @@ output:
       start: 1990-09-03T00:00
       end: 1990-09-04T00:00
       step: PT3H
+  splitting_dim: time
+  splits:
+    train:
+      start: 1990-09-03T00:00
+      end: 1990-09-06T00:00
+      compute_statistics:
+        ops: [mean, std]
+        dims: [grid_index, time]
+    validation:
+      start: 1990-09-06T00:00
+      end: 1990-09-07T00:00
+    test:
+      start: 1990-09-07T00:00
+      end: 1990-09-09T00:00
 
 inputs:
   danra_height_levels:

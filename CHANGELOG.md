@@ -10,18 +10,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - split dataset creation and storage to zarr into separate functions `mllam_data_prep.create_dataset(...)` and `mllam_data_prep.create_dataset_zarr(...)` respectively ![\#7](https://github.com/mllam/mllam-data-prep/pull/7)
 
 - changes to spec from v0.1.0:
-    - `sampling_dim` removed from `architectures` section of spec, this is not needed to create the training data
-    - selection on variable coordinates values is now set with `inputs.{dataset_name}.variables.{variable_name}.values`
-      rather than `inputs.{dataset_name}.variables.{variable_name}.sel`
-    - when dimension-mapping method `stack_variables_by_var_name` is used the formatting string for the new variable
-      is now called `name_format` rather than `name`
-    - when dimension-mapping is done by simply renaming a dimension this configuration now needs to be set by providing
-      the named method (`rename`) explicitly through the `method` key, i.e. rather than `{to_dim}: {from_dim}` it is now
-      `{to_dim}: {method: rename, dim: {from_dim}}` to match the signature of the other dimension-mapping methods.
-    - coordinate value ranges for the dimensions that the architecture expects as input has been renamed from
-      `architecture.input_ranges` to `architecture.input_coord_ranges` to make the use more clear
-    - attribute `inputs.{dataset_name}.name` attribute has been removed, with the key `dataset_name` this is
-      superfluous
+  - the `architecture` section has been renamed `output` to make it clearer that this section defines the
+    properties of the output of `mllam-data-prep`
+  - `sampling_dim` removed from `output` (previously `architecture`) section of spec, this is not needed to create the training data
+  - the variables (and their dimensions) of the output definition has been renamed from `architecture.input_variables` to `output.variables`
+  - coordinate value ranges for the dimensions of the output (i.e. what that the architecture expects as input) has been renamed from
+    `architecture.input_ranges` to `output.coord_ranges` to make the use more clear
+  - selection on variable coordinates values is now set with `inputs.{dataset_name}.variables.{variable_name}.values`
+    rather than `inputs.{dataset_name}.variables.{variable_name}.sel`
+  - when dimension-mapping method `stack_variables_by_var_name` is used the formatting string for the new variable
+    is now called `name_format` rather than `name`
+  - when dimension-mapping is done by simply renaming a dimension this configuration now needs to be set by providing
+    the named method (`rename`) explicitly through the `method` key, i.e. rather than `{to_dim}: {from_dim}` it is now
+    `{to_dim}: {method: rename, dim: {from_dim}}` to match the signature of the other dimension-mapping methods.
+  - attribute `inputs.{dataset_name}.name` attribute has been removed, with the key `dataset_name` this is
+    superfluous
 
 ## [v0.1.0](https://github.com/mllam/mllam-data-prep/releases/tag/v0.1.0)
 

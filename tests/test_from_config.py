@@ -25,13 +25,13 @@ def test_merging_static_and_surface_analysis():
     config = dict(
         schema_version="v0.2.0",
         dataset_version="v0.1.0",
-        architecture=dict(
-            input_variables=dict(
+        output=dict(
+            variables=dict(
                 static=["grid_index", "static_feature"],
                 state=["time", "grid_index", "state_feature"],
                 forcing=["time", "grid_index", "forcing_feature"],
             ),
-            input_coord_ranges=dict(
+            coord_ranges=dict(
                 time=dict(
                     start=testdata.T_START.isoformat(),
                     end=testdata.T_END_ANALYSIS.isoformat(),
@@ -58,7 +58,7 @@ def test_merging_static_and_surface_analysis():
                         name_format="{var_name}",
                     ),
                 ),
-                target_architecture_variable="forcing",
+                target_output_variable="forcing",
             ),
             danra_static=dict(
                 path=datasets["static"],
@@ -74,7 +74,7 @@ def test_merging_static_and_surface_analysis():
                         name_format="{var_name}",
                     ),
                 ),
-                target_architecture_variable="static",
+                target_output_variable="static",
             ),
         ),
     )
@@ -118,13 +118,13 @@ def test_time_selection(source_data_contains_time_range, time_stepsize):
     config = dict(
         schema_version="v0.2.0",
         dataset_version="v0.1.0",
-        architecture=dict(
-            input_variables=dict(
+        output=dict(
+            variables=dict(
                 static=["grid_index", "feature"],
                 state=["time", "grid_index", "feature"],
                 forcing=["time", "grid_index", "feature"],
             ),
-            input_coord_ranges=dict(
+            coord_ranges=dict(
                 time=dict(
                     start=t_start_config.isoformat(),
                     end=t_end_config.isoformat(),
@@ -151,7 +151,7 @@ def test_time_selection(source_data_contains_time_range, time_stepsize):
                         name_format="{var_name}",
                     ),
                 ),
-                target_architecture_variable="forcing",
+                target_output_variable="forcing",
             ),
         ),
     )
@@ -176,8 +176,8 @@ def test_time_selection(source_data_contains_time_range, time_stepsize):
 @pytest.mark.parametrize("use_common_feature_var_name", [True, False])
 def test_feature_collision(use_common_feature_var_name):
     """
-    Use to arch target_architecture_variable variables which have a different number of features and
-    therefore need a unique feature dimension for each target_architecture_variable. This should raise
+    Use to arch target_output_variable variables which have a different number of features and
+    therefore need a unique feature dimension for each target_output_variable. This should raise
     a ValueError if the feature coordinates have the same name
     """
     tmpdir = tempfile.TemporaryDirectory()
@@ -194,8 +194,8 @@ def test_feature_collision(use_common_feature_var_name):
     config = dict(
         schema_version="v0.2.0",
         dataset_version="v0.1.0",
-        architecture=dict(
-            input_variables=dict(
+        output=dict(
+            variables=dict(
                 static=["grid_index", static_feature_var_name],
                 state=["time", "grid_index", state_feature_var_name],
             ),
@@ -219,7 +219,7 @@ def test_feature_collision(use_common_feature_var_name):
                         name_format="{var_name}",
                     ),
                 },
-                target_architecture_variable="state",
+                target_output_variable="state",
             ),
             danra_static=dict(
                 path=datasets["static"],
@@ -235,7 +235,7 @@ def test_feature_collision(use_common_feature_var_name):
                         name_format="{var_name}",
                     ),
                 },
-                target_architecture_variable="static",
+                target_output_variable="static",
             ),
         ),
     )

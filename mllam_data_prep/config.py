@@ -126,18 +126,17 @@ class DimMapping:
 class InputDataset:
     """
     Definition of a single input dataset which will be mapped to one the
-    variables that have been defined as input variables for model architecture
-    being targeted by the dataset.
+    variables that have been defined as output variables in the produced dataset
+    (i.e. the input variables for model architecture being targeted by the dataset).
     The definition for a input dataset includes setting
         1) the path to the dataset,
         2) the expected dimensions of the dataset,
         3) the variables to select from the dataset (and optionally subsection
            along the coordinates for each variable) and finally
         4) the method by which the dimensions and variables of the dataset are
-           mapped to the dimensions of the architecture's input variables (this
-           includes stacking of all the selected variables into a new single
-           variable along a new coordinate, and may include renaming and
-           stacking dimensions existing dimensions).
+           mapped to one of the output variables (this includes stacking of all
+           the selected variables into a new single variable along a new coordinate,
+           and may include renaming and stacking dimensions existing dimensions).
 
     Attributes
     ----------
@@ -154,14 +153,15 @@ class InputDataset:
         would select the "temperature" variable and only the levels 1000, 950, and 900.
     dim_mapping: Dict[str, DimMapping]
         Mapping of the variables and dimensions in the input dataset to the dimensions of the
-        architecture's input variables. The key is the name of the architecture dimension to map to
+        output variable (`target_output_variable`). The key is the name of the output dimension to map to
         and the ´DimMapping´ describes how to map the dimensions and variables of the input dataset
-        to this input dimension for the architecture.
-    target_architecture_variable: str
-        The name of the variable in the architecture that this dataset is intended to map to. If multiple
-        datasets map to the same variable, then the data from all datasets will be concatenated along the
-        dimension that isn't shared (e.g. two datasets that coincide in space and time will only differ
-        in the feature dimension, so the two will be combined by concatenating along the feature dimension).
+        to this input dimension for the output variable.
+    target_output_variable: str
+        The name of the output variable (i.e. the name of a variable that that is expected by
+        the architecture to exist in the training dataset). If multiple datasets map to the same variable,
+        then the data from all datasets will be concatenated along the dimension that isn't shared
+        (e.g. two datasets that coincide in space and time will only differ in the feature dimension,
+        so the two will be combined by concatenating along the feature dimension).
         If a single shared coordinate cannot be found then an exception will be raised.
     """
 
@@ -169,29 +169,29 @@ class InputDataset:
     dims: List[str]
     variables: Union[List[str], Dict[str, Dict[str, ValueSelection]]]
     dim_mapping: Dict[str, DimMapping]
-    target_architecture_variable: str
+    target_output_variable: str
     attributes: Dict[str, Any] = None
-    target_architecture_variable: str
 
 
 @dataclass
-class Architecture:
+class Output:
     """
-    Information about the model architecture this dataset is intended for. This
-    covers defining what input variables the architecture expects (and the dimensions of each),
+    Definition of the output dataset that will be created by the dataset generation, you should
+    adapt this to the architecture of the model that you are going to using the dataset with. This
+    includes defining what input variables the architecture expects (and the dimensions of each),
     the expected value range for each coordinate, and the chunking information for each dimension.
 
     Attributes
     ----------
-    input_variables: Dict[str, List[str]]
-        Defines the input variables for model architecture. The keys are the
-        variable names to create and the values are lists of the dimensions. E.g.
-        `{"static": ["grid_index", "feature"], "state": ["time", "grid_index", "state_feature"]}`.
-        would define that the architecture expects a variable named "static" with
-        dimensions "grid_index" and "feature" and a variable named "state" with
+    variables: Dict[str, List[str]]
+        Defines the variables of the produced output, i.e. the input variables for the model
+        architecture. The keys are the variable names to create and the values are lists of
+        the dimensions. E.g. `{"static": ["grid_index", "feature"], "state": ["time",
+        "grid_index", "state_feature"]}` would define that the architecture expects a variable
+        named "static" with dimensions "grid_index" and "feature" and a variable named "state" with
         dimensions "time", "grid_index", and "state_feature".
 
-    input_coord_ranges: Dict[str, Range]
+    coord_ranges: Dict[str, Range]
         Defines the expected value range for each coordinate. The keys are the
         name of the coordinate and the values are the range, e.g.
         `{"time": {"start": "1990-09-03T00:00", "end": "1990-09-04T00:00", "step": "PT3H"}}`
@@ -208,8 +208,8 @@ class Architecture:
         will be a single chunk.
     """
 
-    input_variables: Dict[str, List[str]]
-    input_coord_ranges: Dict[str, Range] = None
+    variables: Dict[str, List[str]]
+    coord_ranges: Dict[str, Range] = None
     chunking: Dict[str, int] = None
 
 
@@ -225,8 +225,9 @@ class Config(dataclass_wizard.YAMLWizard):
 
     Attributes
     ----------
-    architecture: Architecture
-        Information about the model architecture this dataset is intended for. This
+    output: Output
+        Information about the structure of the output from mllam-data-prep, you should set this
+        to matchthe model architecture this dataset is intended for. This
         covers defining what input variables the architecture expects (and the dimensions of each),
         the expected value range for each coordinate, and the chunking information for each dimension.
     inputs: Dict[str, InputDataset]
@@ -238,7 +239,7 @@ class Config(dataclass_wizard.YAMLWizard):
         Version string for the dataset itself.
     """
 
-    architecture: Architecture
+    output: Output
     inputs: Dict[str, InputDataset]
     schema_version: str
     dataset_version: str

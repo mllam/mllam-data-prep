@@ -88,27 +88,28 @@ def create_dataset(config: Config):
 
     Parameters
     ----------
-    config : ConfigDict
-        The configuration file.
+    config : Config
+        The configuration object defining the input datasets and how to map them to the output dataset.
 
     Returns
     -------
     xr.Dataset
-        The dataset created from the input datasets with a variable for each target architecture variable.
+        The dataset created from the input datasets with a variable for each output
+        as defined in the config file.
     """
-    architecture_config = config.architecture
-    architecture_coord_ranges = architecture_config.input_coord_ranges
+    output_config = config.output
+    output_coord_ranges = output_config.coord_ranges
 
     dataarrays_by_target = defaultdict(list)
 
     for dataset_name, input_config in config.inputs.items():
         path = input_config.path
         variables = input_config.variables
-        target_arch_var = input_config.target_architecture_variable
+        target_output_var = input_config.target_output_variable
         expected_input_attributes = input_config.attributes or {}
         expected_input_var_dims = input_config.dims
 
-        arch_dims = architecture_config.input_variables[target_arch_var]
+        output_dims = output_config.variables[target_output_var]
 
         logger.info(f"Loading dataset {dataset_name} from {path}")
         try:
@@ -126,17 +127,17 @@ def create_dataset(config: Config):
         # check that there is an entry for each arch dimension
         # in the dim_mapping so that we know how to construct the
         # final dataset
-        missing_dims = set(arch_dims) - set(dim_mapping.keys())
+        missing_dims = set(output_dims) - set(dim_mapping.keys())
         if missing_dims:
             raise ValueError(
                 f"Missing dimension mapping for {missing_dims}"
                 f" for input dataset {dataset_name}, please provide"
-                " a mapping for all architecture dimensions by"
+                " a mapping for all output dimensions by"
                 " using the 'dim_mapping' key in the input dataset"
             )
 
         logger.info(
-            f"Mapping dimensions and variables for dataset {dataset_name} to {target_arch_var}"
+            f"Mapping dimensions and variables for dataset {dataset_name} to {target_output_var}"
         )
         try:
             da_target = map_dims_and_variables(
@@ -147,20 +148,20 @@ def create_dataset(config: Config):
         except Exception as ex:
             raise Exception(
                 f"There was an issue stacking dimensions and variables to"
-                f" produce variable {target_arch_var} from dataset {dataset_name}"
+                f" produce variable {target_output_var} from dataset {dataset_name}"
             ) from ex
 
         da_target.attrs["source_dataset"] = dataset_name
 
         # only need to do selection for the coordinates that the input dataset actually has
-        if architecture_coord_ranges is not None:
+        if output_coord_ranges is not None:
             selection_kwargs = {}
-            for dim in arch_dims:
-                if dim in architecture_coord_ranges:
-                    selection_kwargs[dim] = architecture_coord_ranges[dim]
+            for dim in output_dims:
+                if dim in output_coord_ranges:
+                    selection_kwargs[dim] = output_coord_ranges[dim]
             da_target = select_by_kwargs(da_target, **selection_kwargs)
 
-        dataarrays_by_target[target_arch_var].append(da_target)
+        dataarrays_by_target[target_output_var].append(da_target)
 
     ds = _merge_dataarrays_by_target(dataarrays_by_target=dataarrays_by_target)
 
@@ -169,7 +170,7 @@ def create_dataset(config: Config):
 
     # default to making a single chunk for each dimension if chunksize is not specified
     # in the config
-    chunking_config = config.architecture.chunking or {}
+    chunking_config = config.output.chunking or {}
     logger.info(f"Chunking dataset with {chunking_config}")
     chunks = {d: chunking_config.get(d, int(ds[d].count())) for d in ds.dims}
     ds = ds.chunk(chunks)

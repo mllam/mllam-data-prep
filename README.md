@@ -64,12 +64,12 @@ A full example configuration file is given in [example.danra.yaml](example.danra
 schema_version: v0.2.0
 dataset_version: v0.1.0
 
-architecture:
-  input_variables:
+output:
+  variables:
     static: [grid_index, static_feature]
     state: [time, grid_index, state_feature]
     forcing: [time, grid_index, forcing_feature]
-  input_coord_ranges:
+  coord_ranges:
     time:
       start: 1990-09-03T00:00
       end: 1990-09-09T00:00
@@ -101,7 +101,7 @@ inputs:
       grid_index:
         method: stack
         dims: [x, y]
-    target_architecture_variable: state
+    target_output_variable: state
 
   danra_surface:
     path: https://mllam-test-data.s3.eu-north-1.amazonaws.com/single_levels.zarr
@@ -120,7 +120,7 @@ inputs:
       forcing_feature:
         method: stack_variables_by_var_name
         name_format: f"{var_name}"
-    target_architecture_variable: forcing
+    target_output_variable: forcing
 
   danra_lsm:
     path: https://mllam-test-data.s3.eu-north-1.amazonaws.com/lsm.zarr
@@ -134,23 +134,24 @@ inputs:
       static_feature:
         method: stack_variables_by_var_name
         name_format: f"{var_name}"
-    target_architecture_variable: static
+    target_output_variable: static
+
 ```
 
-Apart from identifies to keep track of the configuration file format version and the datasets version, the configuration file is divided into two main sections:
+Apart from identifiers to keep track of the configuration file format version and the datasets version, the configuration file is divided into two main sections:
 
-- `architecture`: defines the input variables and dimensions of the model architecture to be trained. These are the variables and dimensions that the inputs datasets will be mapped to.
+- `output`: defines the input variables and dimensions of the output dataset produced by `mllam-data-prep`. These are the variables and dimensions that the inputs datasets will be mapped to. These should match the variables and dimensions expected by the model architecture you are training.
 - `inputs`: a list of source datasets to extract data from. These are the datasets that will be mapped to the architecture defined in the `architecture` section.
 
-### The `architecture` section
+### The `output` section
 
 ```yaml
-architecture:
-  input_variables:
+output:
+  variables:
     static: [grid_index, static_feature]
     state: [time, grid_index, state_feature]
     forcing: [time, grid_index, forcing_feature]
-  input_coord_ranges:
+  coord_ranges:
     time:
       start: 1990-09-03T00:00
       end: 1990-09-09T00:00
@@ -159,10 +160,10 @@ architecture:
     time: 1
 ```
 
-The `architecture` section defines three things:
+The `output` section defines three things:
 
-1. `input_variables`: what input variables the model architecture you are targeting expects, and what the dimensions are for each of these variables.
-2. `input_coord_ranges`: the range of values for each of the dimensions that the model architecture expects as input. These are optional, but allows you to ensure that the training dataset is created with the correct range of values for each dimension.
+1. `variables`: what input variables the model architecture you are targeting expects, and what the dimensions are for each of these variables.
+2. `coord_ranges`: the range of values for each of the dimensions that the model architecture expects as input. These are optional, but allows you to ensure that the training dataset is created with the correct range of values for each dimension.
 3. `chunking`: the chunk sizes to use when writing the training dataset to zarr. This is optional, but can be used to optimise the performance of the zarr dataset. By default the chunk sizes are set to the size of the dimension, but this can be overridden by setting the chunk size in the configuration file. A common choice is to set the dimension along which you are batching to align with the of each training item (e.g. if you are training a model with time-step roll-out of 10 timesteps, you might choose a chunksize of 10 along the time dimension).
 
 ### The `inputs` section

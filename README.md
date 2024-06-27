@@ -152,6 +152,11 @@ inputs:
 
 ```
 
+The config above will result in the following output dataset:
+
+```bash
+
+
 Apart from identifiers to keep track of the configuration file format version and the datasets version, the configuration file is divided into two main sections:
 
 - `output`: defines the input variables and dimensions of the output dataset produced by `mllam-data-prep`. These are the variables and dimensions that the inputs datasets will be mapped to. These should match the variables and dimensions expected by the model architecture you are training.

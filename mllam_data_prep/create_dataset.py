@@ -8,10 +8,10 @@ import xarray as xr
 from loguru import logger
 
 from .config import Config, InvalidConfigException
-from .ops.calc_stats import calc_stats
 from .ops.loading import load_and_subset_dataset
 from .ops.mapping import map_dims_and_variables
 from .ops.selection import select_by_kwargs
+from .ops.statistics import calc_stats
 
 
 def _check_dataset_attributes(ds, expected_attributes, dataset_name):

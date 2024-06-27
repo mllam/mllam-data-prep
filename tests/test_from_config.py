@@ -22,6 +22,12 @@ def test_merging_static_and_surface_analysis():
         data_kinds=["surface_analysis", "static"], fp_root=tmpdir.name
     )
 
+    # use 80% for training and 20% for testing
+    t_train_start = testdata.T_START
+    t_train_end = testdata.T_START + 0.8 * (testdata.T_END_ANALYSIS - testdata.T_START)
+    t_test_start = t_train_end + testdata.DT_ANALYSIS
+    t_test_end = testdata.T_END_ANALYSIS
+
     config = dict(
         schema_version="v0.2.0",
         dataset_version="v0.1.0",
@@ -37,6 +43,21 @@ def test_merging_static_and_surface_analysis():
                     end=testdata.T_END_ANALYSIS.isoformat(),
                     step=isodate.duration_isoformat(testdata.DT_ANALYSIS),
                 )
+            ),
+            splitting_dim="time",
+            splits=dict(
+                train=dict(
+                    start=t_train_start.isoformat(),
+                    end=t_train_end.isoformat(),
+                    compute_statistics=dict(
+                        ops=["mean", "std"],
+                        dims=["time", "grid_index"],
+                    ),
+                ),
+                test=dict(
+                    start=t_test_start.isoformat(),
+                    end=t_test_end.isoformat(),
+                ),
             ),
         ),
         inputs=dict(

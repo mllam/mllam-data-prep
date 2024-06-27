@@ -1,11 +1,14 @@
+import datetime
 import shutil
 from collections import defaultdict
 from pathlib import Path
 
+import numpy as np
 import xarray as xr
 from loguru import logger
 
 from .config import Config, InvalidConfigException
+from .ops.calc_stats import calc_stats
 from .ops.loading import load_and_subset_dataset
 from .ops.mapping import map_dims_and_variables
 from .ops.selection import select_by_kwargs
@@ -174,6 +177,47 @@ def create_dataset(config: Config):
     logger.info(f"Chunking dataset with {chunking_config}")
     chunks = {d: chunking_config.get(d, int(ds[d].count())) for d in ds.dims}
     ds = ds.chunk(chunks)
+
+    splits = config.output.splits
+    splitting_dim = config.output.splitting_dim
+    if (splits is None) != (splitting_dim is None):
+        raise ValueError(
+            "Both splits and splitting_dim must be either None or not None"
+        )
+
+    if splits is not None:
+        logger.info(
+            f"Setting splitting information to define `{list(splits.keys())}` splits "
+            f"along dimension `{splitting_dim}`"
+        )
+
+        for split_name, split_config in splits.items():
+            if split_config.compute_statistics is not None:
+                ds_split = ds.sel(
+                    {splitting_dim: slice(split_config.start, split_config.end)}
+                )
+                logger.info(f"Computing statistics for split {split_name}")
+                split_stats = calc_stats(
+                    ds=ds_split, statistics_config=split_config.compute_statistics
+                )
+                for op, op_dataarrays in split_stats.items():
+                    for var_name, da in op_dataarrays.items():
+                        ds[f"{var_name}__{split_name}__{op}"] = da
+
+        # add a new variable which contains the start, stop for each split, the coords would then be the split names
+        # and the data would be the start, stop values
+        split_vals = np.array([[split.start, split.end] for split in splits.values()])
+        da_splits = xr.DataArray(
+            split_vals,
+            dims=["split_name", "split_part"],
+            coords={"split_name": list(splits.keys()), "split_part": ["start", "end"]},
+        )
+        ds["splits"] = da_splits
+
+    ds.attrs = {}
+    ds.attrs["schema_version"] = config.schema_version
+    ds.attrs["dataset_version"] = config.dataset_version
+    ds.attrs["created_on"] = datetime.datetime.now().replace(microsecond=0).isoformat()
 
     return ds
 

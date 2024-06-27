@@ -174,6 +174,46 @@ class InputDataset:
 
 
 @dataclass
+class Statistics:
+    """
+    Define the statistics to compute for the output dataset, this includes defining
+    the the statistics to compute and the dimensions to compute the statistics over.
+    The statistics will be computed for each variable in the output dataset seperately.
+
+    Attributes
+    ----------
+    ops: List[str]
+        The statistics to compute, e.g. ["mean", "std", "min", "max"].
+    dims: List[str]
+        The dimensions to compute the statistics over, e.g. ["time", "grid_index"].
+    """
+
+    ops: List[str]
+    dims: List[str]
+
+
+@dataclass
+class Split:
+    """
+    Define the `start` and `end` coordinate value (e.g. time) for a split of the dataset and optionally
+    the statistics to compute for the split.
+
+    Attributes
+    ----------
+    start: str
+        The start of the split, e.g. "1990-09-03T00:00".
+    end: str
+        The end of the split, e.g. "1990-09-04T00:00".
+    compute_statistics: StatisticsInput
+        The statistics to compute for the split.
+    """
+
+    start: str
+    end: str
+    compute_statistics: Statistics = None
+
+
+@dataclass
 class Output:
     """
     Definition of the output dataset that will be created by the dataset generation, you should
@@ -206,9 +246,19 @@ class Output:
         names of the dimensions and the values are the chunk size for that dimension.
         If chunking is not specified for a dimension, then the entire dimension
         will be a single chunk.
+
+    splits: Dict[str, Split]
+        Defines the splits of the dataset, the keys are the names of the splits and the values
+        are the `Split` objects defining the start and end of the split. Optionally, the
+        `compute_statistics` attribute can be used to define the statistics to compute for the split.
+
+    splitting_dim: str
+        The dimension to split the dataset along, e.g. "time", this must be provided if splits are defined.
     """
 
     variables: Dict[str, List[str]]
+    splits: Dict[str, Split] = None
+    splitting_dim: str = None
     coord_ranges: Dict[str, Range] = None
     chunking: Dict[str, int] = None
 
@@ -246,7 +296,15 @@ class Config(dataclass_wizard.YAMLWizard):
 
 
 if __name__ == "__main__":
-    config = Config.from_yaml_file("example.danra.yaml")
+    import argparse
+
+    argparser = argparse.ArgumentParser()
+    argparser.add_argument(
+        "-f", help="Path to the yaml file to load.", default="example.danra.yaml"
+    )
+    args = argparser.parse_args()
+
+    config = Config.from_yaml_file(args.f)
     import rich
 
     rich.print(config)

@@ -6,6 +6,24 @@ def stack_variables_as_coord_values(ds, name_format, combined_dim_name):
     combine all variables in an xr.Dataset into a single xr.DataArray
     by stacking the variables along a new coordinate with the name given
     by `name_format` (which should include the variable name, `var_name`)
+
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+        source dataset with variables to stack
+    name_format : str
+        format string to construct the new coordinate values for the
+        stacked variables, e.g. "{var_name}_level"
+    combined_dim_name : str
+        name of the new dimension to create for the stacked variables, for
+        example "forcing_feature"
+
+    Returns
+    -------
+    da_combined : xr.DataArray
+        The combined dataset with all variables stacked along the new
+        coordinate
     """
     if "{var_name}" not in name_format:
         raise ValueError(
@@ -14,10 +32,21 @@ def stack_variables_as_coord_values(ds, name_format, combined_dim_name):
         )
     dataarrays = []
     for var_name in list(ds.data_vars):
-        da = ds[var_name]
-        da.coords[combined_dim_name] = name_format.format(var_name=var_name)
+        da = ds[var_name].expand_dims(combined_dim_name)
+        da.coords[combined_dim_name] = [name_format.format(var_name=var_name)]
+
+        # add extra coordinates (spanning along `combined_dim_name`) for
+        # keeping track of `units` and `long_name` attributes
+        for attr in ["units", "long_name"]:
+            da_attr = xr.DataArray(
+                [ds[var_name].attrs.get(attr, "")],
+                dims=[combined_dim_name],
+                coords={combined_dim_name: da.coords[combined_dim_name]},
+            )
+            da.coords[f"{combined_dim_name}_{attr}"] = da_attr
         dataarrays.append(da)
     da_combined = xr.concat(dataarrays, dim=combined_dim_name)
+
     return da_combined
 
 

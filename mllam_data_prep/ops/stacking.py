@@ -40,6 +40,11 @@ def stack_variables_by_coord_values(ds, coord, name_format, combined_dim_name):
     3. stack all the variables along the `combined_dim_name` dimension to
        produce a single xr.DataArray
 
+    In addition to the stacked variables, we also add extra coordinates for
+    keeping track of `units` and `long_name` attributes for each variable in
+    `{combined_dim_name}_units` and `{combined_dim_name}_long_name`
+    respectively.
+
     Parameters
     ----------
     ds : xr.Dataset
@@ -73,15 +78,24 @@ def stack_variables_by_coord_values(ds, coord, name_format, combined_dim_name):
         )
 
     datasets = []
-    for var in list(ds.data_vars):
-        da = ds[var]
+    for var_name in list(ds.data_vars):
+        da = ds[var_name]
         coord_values = da.coords[coord].values
         new_coord_values = [
-            name_format.format(var_name=var, **{coord: val}) for val in coord_values
+            name_format.format(var_name=var_name, **{coord: val})
+            for val in coord_values
         ]
         da = da.assign_coords({coord: new_coord_values}).rename(
             {coord: combined_dim_name}
         )
+
+        # add extra coordinates for keeping track of `units` and `long_name` attributes
+        for attr in ["units", "long_name"]:
+            da_attr = xr.DataArray(
+                [ds[var_name].attrs.get(attr, "")],
+                dims=[combined_dim_name],
+            )
+            da.coords[f"{combined_dim_name}_{attr}"] = da_attr
         datasets.append(da)
 
     da_combined = xr.concat(datasets, dim=combined_dim_name)

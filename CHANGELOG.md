@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased](https://github.com/mllam/mllam-data-prep/compare/v0.1.0...HEAD)
 
+### Added
+
+- add support for creating dataset splits (e.g. train, validation, test)
+  through `output.splitting` section in the config file, and support for
+  optionally compute statistics for a given split (with
+  `output.splitting.splits.{split_name}.compute_statistics`).
+  ![\#28](https://github.com/mllam/mllam-data-prep/pull/10)
+
+### Changed
+
 - split dataset creation and storage to zarr into separate functions `mllam_data_prep.create_dataset(...)` and `mllam_data_prep.create_dataset_zarr(...)` respectively ![\#7](https://github.com/mllam/mllam-data-prep/pull/7)
 
 - changes to spec from v0.1.0:

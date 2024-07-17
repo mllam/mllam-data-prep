@@ -76,20 +76,21 @@ output:
       step: PT3H
   chunking:
     time: 1
-  splitting_dim: time
-  splits:
-    train:
-      start: 1990-09-03T00:00
-      end: 1990-09-06T00:00
-      compute_statistics:
-        ops: [mean, std]
-        dims: [grid_index, time]
-    validation:
-      start: 1990-09-06T00:00
-      end: 1990-09-07T00:00
-    test:
-      start: 1990-09-07T00:00
-      end: 1990-09-09T00:00
+  splitting:
+    dim: time
+    splits:
+      train:
+        start: 1990-09-03T00:00
+        end: 1990-09-06T00:00
+        compute_statistics:
+          ops: [mean, std, diff_mean, diff_std]
+          dims: [grid_index, time]
+      validation:
+        start: 1990-09-06T00:00
+        end: 1990-09-07T00:00
+      test:
+        start: 1990-09-07T00:00
+        end: 1990-09-09T00:00
 
 inputs:
   danra_height_levels:
@@ -177,20 +178,21 @@ output:
       step: PT3H
   chunking:
     time: 1
-  splitting_dim: time
-  splits:
-    train:
-      start: 1990-09-03T00:00
-      end: 1990-09-06T00:00
-      compute_statistics:
-        ops: [mean, std]
-        dims: [grid_index, time]
-    validation:
-      start: 1990-09-06T00:00
-      end: 1990-09-07T00:00
-    test:
-      start: 1990-09-07T00:00
-      end: 1990-09-09T00:00
+  splitting:
+    dim: time
+    splits:
+      train:
+        start: 1990-09-03T00:00
+        end: 1990-09-06T00:00
+        compute_statistics:
+          ops: [mean, std, diff_mean, diff_std]
+          dims: [grid_index, time]
+      validation:
+        start: 1990-09-06T00:00
+        end: 1990-09-07T00:00
+      test:
+        start: 1990-09-07T00:00
+        end: 1990-09-09T00:00
 ```
 
 The `output` section defines three things:
@@ -198,7 +200,7 @@ The `output` section defines three things:
 1. `variables`: what input variables the model architecture you are targeting expects, and what the dimensions are for each of these variables.
 2. `coord_ranges`: the range of values for each of the dimensions that the model architecture expects as input. These are optional, but allows you to ensure that the training dataset is created with the correct range of values for each dimension.
 3. `chunking`: the chunk sizes to use when writing the training dataset to zarr. This is optional, but can be used to optimise the performance of the zarr dataset. By default the chunk sizes are set to the size of the dimension, but this can be overridden by setting the chunk size in the configuration file. A common choice is to set the dimension along which you are batching to align with the of each training item (e.g. if you are training a model with time-step roll-out of 10 timesteps, you might choose a chunksize of 10 along the time dimension).
-4. Splitting and calculation of statistics of the output variables, using the `splitting_dim` and `splits` attributes. The `splits` attribute defines the individual splits to create (for example `train`, `val` and `test`) and `splitting_dim` defines the dimension to split along. The `compute_statistics` attribute is optional, and if set calculate the statistical properties requested (for example `mean`, `std`) any method available on `xarray.Dataset.{op}` can be used. The `dims` attribute defines the dimensions to calculate the statistics over (for example `grid_index` and `time`).
+4. Splitting and calculation of statistics of the output variables, using the `splitting` section. The `output.splitting.splits` attribute defines the individual splits to create (for example `train`, `val` and `test`) and `output.splitting.dim` defines the dimension to split along. The `compute_statistics` can be optionally set for a given split to calculate the statistical properties requested (for example `mean`, `std`) any method available on `xarray.Dataset.{op}` can be used. In addition methods prefixed by `diff_` (so the operational would be listed as `diff_{op}`) to compute a statistic based on difference of consecutive time-steps, e.g. `diff_mean` to compute the `mean` of the difference between consecutive timesteps (these are used for normalisating increments)). The `dims` attribute defines the dimensions to calculate the statistics over (for example `grid_index` and `time`).
 
 ### The `inputs` section
 

@@ -13,7 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   through `output.splitting` section in the config file, and support for
   optionally compute statistics for a given split (with
   `output.splitting.splits.{split_name}.compute_statistics`).
-  ![\#28](https://github.com/mllam/mllam-data-prep/pull/10)
+  ![\#28](https://github.com/mllam/mllam-data-prep/pull/10).
+
+- include `units` and `long_name` attributes for all stacked variables as
+  `{output_variable}_units` and `{output_variable}_long_name`
+  ![\#11](https://github.com/mllam/mllam-data-prep/pull/11).
 
 ### Changed
 

@@ -76,6 +76,21 @@ output:
       step: PT3H
   chunking:
     time: 1
+  splitting:
+    dim: time
+    splits:
+      train:
+        start: 1990-09-03T00:00
+        end: 1990-09-06T00:00
+        compute_statistics:
+          ops: [mean, std, diff_mean, diff_std]
+          dims: [grid_index, time]
+      validation:
+        start: 1990-09-06T00:00
+        end: 1990-09-07T00:00
+      test:
+        start: 1990-09-07T00:00
+        end: 1990-09-09T00:00
 
 inputs:
   danra_height_levels:
@@ -138,9 +153,9 @@ inputs:
 
 ```
 
-Apart from identifiers to keep track of the configuration file format version and the datasets version, the configuration file is divided into two main sections:
+Apart from identifiers to keep track of the configuration file format version and the dataset version (for you to keep track of changes that you make to the dataset), the configuration file is divided into two main sections:
 
-- `output`: defines the input variables and dimensions of the output dataset produced by `mllam-data-prep`. These are the variables and dimensions that the inputs datasets will be mapped to. These should match the variables and dimensions expected by the model architecture you are training.
+- `output`: defines the variables and dimensions of the output dataset produced by `mllam-data-prep`. These are the variables and dimensions that the input datasets will be mapped to. These output variables and dimensions should match the input variables and dimensions expected by the model architecture you are training.
 - `inputs`: a list of source datasets to extract data from. These are the datasets that will be mapped to the architecture defined in the `architecture` section.
 
 ### The `output` section
@@ -158,6 +173,21 @@ output:
       step: PT3H
   chunking:
     time: 1
+  splitting:
+    dim: time
+    splits:
+      train:
+        start: 1990-09-03T00:00
+        end: 1990-09-06T00:00
+        compute_statistics:
+          ops: [mean, std, diff_mean, diff_std]
+          dims: [grid_index, time]
+      validation:
+        start: 1990-09-06T00:00
+        end: 1990-09-07T00:00
+      test:
+        start: 1990-09-07T00:00
+        end: 1990-09-09T00:00
 ```
 
 The `output` section defines three things:
@@ -165,6 +195,7 @@ The `output` section defines three things:
 1. `variables`: what input variables the model architecture you are targeting expects, and what the dimensions are for each of these variables.
 2. `coord_ranges`: the range of values for each of the dimensions that the model architecture expects as input. These are optional, but allows you to ensure that the training dataset is created with the correct range of values for each dimension.
 3. `chunking`: the chunk sizes to use when writing the training dataset to zarr. This is optional, but can be used to optimise the performance of the zarr dataset. By default the chunk sizes are set to the size of the dimension, but this can be overridden by setting the chunk size in the configuration file. A common choice is to set the dimension along which you are batching to align with the of each training item (e.g. if you are training a model with time-step roll-out of 10 timesteps, you might choose a chunksize of 10 along the time dimension).
+4. Splitting and calculation of statistics of the output variables, using the `splitting` section. The `output.splitting.splits` attribute defines the individual splits to create (for example `train`, `val` and `test`) and `output.splitting.dim` defines the dimension to split along. The `compute_statistics` can be optionally set for a given split to calculate the statistical properties requested (for example `mean`, `std`) any method available on `xarray.Dataset.{op}` can be used. In addition methods prefixed by `diff_` (so the operational would be listed as `diff_{op}`) to compute a statistic based on difference of consecutive time-steps, e.g. `diff_mean` to compute the `mean` of the difference between consecutive timesteps (these are used for normalisating increments). The `dims` attribute defines the dimensions to calculate the statistics over (for example `grid_index` and `time`).
 
 ### The `inputs` section
 
@@ -217,7 +248,7 @@ inputs:
   ...
 ```
 
-The `inputs` section defines the source datasets to extract data from. Each source dataset is defined by a key (e.g. `danra_height_levels`) which names the source, and the attributes of the source dataset:
+The `inputs` section defines the source datasets to extract data from. Each source dataset is defined by a key (e.g. `danra_height_levels`) which names the source dataset, and the attributes of the source dataset:
 
 - `path`: the path to the source dataset. This can be a local path or a URL to e.g. a zarr dataset or netCDF file, anything that can be read by `xarray.open_dataset(...)`.
 - `dims`: the dimensions that the source dataset is expected to have. This is used to check that the source dataset has the expected dimensions and also makes it clearer in the config file what the dimensions of the source dataset are.

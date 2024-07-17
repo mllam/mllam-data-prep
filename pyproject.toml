@@ -16,6 +16,7 @@ dependencies = [
     "aiohttp>=3.9.3",
     "dataclass-wizard>=0.22.3",
     "semver>=3.0.2",
+    "rich>=13.7.1",
 ]
 requires-python = ">=3.10"
 readme = "README.md"
@@ -35,6 +36,5 @@ distribution = true
 dev = [
     "pytest>=8.0.2",
     "ipdb>=0.13.13",
-    "rich>=13.7.1",
     "pre-commit>=3.7.1",
 ]

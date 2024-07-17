@@ -43,6 +43,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - attribute `inputs.{dataset_name}.name` attribute has been removed, with the key `dataset_name` this is
     superfluous
 
+- relax minimuim python version requirement to `>3.8` to simplify downstream
+  usage ![\#13](https://github.com/mllam/mllam-data-prep/pull/13)
+
 ## [v0.1.0](https://github.com/mllam/mllam-data-prep/releases/tag/v0.1.0)
 
 First tagged release of `mllam-data-prep` which includes functionality to

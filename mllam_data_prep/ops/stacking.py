@@ -92,7 +92,7 @@ def stack_variables_by_coord_values(ds, coord, name_format, combined_dim_name):
         # add extra coordinates for keeping track of `units` and `long_name` attributes
         for attr in ["units", "long_name"]:
             da_attr = xr.DataArray(
-                [ds[var_name].attrs.get(attr, "")],
+                [ds[var_name].attrs.get(attr, "")] * len(coord_values),
                 dims=[combined_dim_name],
             )
             da.coords[f"{combined_dim_name}_{attr}"] = da_attr

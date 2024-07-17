@@ -44,19 +44,21 @@ def test_merging_static_and_surface_analysis():
                     step=isodate.duration_isoformat(testdata.DT_ANALYSIS),
                 )
             ),
-            splitting_dim="time",
-            splits=dict(
-                train=dict(
-                    start=t_train_start.isoformat(),
-                    end=t_train_end.isoformat(),
-                    compute_statistics=dict(
-                        ops=["mean", "std"],
-                        dims=["time", "grid_index"],
+            splitting=dict(
+                dim="time",
+                splits=dict(
+                    train=dict(
+                        start=t_train_start.isoformat(),
+                        end=t_train_end.isoformat(),
+                        compute_statistics=dict(
+                            ops=["mean", "std"],
+                            dims=["time", "grid_index"],
+                        ),
                     ),
-                ),
-                test=dict(
-                    start=t_test_start.isoformat(),
-                    end=t_test_end.isoformat(),
+                    test=dict(
+                        start=t_test_start.isoformat(),
+                        end=t_test_end.isoformat(),
+                    ),
                 ),
             ),
         ),

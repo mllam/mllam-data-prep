@@ -178,27 +178,25 @@ def create_dataset(config: Config):
     chunks = {d: chunking_config.get(d, int(ds[d].count())) for d in ds.dims}
     ds = ds.chunk(chunks)
 
-    splits = config.output.splits
-    splitting_dim = config.output.splitting_dim
-    if (splits is None) != (splitting_dim is None):
-        raise ValueError(
-            "Both splits and splitting_dim must be either None or not None"
-        )
+    splitting = config.output.splitting
 
-    if splits is not None:
+    if splitting is not None:
+        splits = splitting.splits
         logger.info(
             f"Setting splitting information to define `{list(splits.keys())}` splits "
-            f"along dimension `{splitting_dim}`"
+            f"along dimension `{splitting.dim}`"
         )
 
         for split_name, split_config in splits.items():
             if split_config.compute_statistics is not None:
                 ds_split = ds.sel(
-                    {splitting_dim: slice(split_config.start, split_config.end)}
+                    {splitting.dim: slice(split_config.start, split_config.end)}
                 )
                 logger.info(f"Computing statistics for split {split_name}")
                 split_stats = calc_stats(
-                    ds=ds_split, statistics_config=split_config.compute_statistics
+                    ds=ds_split,
+                    statistics_config=split_config.compute_statistics,
+                    splitting_dim=splitting.dim,
                 )
                 for op, op_dataarrays in split_stats.items():
                     for var_name, da in op_dataarrays.items():

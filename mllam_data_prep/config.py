@@ -214,6 +214,22 @@ class Split:
 
 
 @dataclass
+class Splitting:
+    """
+    dim: str
+        The dimension to split the dataset along, e.g. "time", this must be provided if splits are defined.
+
+    splits: Dict[str, Split]
+        Defines the splits of the dataset, the keys are the names of the splits and the values
+        are the `Split` objects defining the start and end of the split. Optionally, the
+        `compute_statistics` attribute can be used to define the statistics to compute for the split.
+    """
+
+    dim: str
+    splits: Dict[str, Split]
+
+
+@dataclass
 class Output:
     """
     Definition of the output dataset that will be created by the dataset generation, you should
@@ -247,20 +263,15 @@ class Output:
         If chunking is not specified for a dimension, then the entire dimension
         will be a single chunk.
 
-    splits: Dict[str, Split]
-        Defines the splits of the dataset, the keys are the names of the splits and the values
-        are the `Split` objects defining the start and end of the split. Optionally, the
-        `compute_statistics` attribute can be used to define the statistics to compute for the split.
-
-    splitting_dim: str
-        The dimension to split the dataset along, e.g. "time", this must be provided if splits are defined.
+    splitting: Splitting
+        Defines the splits of the dataset (e.g. train, test, validation), the dimension to split
+        the dataset along, and optionally the statistics to compute for each split.
     """
 
     variables: Dict[str, List[str]]
-    splits: Dict[str, Split] = None
-    splitting_dim: str = None
     coord_ranges: Dict[str, Range] = None
     chunking: Dict[str, int] = None
+    splitting: Splitting = None
 
 
 @dataclass

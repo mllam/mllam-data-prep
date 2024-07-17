@@ -155,7 +155,7 @@ inputs:
 
 Apart from identifiers to keep track of the configuration file format version and the datasets version, the configuration file is divided into two main sections:
 
-- `output`: defines the input variables and dimensions of the output dataset produced by `mllam-data-prep`. These are the variables and dimensions that the inputs datasets will be mapped to. These should match the variables and dimensions expected by the model architecture you are training.
+- `output`: defines the variables and dimensions of the output dataset produced by `mllam-data-prep`. These are the variables and dimensions that the inputs datasets will be mapped to. These should match the input variables and dimensions expected by the model architecture you are training.
 - `inputs`: a list of source datasets to extract data from. These are the datasets that will be mapped to the architecture defined in the `architecture` section.
 
 ### The `output` section
@@ -248,7 +248,7 @@ inputs:
   ...
 ```
 
-The `inputs` section defines the source datasets to extract data from. Each source dataset is defined by a key (e.g. `danra_height_levels`) which names the source, and the attributes of the source dataset:
+The `inputs` section defines the source datasets to extract data from. Each source dataset is defined by a key (e.g. `danra_height_levels`) which names the source dataset, and the attributes of the source dataset:
 
 - `path`: the path to the source dataset. This can be a local path or a URL to e.g. a zarr dataset or netCDF file, anything that can be read by `xarray.open_dataset(...)`.
 - `dims`: the dimensions that the source dataset is expected to have. This is used to check that the source dataset has the expected dimensions and also makes it clearer in the config file what the dimensions of the source dataset are.

@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `{output_variable}_units` and `{output_variable}_long_name`
   ![\#11](https://github.com/mllam/mllam-data-prep/pull/11).
 
+- include version of `mllam-data-prep` in output
+  ![\#12](https://github.com/mllam/mllam-data-prep/pull/12)
+
 ### Changed
 
 - split dataset creation and storage to zarr into separate functions `mllam_data_prep.create_dataset(...)` and `mllam_data_prep.create_dataset_zarr(...)` respectively ![\#7](https://github.com/mllam/mllam-data-prep/pull/7)

@@ -7,6 +7,7 @@ import numpy as np
 import xarray as xr
 from loguru import logger
 
+from . import __version__
 from .config import Config, InvalidConfigException
 from .ops.loading import load_and_subset_dataset
 from .ops.mapping import map_dims_and_variables
@@ -216,6 +217,10 @@ def create_dataset(config: Config):
     ds.attrs["schema_version"] = config.schema_version
     ds.attrs["dataset_version"] = config.dataset_version
     ds.attrs["created_on"] = datetime.datetime.now().replace(microsecond=0).isoformat()
+    ds.attrs[
+        "created_with"
+    ] = "mllam-data-prep (https://github.com/mllam/mllam-data-prep)"
+    ds.attrs["mdp_version"] = f"v{__version__}"
 
     return ds
 

@@ -10,7 +10,12 @@ jobs:
   linting:
     name: "pre-commit hooks"
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
+        with:
+          # don't use python3.12 because flake8 finds extra issues with that
+          # version
+          python-version: "3.11"
       - uses: pre-commit/action@v2.0.3

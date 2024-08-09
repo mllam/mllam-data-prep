@@ -264,3 +264,5 @@ def create_dataset_zarr(fp_config, fp_zarr: str = None):
 
     ds.to_zarr(fp_zarr, consolidated=True, mode="w", encoding=encoding)
     logger.info(f"Wrote training-ready dataset to {fp_zarr}")
+
+    logger.info(ds)

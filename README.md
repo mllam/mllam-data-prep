@@ -46,7 +46,9 @@ The branch, commit, push and make a pull-request :)
 
 ## Usage
 
-The package is designed to be used as a command-line tool. The main command is `mllam-data-prep` which takes a configuration file as input and outputs a training dataset in the form of a `.zarr` dataset named from the config file (e.g. `example.danra.yaml` produces `example.danra.zarr`).
+The package is designed to be used as a command-line tool. The main command is `mllam-data-prep` which takes a configuration file as input and outputs a training dataset in the form of a `.zarr` dataset named from the config file (e.g. `example.danra.yaml` produces `example.danra.zarr`). The package can also be used as a python module to create datasets in a more programmatic way by calling `mllam_data_prep.create_dataset(config)` directly (see below).
+
+### Command-line usage
 
 ```bash
 python -m mllam_data_prep example.danra.yaml
@@ -55,6 +57,35 @@ python -m mllam_data_prep example.danra.yaml
 Example output:
 
 ![](docs/example_output.png)
+
+
+#### Creating large datasets (with `dask.distributed`)
+
+If you will be creating datasets larger than a few 100MB you may want to use
+`dask.distributed` to parallelise the creation of the dataset. This can be done
+by setting the ` --dask-distributed-local-core-fraction` flag to a value
+between 0 and 1. This will create a local `dask.distributed` cluster with the
+number of workers set to the number of cores on the machine multiplied by the
+fraction given. For example, to use 50% of the cores on the machine you would
+run:
+
+```bash
+python -m mllam_data_prep example.danra.yaml --dask-distributed-local-core-fraction 0.5
+```
+
+Unfortunately, the number of cores to use can only be worked out by trial and
+error, but a good starting point is to use 50% of the cores on the machine. If
+you notice warnings suggesting that workers are running out of memory you
+should reduce the fraction of cores used (so that each worker has more memory
+available).
+You can adjust the fraction of the total system memory allocated with
+`--dask-distributed-local-memory-fraction` (default is `0.9`).
+
+When you run the above command the console will print a URL to the dask
+dashboard, which you can open in a browser to monitor the progress of the
+dataset creation (and see the memory usage of the workers).
+
+![example of using mllam-data-prep with dask.distrubted for parallel processing](docs/using_dask_distributed.png)
 
 ## Configuration file
 

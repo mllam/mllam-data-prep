@@ -64,7 +64,7 @@ Example output:
 If you will be creating datasets larger than a few 100MB you may want to use
 `dask.distributed` to parallelise the creation of the dataset. This can be done
 by setting the ` --dask-distributed-local-core-fraction` flag to a value
-between 0 and 1. This will create a local `dask.distributed` cluster with the
+between `0.0` and `1.0`. This will create a local `dask.distributed` cluster with the
 number of workers set to the number of cores on the machine multiplied by the
 fraction given. For example, to use 50% of the cores on the machine you would
 run:
@@ -74,11 +74,11 @@ python -m mllam_data_prep example.danra.yaml --dask-distributed-local-core-fract
 ```
 
 Unfortunately, the number of cores to use can only be worked out by trial and
-error, but a good starting point is to use 50% of the cores on the machine. If
-you notice warnings suggesting that workers are running out of memory you
-should reduce the fraction of cores used (so that each worker has more memory
-available).
-You can adjust the fraction of the total system memory allocated with
+error, but a good starting point is to use 50% of the cores on the machine and
+then if you notice warnings suggesting that workers are running out of memory
+you should reduce the fraction of cores used (so that each worker has more
+memory available).
+You can also adjust the fraction of the total system memory allocated with
 `--dask-distributed-local-memory-fraction` (default is `0.9`).
 
 When you run the above command the console will print a URL to the dask

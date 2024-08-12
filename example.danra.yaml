@@ -59,8 +59,8 @@ inputs:
     path: https://mllam-test-data.s3.eu-north-1.amazonaws.com/single_levels.zarr
     dims: [time, x, y]
     variables:
-      # use direct normal irradiance for forcing
-      - dni
+      # use surface incoming shortwave radiation as forcing
+      - swavr0m
     dim_mapping:
       time:
         method: rename

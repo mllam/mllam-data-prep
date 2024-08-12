@@ -18,6 +18,12 @@ To simply use `mllam-data-prep` you can install the most recent tagged version f
 python -m pip install mllam-data-prep
 ```
 
+If you want support for [creating datasets in parallel using `dask.distributed`](#creating-large-datasets-with-daskdistributed) you can install the package with the `dask-distributed` extra:
+
+```bash
+python -m pip install mllam-data-prep[dask-distributed]
+```
+
 ## Developing `mllam-data-prep`
 
 To work on developing `mllam-data-prep` it easiest to install and manage the dependencies with [pdm](https://pdm.fming.dev/). To get started clone your fork of [the main repo](https://github.com/mllam/mllam-data-prep) locally:

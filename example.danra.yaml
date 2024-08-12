@@ -59,9 +59,8 @@ inputs:
     path: https://mllam-test-data.s3.eu-north-1.amazonaws.com/single_levels.zarr
     dims: [time, x, y]
     variables:
-      # shouldn't really be using sea-surface pressure as "forcing", but don't
-      # have radiation varibles in danra yet
-      - pres_seasurface
+      # use direct normal irradiance for forcing
+      - dni
     dim_mapping:
       time:
         method: rename

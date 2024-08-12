@@ -41,12 +41,16 @@ All the linting is handelled by `pre-commit` which can be setup to automatically
 pdm run pre-commit install
 ```
 
-The branch, commit, push and make a pull-request :)
+Then branch, commit, push and make a pull-request :)
 
 
 ## Usage
 
 The package is designed to be used as a command-line tool. The main command is `mllam-data-prep` which takes a configuration file as input and outputs a training dataset in the form of a `.zarr` dataset named from the config file (e.g. `example.danra.yaml` produces `example.danra.zarr`).
+The format for the [config is described below](#configuration-file).
+The package can also be used as a python module to create datasets in a more programmatic way by calling `mllam_data_prep.create_dataset()` directly (see below).
+
+### Command-line usage
 
 ```bash
 python -m mllam_data_prep example.danra.yaml
@@ -55,6 +59,47 @@ python -m mllam_data_prep example.danra.yaml
 Example output:
 
 ![](docs/example_output.png)
+
+
+#### Creating large datasets (with `dask.distributed`)
+
+If you will be creating datasets larger than a few 100MB you may want to use
+`dask.distributed.LocalCluster` to parallelise the creation of the dataset. This can be done
+by setting the ` --dask-distributed-local-core-fraction` flag to a value
+between `0.0` and `1.0`. This will create a local `dask.distributed` cluster with the
+number of workers set to the number of cores on the machine multiplied by the
+fraction given. For example, to use 50% of the cores on the machine you would
+run:
+
+```bash
+python -m mllam_data_prep example.danra.yaml --dask-distributed-local-core-fraction 0.5
+```
+
+Unfortunately, the number of cores to use can only be worked out by trial and
+error, but a good starting point is to use 50% of the cores on the machine and
+then if you notice warnings suggesting that workers are running out of memory
+you should reduce the fraction of cores used (so that each worker has more
+memory available).
+You can also adjust the fraction of the total system memory allocated with
+`--dask-distributed-local-memory-fraction` (default is `0.9`).
+
+When you run the above command the console will print a URL to the dask
+dashboard, which you can open in a browser to monitor the progress of the
+dataset creation (and see the memory usage of the workers).
+
+![example of using mllam-data-prep with dask.distrubted for parallel processing](docs/using_dask_distributed.png)
+
+### Usage as a python module
+
+The package can also be used as a python module to create datasets directly, for example to create training datasets during training. The main function to use is `mllam_data_prep.create_dataset(config)` which takes a `mllam_data_prep.Config` as input and returns a `xarray.Dataset` object. For example:
+
+```python
+import mllam_data_prep as mdp
+
+config_path = "example.danra.yaml"
+config = mdp.Config.from_yaml_file(config_path)
+ds = mdp.create_dataset(config=config)
+```
 
 ## Configuration file
 

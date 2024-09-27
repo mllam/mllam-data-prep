@@ -112,7 +112,7 @@ ds = mdp.create_dataset(config=config)
 A full example configuration file is given in [example.danra.yaml](example.danra.yaml), and reproduced here for completeness:
 
 ```yaml
-schema_version: v0.2.0
+schema_version: v0.2.0+dev
 dataset_version: v0.1.0
 
 output:
@@ -201,12 +201,21 @@ inputs:
         name_format: f"{var_name}"
     target_output_variable: static
 
+extra:
+  projection:
+    class_name: LambertConformal
+    kwargs:
+      central_longitude: 25.0
+      central_latitude: 56.7
+      standard_parallels: [56.7, 56.7]
 ```
 
 Apart from identifiers to keep track of the configuration file format version and the dataset version (for you to keep track of changes that you make to the dataset), the configuration file is divided into two main sections:
 
 - `output`: defines the variables and dimensions of the output dataset produced by `mllam-data-prep`. These are the variables and dimensions that the input datasets will be mapped to. These output variables and dimensions should match the input variables and dimensions expected by the model architecture you are training.
 - `inputs`: a list of source datasets to extract data from. These are the datasets that will be mapped to the architecture defined in the `architecture` section.
+
+If you want to add any extra information to the configuration file you can add it to the `extra` section. This section is not used or validated by `mllam-data-prep` but can be used to store any extra information you want to keep track of (for example when using `mllam-data-prep` with [neural-lam](https://github.com/mllam/neural-lam) the `extra` section is used to store the projection information).
 
 ### The `output` section
 

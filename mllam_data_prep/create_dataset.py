@@ -241,9 +241,10 @@ def create_dataset_zarr(fp_config, fp_zarr: str = None):
     """
     config = Config.from_yaml_file(file=fp_config)
 
+    expected_schema_version = "v0.2.0+dev"
     assert (
-        config.schema_version == "v0.2.0"
-    ), f"Expected schema version v0.2.0, got {config.schema_version}"
+        config.schema_version == expected_schema_version
+    ), f"Expected schema version {expected_schema_version}, got {config.schema_version}"
 
     ds = create_dataset(config=config)
 

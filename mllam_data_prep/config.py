@@ -306,9 +306,9 @@ class Config(dataclass_wizard.YAMLWizard):
 
     output: Output
     inputs: Dict[str, InputDataset]
-    extra: Dict[str, Any] = None
     schema_version: str
     dataset_version: str
+    extra: Dict[str, Any] = None
 
 
 if __name__ == "__main__":

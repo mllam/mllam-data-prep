@@ -5,6 +5,8 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
+SCHEMA_VERSION = "v0.2.0+dev"
+
 NX, NY = 10, 8
 NT_ANALYSIS, NT_FORECAST = 5, 12
 NZ = 3

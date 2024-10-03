@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- fix bug by making dependency `distributed` optional ![\#27](https://github.com/mllam/mllam-data-prep/pull/27)
 - fix typo in install dependency `distributed` ![\#20](https://github.com/mllam/mllam-data-prep/pull/20)
 - add missing `psutil` requirement. [\#21](https://github.com/mllam/mllam-data-prep/pull/21).
 

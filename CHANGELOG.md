@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## vX.X.X
 
+### Added
+
+- add optional output path argument to parser. ![\#26](https://github.com/mllam/mllam-data-prep/pull/26)
+
 ### Changed
 
 - fix typo in install dependency `distributed` ![\#20](https://github.com/mllam/mllam-data-prep/pull/20)

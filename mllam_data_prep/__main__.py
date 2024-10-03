@@ -49,7 +49,6 @@ if __name__ == "__main__":
                 "be used in mllam-data-prep. Please install the optional dependency "
                 'with `python -m pip install "mllam-data-prep[dask-distributed]"`'
             )
-        
         # get the number of system cores
         n_system_cores = os.cpu_count()
         # compute the number of cores to use

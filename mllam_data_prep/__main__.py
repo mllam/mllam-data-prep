@@ -44,11 +44,11 @@ if __name__ == "__main__":
     if args.dask_distributed_local_core_fraction > 0.0:
         # Only run this block if dask.distributed is available
         if not DASK_DISTRIBUTED_AVAILABLE:
-            raise Exception(
+            raise ModuleNotFoundError(
                 "Currently dask.distributed isn't installed and therefore can't "
                 "be used in mllam-data-prep. Please install the optional dependency "
                 'with `python -m pip install "mllam-data-prep[dask-distributed]"`'
-        )
+            )
         
         # get the number of system cores
         n_system_cores = os.cpu_count()

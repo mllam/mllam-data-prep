@@ -24,7 +24,7 @@ readme = "README.md"
 license = {text = "MIT"}
 
 [project.optional-dependencies]
-dask-distibuted = [
+dask-distributed = [
     "dask[distributed]>=2024.7.1",
     "bokeh!=3.0.*,>=2.4.2",
 ]

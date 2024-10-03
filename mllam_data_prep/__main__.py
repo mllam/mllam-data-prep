@@ -11,7 +11,7 @@ try:
     import psutil
     from dask.diagnostics import ProgressBar
     from dask.distributed import LocalCluster
-except ModuleNotFoundError:
+except ImportError or ModuleNotFoundError:
     logger.warning("psutil or dask.distributed not available. Skipping multiprocessing setup.")
     dask_distributed_available = False
 

@@ -6,16 +6,13 @@ from loguru import logger
 from .create_dataset import create_dataset_zarr
 
 # Attempt to import psutil and dask.distributed modules
-dask_distributed_available = True
+DASK_DISTRIBUTED_AVAILABLE = True
 try:
     import psutil
     from dask.diagnostics import ProgressBar
     from dask.distributed import LocalCluster
 except ImportError or ModuleNotFoundError:
-    logger.warning(
-        "psutil or dask.distributed not available. Skipping multiprocessing setup."
-    )
-    dask_distributed_available = False
+    DASK_DISTRIBUTED_AVAILABLE = False
 
 if __name__ == "__main__":
     import argparse
@@ -44,8 +41,15 @@ if __name__ == "__main__":
     if args.show_progress:
         ProgressBar().register()
 
-    # Only run this block if dask.distributed is available
-    if dask_distributed_available and args.dask_distributed_local_core_fraction > 0.0:
+    if args.dask_distributed_local_core_fraction > 0.0:
+        # Only run this block if dask.distributed is available
+        if not DASK_DISTRIBUTED_AVAILABLE:
+            raise Exception(
+                "Currently dask.distributed isn't installed and therefore can't "
+                "be used in mllam-data-prep. Please install the optional dependency "
+                'with `python -m pip install "mllam-data-prep[dask-distributed]"`'
+            )
+        
         # get the number of system cores
         n_system_cores = os.cpu_count()
         # compute the number of cores to use

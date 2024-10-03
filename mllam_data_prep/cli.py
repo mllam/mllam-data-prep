@@ -19,6 +19,9 @@ def call(args=None):
     )
     parser.add_argument("config", help="Path to the config file", type=Path)
     parser.add_argument(
+        "-o", "--output", help="Path to the output zarr file", type=Path, default=None
+    )
+    parser.add_argument(
         "--show-progress", help="Show progress bar", action="store_true"
     )
     parser.add_argument(
@@ -63,4 +66,4 @@ def call(args=None):
         # print the dashboard link
         logger.info(f"Dashboard link: {cluster.dashboard_link}")
 
-    create_dataset_zarr(fp_config=args.config)
+    create_dataset_zarr(fp_config=args.config, fp_zarr=args.output)

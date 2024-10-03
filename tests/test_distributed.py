@@ -20,7 +20,7 @@ def distributed():
         importlib.import_module("dask.distributed")
 
         return True
-    except ImportError:
+    except ModuleNotFoundError:
         return False
 
 

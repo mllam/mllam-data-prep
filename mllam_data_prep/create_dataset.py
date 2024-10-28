@@ -10,6 +10,10 @@ from numcodecs import Blosc
 
 from . import __version__
 from .config import Config, InvalidConfigException
+from .ops.derive_variables import (
+    derive_toa_radiation,
+    get_variables_for_deriving_toa_radiation,
+)
 from .ops.loading import load_and_subset_dataset
 from .ops.mapping import map_dims_and_variables
 from .ops.selection import select_by_kwargs
@@ -116,9 +120,20 @@ def create_dataset(config: Config):
 
         output_dims = output_config.variables[target_output_var]
 
+        # Check if the variables should be derived/calculated
+        derive_input_variables = input_config.derive_variables or False
+
+        if derive_input_variables:
+            logger.info(
+                f"Get variables needed to derive additional/external forcings: {variables}"
+            )
+            variables_to_extract = get_variables_for_forcing_derivation(variables)
+        else:
+            variables_to_extract = variables
+
         logger.info(f"Loading dataset {dataset_name} from {path}")
         try:
-            ds = load_and_subset_dataset(fp=path, variables=variables)
+            ds = load_and_subset_dataset(fp=path, variables=variables_to_extract)
         except Exception as ex:
             raise Exception(f"Error loading dataset {dataset_name} from {path}") from ex
         _check_dataset_attributes(
@@ -126,6 +141,9 @@ def create_dataset(config: Config):
             expected_attributes=expected_input_attributes,
             dataset_name=dataset_name,
         )
+
+        if derive_input_variables:
+            ds = derive_forcings(ds, variables, variables_to_extract)
 
         dim_mapping = input_config.dim_mapping
 
@@ -266,3 +284,49 @@ def create_dataset_zarr(fp_config, fp_zarr: str = None):
     logger.info(f"Wrote training-ready dataset to {fp_zarr}")
 
     logger.info(ds)
+
+
+def get_variables_for_forcing_derivation(variables):
+    """
+    Extract the variables needed for deriving the external/additional forcings
+    """
+    if isinstance(variables, dict):
+        raise Exception("Not implemented yet")
+    elif isinstance(variables, list):
+        variables_to_extract = set()
+        for var in variables:
+            if var == "toa_radiation":
+                vars = get_variables_for_deriving_toa_radiation()
+            else:
+                raise Exception(f"Function for deriving {var} is not implemented yet!")
+
+            # Add variable names to set (only adds unique variables)
+            variables_to_extract.update(vars)
+
+        # Turn the set into a list
+        variables_to_extract = list(variables_to_extract)
+
+        return variables_to_extract
+
+
+def derive_forcings(ds, variables, variables_to_extract):
+    """
+    Derive the specified forcings
+    """
+    if isinstance(variables, dict):
+        raise Exception("Not implemented yet")
+    elif isinstance(variables, list):
+        for var in variables:
+            if var == "toa_radiation":
+                ds = derive_toa_radiation(ds)
+            else:
+                raise Exception(f"Function for deriving {var} is not implemented yet!")
+
+    # Drop all the unneeded variables that have only been used to derive the
+    # forcing variables. Need to keep any variables that are also coordinates!
+    variables_to_drop = [
+        var for var in variables_to_extract if var not in list(ds._coord_names)
+    ]
+    ds = ds.drop_vars(variables_to_drop, errors="ignore")
+
+    return ds

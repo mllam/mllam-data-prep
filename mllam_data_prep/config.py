@@ -171,6 +171,7 @@ class InputDataset:
     dim_mapping: Dict[str, DimMapping]
     target_output_variable: str
     attributes: Dict[str, Any] = None
+    derive_variables: bool = False
 
 
 @dataclass

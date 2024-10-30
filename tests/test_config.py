@@ -4,7 +4,7 @@ from dataclass_wizard.errors import MissingFields, UnknownJSONKey
 import mllam_data_prep as mdp
 
 INVALID_EXTRA_FIELDS_CONFIG_YAML = """
-schema_version: v0.1.0
+schema_version: v0.2.0
 dataset_version: v0.1.0
 
 output:
@@ -21,7 +21,7 @@ foobar: 42
 """
 
 MISSING_FIELDS_CONFIG_YAML = """
-schema_version: v0.1.0
+schema_version: v0.2.0
 dataset_version: v0.1.0
 """
 
@@ -36,7 +36,7 @@ def test_get_config_issues():
 
 
 VALID_EXAMPLE_CONFIG_YAML = """
-schema_version: v0.1.0
+schema_version: v0.2.0
 dataset_version: v0.1.0
 
 output:
@@ -71,13 +71,15 @@ inputs:
     dims: [time, x, y, altitude]
     variables:
       u:
-        altitude:
-          values: [100, ]
-          units: m
+        coordinates:
+          altitude:
+            values: [100, ]
+            units: m
       v:
-        altitude:
-          values: [100, ]
-          units: m
+        coordinates:
+          altitude:
+            values: [100, ]
+            units: m
     dim_mapping:
       time:
         method: rename

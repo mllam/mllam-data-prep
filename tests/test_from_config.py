@@ -29,7 +29,7 @@ def test_merging_static_and_surface_analysis():
     t_test_end = testdata.T_END_ANALYSIS
 
     config = dict(
-        schema_version="v0.2.0",
+        schema_version=testdata.SCHEMA_VERSION,
         dataset_version="v0.1.0",
         output=dict(
             variables=dict(
@@ -139,7 +139,7 @@ def test_time_selection(source_data_contains_time_range, time_stepsize):
         t_end_config = t_end_dataset + testdata.DT_ANALYSIS
 
     config = dict(
-        schema_version="v0.2.0",
+        schema_version=testdata.SCHEMA_VERSION,
         dataset_version="v0.1.0",
         output=dict(
             variables=dict(
@@ -215,7 +215,7 @@ def test_feature_collision(use_common_feature_var_name):
         state_feature_var_name = "state_feature"
 
     config = dict(
-        schema_version="v0.2.0",
+        schema_version=testdata.SCHEMA_VERSION,
         dataset_version="v0.1.0",
         output=dict(
             variables=dict(

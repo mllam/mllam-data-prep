@@ -35,13 +35,15 @@ inputs:
     dims: [time, x, y, altitude]
     variables:
       u:
-        altitude:
-          values: [100,]
-          units: m
+        coordinates:
+          altitude:
+            values: [100,]
+            units: m
       v:
-        altitude:
-          values: [100, ]
-          units: m
+        coordinates:
+          altitude:
+            values: [100, ]
+            units: m
     dim_mapping:
       time:
         method: rename

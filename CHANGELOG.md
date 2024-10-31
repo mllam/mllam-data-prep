@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- add support for CLI calls. ![\25](https://github.com/mllam/mllam-data-prep/pull/25).
 - add optional output path argument to parser. ![\#26](https://github.com/mllam/mllam-data-prep/pull/26)
 
 ### Changed
@@ -17,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - change config example to call validation split `val` instead of `validation` [\#28](https://github.com/mllam/mllam-data-prep/pull/28)
 - fix typo in install dependency `distributed` ![\#20](https://github.com/mllam/mllam-data-prep/pull/20)
 - add missing `psutil` requirement. [\#21](https://github.com/mllam/mllam-data-prep/pull/21).
+
 
 ## [v0.3.0](https://github.com/mllam/mllam-data-prep/releases/tag/v0.3.0)
 

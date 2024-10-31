@@ -44,3 +44,5 @@ dev = [
     "ipdb>=0.13.13",
     "pre-commit>=3.7.1",
 ]
+[project.scripts]
+mllam_data_prep = "mllam_data_prep:cli.call"

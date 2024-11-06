@@ -45,13 +45,30 @@ def load_and_subset_dataset(fp, variables):
                     )
             ds_subset[var] = da
     elif isinstance(variables, list):
+        # Check if the variables in a section are all derived variables or not
+        if all(isinstance(var, dict) for var in variables):
+            variables_to_extract = set()
+            for var in variables:
+                for _, var_dict in var.items():
+                    variables_to_extract.update(var_dict.dependencies)
+        elif all(isinstance(var, str) for var in variables):
+            variables_to_extract = variables
+        else:
+            raise TypeError(
+                "Expected either a list of strings or a list of dicts "
+                "but got a list of mixed types. If you are trying to derive "
+                "variables they should go in its own input section."
+            )
+
+        # Subset the dataset
         try:
-            ds_subset = ds[variables]
+            ds_subset = ds[variables_to_extract]
         except KeyError as ex:
             raise KeyError(
-                f"Could not find the all variables `{variables}` in the dataset. "
+                f"Could not find the all variables `{variables_to_extract}` in the dataset. "
                 f"The available variables are {list(ds.data_vars)}"
             ) from ex
     else:
         raise ValueError("The `variables` argument should be a list or a dictionary")
+
     return ds_subset

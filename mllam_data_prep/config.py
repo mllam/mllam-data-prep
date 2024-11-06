@@ -65,6 +65,22 @@ class ValueSelection:
 
 
 @dataclass
+class DerivedVariable:
+    """
+    Defines a derived variables, where the dependencies (variables used
+    in the calculation) and the method (function for calculations) are
+    specified.
+
+    Attributes:
+        dependencies: The variables to use in the calculation.
+        method: The methpd with which to derive the variable.
+    """
+
+    dependencies: List[str]
+    method: str = None
+
+
+@dataclass
 class DimMapping:
     """
     Defines the process for mapping dimensions and variables from an input
@@ -167,11 +183,13 @@ class InputDataset:
 
     path: str
     dims: List[str]
-    variables: Union[List[str], Dict[str, Dict[str, ValueSelection]]]
+    variables: Union[
+        List[Union[str, Dict[str, DerivedVariable]]],
+        Dict[str, Dict[str, ValueSelection]],
+    ]
     dim_mapping: Dict[str, DimMapping]
     target_output_variable: str
     attributes: Dict[str, Any] = None
-    derive_variables: bool = False
 
 
 @dataclass

@@ -73,6 +73,28 @@ inputs:
         name_format: f"{var_name}"
     target_output_variable: forcing
 
+  danra_additional_forcings:
+    path: https://mllam-test-data.s3.eu-north-1.amazonaws.com/single_levels.zarr
+    dims: [time, x, y]
+    variables:
+      - toa_radiation:
+          dependencies:
+            - time
+            - lat
+            - lon
+          method: derive_toa_radiation
+    dim_mapping:
+      time:
+        method: rename
+        dim: time
+      grid_index:
+        method: stack
+        dims: [x, y]
+      forcing_feature:
+        method: stack_variables_by_var_name
+        name_format: f"{var_name}"
+    target_output_variable: forcing
+
   danra_lsm:
     path: https://mllam-test-data.s3.eu-north-1.amazonaws.com/lsm.zarr
     dims: [x, y]

@@ -1,6 +1,53 @@
 import dask.array as da
 import numpy as np
 import xarray as xr
+from loguru import logger
+
+
+def derive_forcings(ds, variables):
+    """
+    Derive the specified forcings
+
+    Parameters
+    ---------
+    ds : xr.Dataset
+        The loaded and subsetted dataset
+    variables: list/dict
+        List or dictionary with variables
+
+    Returns
+    -------
+    ds : xr.Dataset
+        Dataset with derived variables included
+    """
+    variables_to_derive = {
+        k: v for elem in variables if isinstance(elem, dict) for (k, v) in elem.items()
+    }
+
+    if variables_to_derive == {}:
+        pass
+    else:
+        logger.info("Deriving additional forcings")
+        for _, derived_var in variables_to_derive.items():
+            # Get the function defined in the config file
+            func = globals()[derived_var.method]
+            # Currently, we're passing the whole dataset
+            ds = func(ds)
+
+        # Drop all the unneeded variables that have only been used to derive the
+        # forcing variables. HOWEVER, it's necessary to keep variables that are
+        # also coordinates!
+        derived_variable_dependencies = []
+        for _, derived_var in variables_to_derive.items():
+            derived_variable_dependencies += derived_var.dependencies
+        variables_to_drop = [
+            var
+            for var in derived_variable_dependencies
+            if var not in list(ds._coord_names)
+        ]
+        ds = ds.drop_vars(variables_to_drop)
+
+    return ds
 
 
 def derive_toa_radiation(ds):
@@ -17,6 +64,7 @@ def derive_toa_radiation(ds):
     ds: xr.Dataset
         The dataset with TOA radiation added
     """
+    logger.info("Calculating top-of-atmosphere radiation")
 
     # Need to construct a new dataset with chunks since
     # lat and lon are coordinates and are therefore eagerly loaded
@@ -70,10 +118,3 @@ def calc_toa_radiation(ds):
     toa_radiation = xr.where(E0 * cos_sza < 0, 0, E0 * cos_sza)
 
     return toa_radiation
-
-
-def get_variables_for_deriving_toa_radiation():
-    """
-    Get list of variables needed for the TOA radiation calculation
-    """
-    return ["lat", "lon", "time"]

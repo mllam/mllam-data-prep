@@ -178,6 +178,45 @@ def derive_day_of_year(ds):
     return ds
 
 
+def derive_time_of_year(ds):
+    logger.info("Calculating time of year")
+
+    # Get the number of seconds a datetime corresponds to
+    number_of_seconds = (
+        (ds.time.dt.dayofyear - 1) * 60 * 60 * 24
+        + ds.time.dt.hour * 60 * 60
+        + ds.time.dt.minute * 60
+        + ds.time.dt.second
+    )
+
+    # Cyclic encoding using both leap year and non-leap year
+    # number of seconds to be able to choose later where to
+    # include which values using xr.where()
+    time_of_year_cos_non_leap, time_of_year_sin_non_leap = cyclic_encoding(
+        number_of_seconds, 31622400
+    )
+    time_of_year_cos_leap, time_of_year_sin_leap = cyclic_encoding(
+        number_of_seconds, 31536000
+    )
+
+    time_of_year_cos = xr.where(
+        ds.time.dt.is_leap_year,
+        time_of_year_cos_leap,
+        time_of_year_cos_non_leap,
+    )
+    time_of_year_sin = xr.where(
+        ds.time.dt.is_leap_year,
+        time_of_year_sin_leap,
+        time_of_year_sin_non_leap,
+    )
+
+    # Assign to the dataset
+    ds = ds.assign(time_of_year_sin=time_of_year_sin)
+    ds = ds.assign(time_of_year_cos=time_of_year_cos)
+
+    return ds
+
+
 def cyclic_encoding(da, da_max):
     """Cyclic encoding of data
 

@@ -179,6 +179,20 @@ def derive_day_of_year(ds):
 
 
 def derive_time_of_year(ds):
+    """
+    Derive time of year features with a cyclic encoding
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+        The dataset with variables needed to derive time of year
+
+    Returns
+    -------
+    ds: xr.Dataset
+        The dataset with time of year added
+    """
+
     logger.info("Calculating time of year")
 
     # Get the number of seconds a datetime corresponds to
@@ -218,17 +232,22 @@ def derive_time_of_year(ds):
 
 
 def cyclic_encoding(da, da_max):
-    """Cyclic encoding of data
+    """
+    Cyclic encoding of data
 
     Parameters
     ----------
-    data : xr.DataArray
-        xarray data-array of the variable which should be cyclically encoded
-    data_max: int/float
-        maximum value of the data variable
+    da : xr.DataArray
+        xarray data-array that should be cyclically encoded
+    da_max: int/float
+        Maximum possible value of input data-array
 
     Returns
     -------
+    da_cos: xr.DataArray
+        Cosine part of cyclically encoded input data-array
+    da_sin: xr.DataArray
+        Sine part of cyclically encoded input data-array
     """
 
     da_sin = np.sin((da / da_max) * 2 * np.pi)

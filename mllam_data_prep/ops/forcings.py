@@ -118,3 +118,81 @@ def calc_toa_radiation(ds):
     toa_radiation = xr.where(E0 * cos_sza < 0, 0, E0 * cos_sza)
 
     return toa_radiation
+
+
+def derive_hour_of_day(ds):
+    """
+    Derive hour of day features with a cyclic encoding
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+        The dataset with variables needed to derive hour of day
+
+    Returns
+    -------
+    ds: xr.Dataset
+        The dataset with hour of day added
+    """
+    logger.info("Calculating hour of day")
+
+    # Get the hour of the day
+    hour_of_day = ds.time.dt.hour
+
+    # Cyclic encoding of hour of day
+    hour_of_day_cos, hour_of_day_sin = cyclic_encoding(hour_of_day, 24)
+
+    # Assign to the dataset
+    ds = ds.assign(hour_of_day_sin=hour_of_day_sin)
+    ds = ds.assign(hour_of_day_cos=hour_of_day_cos)
+
+    return ds
+
+
+def derive_day_of_year(ds):
+    """
+    Derive day of year features with a cyclic encoding
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+        The dataset with variables needed to derive day of year
+
+    Returns
+    -------
+    ds: xr.Dataset
+        The dataset with day of year added
+    """
+    logger.info("Calculating day of year")
+
+    # Get the day of year
+    day_of_year = ds.time.dt.dayofyear
+
+    # Cyclic encoding of day of year - use 366 to include leap years!
+    day_of_year_cos, day_of_year_sin = cyclic_encoding(day_of_year, 366)
+
+    # Assign to the dataset
+    ds = ds.assign(day_of_year_sin=day_of_year_sin)
+    ds = ds.assign(day_of_year_cos=day_of_year_cos)
+
+    return ds
+
+
+def cyclic_encoding(da, da_max):
+    """Cyclic encoding of data
+
+    Parameters
+    ----------
+    data : xr.DataArray
+        xarray data-array of the variable which should be cyclically encoded
+    data_max: int/float
+        maximum value of the data variable
+
+    Returns
+    -------
+    """
+
+    da_sin = np.sin((da / da_max) * 2 * np.pi)
+    da_cos = np.cos((da / da_max) * 2 * np.pi)
+
+    return da_cos, da_sin

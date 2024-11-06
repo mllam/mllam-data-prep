@@ -83,6 +83,14 @@ inputs:
             - lat
             - lon
           method: derive_toa_radiation
+      - hour_of_day:
+          dependencies:
+            - time
+          method: derive_hour_of_day
+      - day_of_year:
+          dependencies:
+            - time
+          method: derive_day_of_year
     dim_mapping:
       time:
         method: rename

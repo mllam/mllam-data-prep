@@ -7,8 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## vX.X.X
 
+### Added
+
+- add optional output path argument to parser. ![\#26](https://github.com/mllam/mllam-data-prep/pull/26)
+
 ### Changed
 
+- fix bug by making dependency `distributed` optional ![\#27](https://github.com/mllam/mllam-data-prep/pull/27)
+- change config example to call validation split `val` instead of `validation` [\#28](https://github.com/mllam/mllam-data-prep/pull/28)
 - fix typo in install dependency `distributed` ![\#20](https://github.com/mllam/mllam-data-prep/pull/20)
 - add missing `psutil` requirement. [\#21](https://github.com/mllam/mllam-data-prep/pull/21).
 

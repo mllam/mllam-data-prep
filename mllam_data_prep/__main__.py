@@ -1,12 +1,18 @@
 import os
 from pathlib import Path
 
-import psutil
-from dask.diagnostics import ProgressBar
-from dask.distributed import LocalCluster
 from loguru import logger
 
 from .create_dataset import create_dataset_zarr
+
+# Attempt to import psutil and dask.distributed modules
+DASK_DISTRIBUTED_AVAILABLE = True
+try:
+    import psutil
+    from dask.diagnostics import ProgressBar
+    from dask.distributed import LocalCluster
+except ImportError or ModuleNotFoundError:
+    DASK_DISTRIBUTED_AVAILABLE = False
 
 if __name__ == "__main__":
     import argparse
@@ -15,6 +21,9 @@ if __name__ == "__main__":
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     parser.add_argument("config", help="Path to the config file", type=Path)
+    parser.add_argument(
+        "-o", "--output", help="Path to the output zarr file", type=Path, default=None
+    )
     parser.add_argument(
         "--show-progress", help="Show progress bar", action="store_true"
     )
@@ -36,6 +45,13 @@ if __name__ == "__main__":
         ProgressBar().register()
 
     if args.dask_distributed_local_core_fraction > 0.0:
+        # Only run this block if dask.distributed is available
+        if not DASK_DISTRIBUTED_AVAILABLE:
+            raise ModuleNotFoundError(
+                "Currently dask.distributed isn't installed and therefore can't "
+                "be used in mllam-data-prep. Please install the optional dependency "
+                'with `python -m pip install "mllam-data-prep[dask-distributed]"`'
+            )
         # get the number of system cores
         n_system_cores = os.cpu_count()
         # compute the number of cores to use
@@ -61,4 +77,4 @@ if __name__ == "__main__":
         # print the dashboard link
         logger.info(f"Dashboard link: {cluster.dashboard_link}")
 
-    create_dataset_zarr(fp_config=args.config)
+    create_dataset_zarr(fp_config=args.config, fp_zarr=args.output)

@@ -7,9 +7,9 @@ import xarray as xr
 from loguru import logger
 
 
-def derive_forcings(ds, variables):
+def derive_variables(ds, variables):
     """
-    Derive the specified forcings
+    Derive the specified variables
 
     Parameters
     ---------
@@ -30,7 +30,7 @@ def derive_forcings(ds, variables):
     if variables_to_derive == {}:
         pass
     else:
-        logger.info("Deriving additional forcings")
+        logger.info("Deriving additional variables")
         for _, derived_var in variables_to_derive.items():
             # Get the function
             func = get_derived_variable_function(derived_var.method)
@@ -38,7 +38,7 @@ def derive_forcings(ds, variables):
             ds = func(ds)
 
         # Drop all the unneeded variables that have only been used to derive the
-        # forcing variables. HOWEVER, it's necessary to keep variables that are
+        # additional variables. HOWEVER, it's necessary to keep variables that are
         # also coordinates!
         derived_variable_dependencies = []
         for _, derived_var in variables_to_derive.items():

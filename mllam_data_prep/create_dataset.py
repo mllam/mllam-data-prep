@@ -10,7 +10,7 @@ from numcodecs import Blosc
 
 from . import __version__
 from .config import Config, InvalidConfigException
-from .derived_variables import derive_forcings
+from .derived_variables import derive_variables
 from .ops.loading import load_and_subset_dataset
 from .ops.mapping import map_dims_and_variables
 from .ops.selection import select_by_kwargs
@@ -128,8 +128,8 @@ def create_dataset(config: Config):
             dataset_name=dataset_name,
         )
 
-        # Derive forcing variables (if applicable)
-        ds = derive_forcings(ds, variables)
+        # Derive variables (if applicable)
+        ds = derive_variables(ds, variables)
 
         dim_mapping = input_config.dim_mapping
 

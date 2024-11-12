@@ -10,7 +10,7 @@ from numcodecs import Blosc
 
 from . import __version__
 from .config import Config, InvalidConfigException
-from .ops.forcings import derive_forcings
+from .derived_variables import derive_forcings
 from .ops.loading import load_and_subset_dataset
 from .ops.mapping import map_dims_and_variables
 from .ops.selection import select_by_kwargs

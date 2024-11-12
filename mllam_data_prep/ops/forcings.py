@@ -1,3 +1,6 @@
+import importlib
+import sys
+
 import dask.array as da
 import numpy as np
 import xarray as xr
@@ -29,8 +32,8 @@ def derive_forcings(ds, variables):
     else:
         logger.info("Deriving additional forcings")
         for _, derived_var in variables_to_derive.items():
-            # Get the function defined in the config file
-            func = globals()[derived_var.method]
+            # Get the function
+            func = get_derived_variable_function(derived_var.method)
             # Currently, we're passing the whole dataset
             ds = func(ds)
 
@@ -48,6 +51,52 @@ def derive_forcings(ds, variables):
         ds = ds.drop_vars(variables_to_drop)
 
     return ds
+
+
+def get_derived_variable_function(function_namespace):
+    """
+    Function for returning the function to be used to derive
+    the specified variable.
+
+    1. Check if the function to use is in globals()
+    2. If it is in globals then call it
+    3. If it isn't in globals() then import the necessary module
+        before calling it
+    """
+    # Get the name of the calling module
+    calling_module = globals()["__name__"]
+
+    if "." in function_namespace:
+        # If the function name is a full namespace, get module and function names
+        module_name, function_name = function_namespace.rsplit(".", 1)
+
+        # Check if the module_name is pointing to here (the calling module),
+        # and if it does then use globals() to get the function otherwise
+        # import the correct module and get the correct function
+        if module_name == calling_module:
+            function = globals().get(function_name)
+        else:
+            # Check if the module is already imported
+            if module_name in sys.modules:
+                module = module_name
+            else:
+                module = importlib.import_module(module_name)
+
+            # Get the function from the module
+            function = getattr(module, function_name)
+    else:
+        # If function name only get it from the calling module (here)
+        function = globals().get(function_namespace)
+        if not function:
+            raise TypeError(
+                f"Function '{function_namespace}' was not found in '{calling_module}'."
+                f" Check that you have specified the correct function name"
+                " and/or that you have defined the full function namespace if you"
+                " want to use a function defined outside of of the current module"
+                f" '{calling_module}'."
+            )
+
+    return function
 
 
 def derive_toa_radiation(ds):

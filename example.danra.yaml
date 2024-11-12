@@ -82,7 +82,7 @@ inputs:
             - time
             - lat
             - lon
-          method: derive_toa_radiation
+          method: mllam_data_prep.ops.forcings.derive_toa_radiation
       - hour_of_day:
           dependencies:
             - time

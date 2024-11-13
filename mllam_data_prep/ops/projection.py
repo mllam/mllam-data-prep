@@ -177,7 +177,7 @@ def get_projection_crs(ds: xr.Dataset) -> Dict[str, Any]:
     """
     vars_w_proj = _get_projection_mappings(ds)
     proj_vars = set([proj for proj in vars_w_proj.values()])
-    vars_wo_proj = set(ds.variables) - set(vars_w_proj.keys()) - proj_vars
+    vars_wo_proj = set(ds.data_vars) - set(vars_w_proj.keys()) - proj_vars
 
     if len(proj_vars) > 1:
         raise ValueError(

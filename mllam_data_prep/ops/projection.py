@@ -156,7 +156,7 @@ def validate_projection_consistency(
     return
 
 
-def get_projection(ds: xr.Dataset) -> Dict[str, Any]:
+def get_projection_crs(ds: xr.Dataset) -> Dict[str, Any]:
     """Get the projection information from the dataset.
 
     Parameters
@@ -190,11 +190,11 @@ def get_projection(ds: xr.Dataset) -> Dict[str, Any]:
             f"Variables {vars_wo_proj} do not have a projection defined in the dataset {ds.encoding.get('source',None)}"
         )
 
-    proj_objs = {}
-    for proj in proj_vars:
-        proj_objs[proj] = pyproj.CRS.from_cf(ds[proj].attrs)
+    crss = {}
+    for crs in crss:
+        crss[crs] = ds[crs].attrs  # pyproj.CRS.from_cf(ds[proj].attrs)
 
-    return proj_objs
+    return crss
 
 
 def get_latitude_longitude_from_projection(

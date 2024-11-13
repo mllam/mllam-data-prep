@@ -4,6 +4,7 @@ from collections import defaultdict
 from pathlib import Path
 
 import numpy as np
+import pyproj
 import xarray as xr
 from loguru import logger
 from numcodecs import Blosc
@@ -12,6 +13,11 @@ from . import __version__
 from .config import Config, InvalidConfigException
 from .ops.loading import load_and_subset_dataset
 from .ops.mapping import map_dims_and_variables
+from .ops.projection import (
+    ProjectionInconsistencyWarning,
+    get_projection_crs,
+    validate_projection_consistency,
+)
 from .ops.selection import select_by_kwargs
 from .ops.statistics import calc_stats
 
@@ -106,6 +112,7 @@ def create_dataset(config: Config):
     output_coord_ranges = output_config.coord_ranges
 
     dataarrays_by_target = defaultdict(list)
+    projections = []
 
     for dataset_name, input_config in config.inputs.items():
         path = input_config.path
@@ -158,6 +165,10 @@ def create_dataset(config: Config):
 
         da_target.attrs["source_dataset"] = dataset_name
 
+        # get the projection information from the dataset and update it with the projection
+        # information given in the input config
+        projections.append(get_projection_crs(ds))
+
         # only need to do selection for the coordinates that the input dataset actually has
         if output_coord_ranges is not None:
             selection_kwargs = {}
@@ -167,6 +178,17 @@ def create_dataset(config: Config):
             da_target = select_by_kwargs(da_target, **selection_kwargs)
 
         dataarrays_by_target[target_output_var].append(da_target)
+
+    # validate projections across input datasets
+    try:
+        validate_projection_consistency(projections)
+    except ProjectionInconsistencyWarning as e:
+        logger.warning(f"Projection information might be ambiguous: {e}")
+    projection = pyproj.CRS.from_cf(set(projections).pop())
+
+    # TODO: generalize the retrieval of x and y coords
+    # coords = (dataarrays_by_target[target_output_var]['x'], dataarrays_by_target[target_output_var]['y'])
+    # lat, lon = get_latitude_longitude_from_projection(projection, coords)
 
     ds = _merge_dataarrays_by_target(dataarrays_by_target=dataarrays_by_target)
 
@@ -213,6 +235,11 @@ def create_dataset(config: Config):
             coords={"split_name": list(splits.keys()), "split_part": ["start", "end"]},
         )
         ds["splits"] = da_splits
+
+    # add the projection information to the dataset
+    ds["crs"] = projection.to_cf()
+    for var in ds.data_vars:
+        ds[var].attrs["grid_mapping"] = "crs"
 
     ds.attrs = {}
     ds.attrs["schema_version"] = config.schema_version

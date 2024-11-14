@@ -228,11 +228,11 @@ def get_latitude_longitude_from_projection(
     >>> proj = pyproj.CRS.from_cf({"crs_wkt":"EPSG:3857"})
     >>> coords = (500000, 4649776)
     >>> np.round(get_latitude_longitude_from_projection(proj, coords),3)
-    array([38.496,  4.492])
+    array([ 4.492, 38.496])
     >>> coords = ([400000, 500000], [3649776, 4649776])
     >>> np.round(get_latitude_longitude_from_projection(proj, coords),3)
-    array([[31.131, 38.496],
-           [ 3.593,  4.492]])
+    array([[ 3.593,  4.492],
+           [31.131, 38.496]])
     """
     if output_proj is None:
         output_proj = pyproj.CRS("EPSG:4326")

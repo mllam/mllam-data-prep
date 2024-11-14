@@ -67,7 +67,7 @@ output:
 
 inputs:
   danra_height_levels:
-    path: ~/Desktop/mldev/height_levels.zarr
+    path: https://mllam-test-data.s3.eu-north-1.amazonaws.com/height_levels.zarr
     dims: [time, x, y, altitude]
     variables:
       u:
@@ -87,12 +87,12 @@ inputs:
         dims: [altitude]
         name_format: f"{var_name}{altitude}m"
       grid_index:
-        method: flatten
+        method: stack
         dims: [x, y]
     target_output_variable: state
 
   danra_surface:
-    path: ~/Desktop/mldev/single_levels.zarr
+    path: https://mllam-test-data.s3.eu-north-1.amazonaws.com/single_levels.zarr
     dims: [time, x, y]
     variables:
       - pres_seasurface
@@ -101,7 +101,7 @@ inputs:
         method: rename
         dim: time
       grid_index:
-        method: flatten
+        method: stack
         dims: [x, y]
       forcing_feature:
         method: stack_variables_by_var_name

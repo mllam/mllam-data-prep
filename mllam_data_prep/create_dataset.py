@@ -207,8 +207,8 @@ def create_dataset(config: Config):
         projection = pyproj.CRS.from_cf(projections[0])
 
         # TODO: generalize the retrieval of x and y coords
-        # coords = (dataarrays_by_target[target_output_var]['x'], dataarrays_by_target[target_output_var]['y'])
-        # lat, lon = get_latitude_longitude_from_projection(projection, coords)
+        # coords = (dataarrays_by_target[target_output_var][0]['x'], dataarrays_by_target[target_output_var][0]['y'])
+        # lon, lat = get_latitude_longitude_from_projection(projection, coords)
 
     ds = _merge_dataarrays_by_target(dataarrays_by_target=dataarrays_by_target)
 

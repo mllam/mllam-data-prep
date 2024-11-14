@@ -212,13 +212,15 @@ def get_latitude_longitude_from_projection(
     ----------
     proj : CRS
         Projection object.
-    coords : Tuple[array-like, array-like]
-        Coordinates to convert.
+    coords : Tuple[Any, Any]
+        Coordinates to convert. The first element is the x-coordinate (easting), the second element is the y-coordinate (northing).
+    output_proj : CRS, optional
+        Output projection object. By default this is set to EPSG:4326 (WGS84).
 
     Returns
     -------
-    Tuple[array-like, array-like]
-        Latitude and longitude in degrees.
+    Tuple[Any, Any]
+        By default longitude and latitude in degrees depending on the output projection.
 
     Examples
     --------
@@ -235,5 +237,5 @@ def get_latitude_longitude_from_projection(
     if output_proj is None:
         output_proj = pyproj.CRS("EPSG:4326")
 
-    transformer = pyproj.Transformer.from_crs(proj, output_proj)
+    transformer = pyproj.Transformer.from_crs(proj, output_proj, always_xy=True)
     return transformer.transform(coords[0], coords[1])

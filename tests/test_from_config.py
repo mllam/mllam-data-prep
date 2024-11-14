@@ -1,12 +1,15 @@
 import tempfile
 from pathlib import Path
+from typing import Dict
 
 import isodate
+import pyproj
 import pytest
 import yaml
 
 import mllam_data_prep as mdp
 import tests.data as testdata
+import tests.test_config as testconfig
 
 
 def test_gen_data():
@@ -274,6 +277,63 @@ def test_feature_collision(use_common_feature_var_name):
             mdp.create_dataset_zarr(fp_config=fp_config)
     else:
         mdp.create_dataset_zarr(fp_config=fp_config)
+
+
+@pytest.mark.parametrize(
+    "projection",
+    [
+        {
+            "crs": {
+                "dims": "[x y]",
+                "attributes": {
+                    "crs_wkt": 'GEOGCRS["WGS 84",DATUM["World Geodetic System 1984",ELLIPSOID["WGS 84",6378137,298.257223563,LENGTHUNIT["metre",1]]],CS[ellipsoidal,2],AXIS["latitude",north,ORDER[1],ANGLEUNIT["degree",0.0174532925199433]],AXIS["longitude",east,ORDER[2],ANGLEUNIT["degree",0.0174532925199433]],ID["EPSG",4326]]'
+                },
+            }
+        },
+        {
+            "crs": {
+                "dims": "[x y]",
+                "attributes": {
+                    "grid_mapping_name": "rotated_latitude_longitude",
+                    "grid_north_pole_latitude": 10,
+                    "grid_north_pole_longitude": 50,
+                },
+            }
+        },
+    ],
+)
+def test_projection_from_config(projection: Dict):
+    """
+    Test parsing of projection information from config
+    and check if it is written to the output file.
+    """
+    # Adding projection config to the example config
+    config = yaml.safe_load(testconfig.VALID_EXAMPLE_CONFIG_YAML)
+    config["inputs"]["danra_surface"]["projections"] = projection
+    config["inputs"]["danra_height_levels"]["projections"] = projection
+    config_yaml = yaml.dump(config)
+
+    config = mdp.Config.from_yaml(config_yaml)
+
+    ds = mdp.create_dataset(config=config)
+    # Test CF-conform projection variable attributes
+    # for var in set(ds.data_vars).intersection(VARIABLES_ON_PROJECTION):
+    #     assert "grid_mapping" in ds[var].attrs
+    #     assert ds[var].attrs["grid_mapping"] in projection.keys()
+    # for var in set(ds.data_vars).difference(VARIABLES_ON_PROJECTION):
+    #     assert "grid_mapping" not in ds[var].attrs
+
+    for proj in projection.keys():
+        assert proj in ds, "Projection variable not found in dataset"
+        if "crs_wkt" in projection[proj]["attributes"]:
+            assert pyproj.CRS.from_wkt(
+                ds[proj].attrs["crs_wkt"]
+            ) == pyproj.CRS.from_wkt(projection[proj]["attributes"]["crs_wkt"])
+        else:
+            ds[proj].attrs.pop("crs_wkt")
+            assert pyproj.CRS.from_cf(ds[proj].attrs) == pyproj.CRS.from_cf(
+                projection[proj]["attributes"]
+            )
 
 
 def test_danra_example():

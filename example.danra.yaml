@@ -35,14 +35,10 @@ inputs:
     dims: [time, x, y, altitude]
     variables:
       u:
-        attrs:
-          grid_mapping: crs
         altitude:
           values: [100,]
           units: m
       v:
-        attrs:
-          grid_mapping: crs
         altitude:
           values: [100, ]
           units: m

@@ -120,6 +120,7 @@ def create_dataset(config: Config):
         target_output_var = input_config.target_output_variable
         expected_input_attributes = input_config.attributes or {}
         expected_input_var_dims = input_config.dims
+        dataset_projections = input_config.projections or {}
 
         output_dims = output_config.variables[target_output_var]
 
@@ -133,6 +134,10 @@ def create_dataset(config: Config):
             expected_attributes=expected_input_attributes,
             dataset_name=dataset_name,
         )
+
+        # TODO: remove this once grid_mapping is set in config file
+        for var in ds.data_vars:
+            ds[var].attrs["grid_mapping"] = "crs"
 
         dim_mapping = input_config.dim_mapping
 
@@ -167,13 +172,21 @@ def create_dataset(config: Config):
 
         # get the projection information from the dataset and update it with the projection
         # information given in the input config
-        # TODO: remove this once grid_mapping is set in config file
-        for var in ds.data_vars:
-            ds[var].attrs["grid_mapping"] = "crs"
         # TODO: read the projection information from the config
         projection_crs = get_projection_crs(ds)
+        if projection_crs is None and dataset_projections:
+            logger.warning(
+                f"Projection information not found in dataset {dataset_name}, using projection information from config."
+            )
+            projection_crs = {
+                crs_var: p.attributes for crs_var, p in dataset_projections.items()
+            }
+        elif projection_crs is None and not dataset_projections:
+            logger.warning(
+                f"No projection information found neither in dataset {dataset_name}, nor in config."
+            )
         if projection_crs is not None:
-            projections.append(projection_crs)
+            projections.extend(projection_crs.values())
 
         # only need to do selection for the coordinates that the input dataset actually has
         if output_coord_ranges is not None:
@@ -191,7 +204,7 @@ def create_dataset(config: Config):
             validate_projection_consistency(projections)
         except ProjectionInconsistencyWarning as e:
             logger.warning(f"Projection information might be ambiguous: {e}")
-        projection = pyproj.CRS.from_cf(set(projections).pop())
+        projection = pyproj.CRS.from_cf(projections[0])
 
         # TODO: generalize the retrieval of x and y coords
         # coords = (dataarrays_by_target[target_output_var]['x'], dataarrays_by_target[target_output_var]['y'])
@@ -245,9 +258,9 @@ def create_dataset(config: Config):
 
     # add the projection information to the dataset
     if projections:
-        ds["crs"] = projection.to_cf()
-        for var in ds.data_vars:
-            ds[var].attrs["grid_mapping"] = "crs"
+        ds["crs"] = xr.DataArray(0, attrs=projection.to_cf()).astype("int16")
+        # for var in ["VARIABLES_WITH_PROKJECTION"]:
+        #     ds[var].attrs["grid_mapping"] = "crs"
 
     ds.attrs = {}
     ds.attrs["schema_version"] = config.schema_version

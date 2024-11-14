@@ -98,7 +98,7 @@ def validate_projection_consistency(
     ...     'USAGE[SCOPE["Horizontal component of 3D system."],'
     ...     'AREA["World."],BBOX[-90,-180,90,180]],ID["EPSG",4326]]'
     ... )
-    >>> proj1 = {'crs_wkt': crs_wkt}
+    >>> proj1 = {"crs_wkt": crs_wkt}
     >>> proj2 = {"crs_wkt": "EPSG:4326"}
     >>> proj3 = {
     ...     "crs_wkt": crs_wkt,
@@ -115,8 +115,8 @@ def validate_projection_consistency(
     >>> proj4 = {"crs_wkt": "AGD84"}
     >>> validate_projection_consistency([proj1, proj2, proj3])
     Traceback (most recent call last):
-        ...
-    mllam_data_prep.ops.projection.ProjectionInconsistencyWarning: ["Key 'semi_major_axis' is missing ...
+    ...
+    mllam_data_prep.ops.projection.ProjectionInconsistencyWarning: ['\\'crs_wkt\\' differs: EPSG:4326 != GEOGCRS...
     >>> validate_projection_consistency([proj2, proj4])
     Traceback (most recent call last):
         ...
@@ -136,14 +136,19 @@ def validate_projection_consistency(
     cf_output = set(proj_obs).pop().to_cf()
     issues = []
     for proj in projections:
-        cf_wkt_set = "crs_wkt" in cf_output
-        cf_indv_attrs_set = set(cf_output.keys()) - {"crs_wkt"}
+        cf_wkt_set = "crs_wkt" in proj
+        cf_indv_attrs_set = set(proj.keys()) - {"crs_wkt"}
         for key, value in cf_output.items():
             if key == "crs_wkt" and cf_wkt_set and value != proj["crs_wkt"]:
                 issues.append(f"'{key}' differs: {proj[key]} != {value}")
             elif key != "crs_wkt" and cf_indv_attrs_set and key not in proj:
                 issues.append(f"Key '{key}' is missing in the projection information.")
-            elif key == "crs_wkt" and cf_indv_attrs_set and value != proj[key]:
+            elif (
+                key == "crs_wkt"
+                and cf_indv_attrs_set
+                and cf_wkt_set
+                and value != proj[key]
+            ):
                 issues.append(f"Value for key '{key}' differs: {proj[key]} != {value}")
         for key in proj:
             if key not in cf_output:

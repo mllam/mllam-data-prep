@@ -178,7 +178,7 @@ def get_projection_crs(ds: xr.Dataset) -> Dict[str, Any]:
     -------
     Dict[str, Any]
         Projection information as a dictionary with the projection
-        variable names as keys and the projection objects as values
+        variable names as keys and the projection attributes as values
     """
     vars_w_proj = _get_projection_mappings(ds)
     proj_vars = set(proj for sublist in vars_w_proj.values() for proj in sublist)

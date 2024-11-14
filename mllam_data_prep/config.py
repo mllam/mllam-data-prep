@@ -123,6 +123,26 @@ class DimMapping:
 
 
 @dataclass
+class Projection:
+    """
+    Definition of a single coordinate reference system (CRS) projection that
+    variables in the dataset refer to.
+
+    Attributes
+    ----------
+    dims : List[str]
+        The dimensions of the projection, usually ["x", "y"].
+    attributes : Dict[str, Any]
+        The attributes that define the projection. The attributes need to adhere to the CF-conventions
+        and contain either a `crs_wkt` attribute or individual attributes that are specific to the used projection.
+        If both are given, then the `crs_wkt` attribute will be used to create the projection object.
+    """
+
+    dims: List[str]
+    attributes: Dict[str, Any]
+
+
+@dataclass
 class InputDataset:
     """
     Definition of a single input dataset which will be mapped to one the
@@ -167,10 +187,15 @@ class InputDataset:
 
     path: str
     dims: List[str]
-    variables: Union[List[str], Dict[str, Dict[str, ValueSelection]]]
+    variables: Union[
+        List[str],
+        Dict[str, Dict[str, ValueSelection]],
+        Dict[str, Dict[str, Dict[str, str]]],
+    ]
     dim_mapping: Dict[str, DimMapping]
     target_output_variable: str
     attributes: Dict[str, Any] = None
+    projections: Optional[Dict[str, Projection]] = None
 
 
 @dataclass

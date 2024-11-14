@@ -176,7 +176,7 @@ def get_projection_crs(ds: xr.Dataset) -> Dict[str, Any]:
         variable names as keys and the projection objects as values
     """
     vars_w_proj = _get_projection_mappings(ds)
-    proj_vars = set([proj for proj in vars_w_proj.values()])
+    proj_vars = set(proj for sublist in vars_w_proj.values() for proj in sublist)
     vars_wo_proj = set(ds.data_vars) - set(vars_w_proj.keys()) - proj_vars
 
     if len(proj_vars) > 1:
@@ -194,7 +194,8 @@ def get_projection_crs(ds: xr.Dataset) -> Dict[str, Any]:
     for crs in crss:
         crss[crs] = ds[crs].attrs  # pyproj.CRS.from_cf(ds[proj].attrs)
 
-    return crss
+    if crss:
+        return crss
 
 
 def get_latitude_longitude_from_projection(

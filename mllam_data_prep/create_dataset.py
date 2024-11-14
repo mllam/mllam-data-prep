@@ -167,7 +167,13 @@ def create_dataset(config: Config):
 
         # get the projection information from the dataset and update it with the projection
         # information given in the input config
-        projections.append(get_projection_crs(ds))
+        # TODO: remove this once grid_mapping is set in config file
+        for var in ds.data_vars:
+            ds[var].attrs["grid_mapping"] = "crs"
+        # TODO: read the projection information from the config
+        projection_crs = get_projection_crs(ds)
+        if projection_crs is not None:
+            projections.append(projection_crs)
 
         # only need to do selection for the coordinates that the input dataset actually has
         if output_coord_ranges is not None:
@@ -180,15 +186,16 @@ def create_dataset(config: Config):
         dataarrays_by_target[target_output_var].append(da_target)
 
     # validate projections across input datasets
-    try:
-        validate_projection_consistency(projections)
-    except ProjectionInconsistencyWarning as e:
-        logger.warning(f"Projection information might be ambiguous: {e}")
-    projection = pyproj.CRS.from_cf(set(projections).pop())
+    if projections:
+        try:
+            validate_projection_consistency(projections)
+        except ProjectionInconsistencyWarning as e:
+            logger.warning(f"Projection information might be ambiguous: {e}")
+        projection = pyproj.CRS.from_cf(set(projections).pop())
 
-    # TODO: generalize the retrieval of x and y coords
-    # coords = (dataarrays_by_target[target_output_var]['x'], dataarrays_by_target[target_output_var]['y'])
-    # lat, lon = get_latitude_longitude_from_projection(projection, coords)
+        # TODO: generalize the retrieval of x and y coords
+        # coords = (dataarrays_by_target[target_output_var]['x'], dataarrays_by_target[target_output_var]['y'])
+        # lat, lon = get_latitude_longitude_from_projection(projection, coords)
 
     ds = _merge_dataarrays_by_target(dataarrays_by_target=dataarrays_by_target)
 
@@ -237,9 +244,10 @@ def create_dataset(config: Config):
         ds["splits"] = da_splits
 
     # add the projection information to the dataset
-    ds["crs"] = projection.to_cf()
-    for var in ds.data_vars:
-        ds[var].attrs["grid_mapping"] = "crs"
+    if projections:
+        ds["crs"] = projection.to_cf()
+        for var in ds.data_vars:
+            ds[var].attrs["grid_mapping"] = "crs"
 
     ds.attrs = {}
     ds.attrs["schema_version"] = config.schema_version

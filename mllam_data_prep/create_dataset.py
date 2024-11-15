@@ -110,8 +110,8 @@ def create_dataset(config: Config):
 
     for dataset_name, input_config in config.inputs.items():
         path = input_config.path
-        variables = input_config.variables
-        derived_variables = input_config.derived_variables
+        variables = input_config.variables or None
+        derived_variables = input_config.derived_variables or None
         target_output_var = input_config.target_output_variable
         expected_input_attributes = input_config.attributes or {}
         expected_input_var_dims = input_config.dims
@@ -132,12 +132,21 @@ def create_dataset(config: Config):
                 dataset_name=dataset_name,
             )
 
-        # Derive variables (if applicable)
         if derived_variables:
             logger.info(
                 f"Loading dataset {dataset_name} from {path} and deriving variables"
             )
-            ds = derive_variables(fp=path, derived_variables=derived_variables)
+            try:
+                ds = derive_variables(fp=path, derived_variables=derived_variables)
+            except Exception as ex:
+                raise Exception(
+                    f"Error loading dataset {dataset_name} from {path}"
+                ) from ex
+            _check_dataset_attributes(
+                ds=ds,
+                expected_attributes=expected_input_attributes,
+                dataset_name=dataset_name,
+            )
 
         dim_mapping = input_config.dim_mapping
 

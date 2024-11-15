@@ -16,9 +16,10 @@ def derive_variables(fp, derived_variables):
     fp : str
         Filepath to the source dataset, for example the path to a zarr dataset
         or a netCDF file (anything that is supported by `xarray.open_dataset` will work)
-    derived_variables: dict
-        Dictionary with the variables to derive with keys as the variable names and
-        values with entries for kwargs and function to be used to derive them
+    derived_variables : dict
+        Dictionary with the variables to derive
+        with keys as the variable names and values with entries for
+        kwargs and function to use in the calculation
 
     Returns
     -------

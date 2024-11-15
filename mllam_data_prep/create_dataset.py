@@ -111,25 +111,33 @@ def create_dataset(config: Config):
     for dataset_name, input_config in config.inputs.items():
         path = input_config.path
         variables = input_config.variables
+        derived_variables = input_config.derived_variables
         target_output_var = input_config.target_output_variable
         expected_input_attributes = input_config.attributes or {}
         expected_input_var_dims = input_config.dims
 
         output_dims = output_config.variables[target_output_var]
 
-        logger.info(f"Loading dataset {dataset_name} from {path}")
-        try:
-            ds = load_and_subset_dataset(fp=path, variables=variables)
-        except Exception as ex:
-            raise Exception(f"Error loading dataset {dataset_name} from {path}") from ex
-        _check_dataset_attributes(
-            ds=ds,
-            expected_attributes=expected_input_attributes,
-            dataset_name=dataset_name,
-        )
+        if variables:
+            logger.info(f"Loading dataset {dataset_name} from {path} and subsetting")
+            try:
+                ds = load_and_subset_dataset(fp=path, variables=variables)
+            except Exception as ex:
+                raise Exception(
+                    f"Error loading dataset {dataset_name} from {path}"
+                ) from ex
+            _check_dataset_attributes(
+                ds=ds,
+                expected_attributes=expected_input_attributes,
+                dataset_name=dataset_name,
+            )
 
         # Derive variables (if applicable)
-        ds = derive_variables(ds, variables)
+        if derived_variables:
+            logger.info(
+                f"Loading dataset {dataset_name} from {path} and deriving variables"
+            )
+            ds = derive_variables(fp=path, derived_variables=derived_variables)
 
         dim_mapping = input_config.dim_mapping
 

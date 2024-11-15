@@ -67,17 +67,17 @@ class ValueSelection:
 @dataclass
 class DerivedVariable:
     """
-    Defines a derived variables, where the dependencies (variables used
-    in the calculation) and the method (function for calculations) are
-    specified.
+    Defines a derived variables, where the kwargs (variables required
+    for the calculation) and the function (for calculating the variable)
+    are specified.
 
     Attributes:
-        dependencies: The variables to use in the calculation.
-        method: The methpd with which to derive the variable.
+        kwargs: Variables required for calculating the derived variable.
+        function: Function used to calculate the derived variable.
     """
 
-    dependencies: List[str]
-    method: str = None
+    kwargs: Dict[str, str]
+    function: str
 
 
 @dataclass
@@ -183,12 +183,10 @@ class InputDataset:
 
     path: str
     dims: List[str]
-    variables: Union[
-        List[Union[str, Dict[str, DerivedVariable]]],
-        Dict[str, Dict[str, ValueSelection]],
-    ]
     dim_mapping: Dict[str, DimMapping]
     target_output_variable: str
+    variables: Union[List[str], Dict[str, Dict[str, ValueSelection]]] = None
+    derived_variables: Dict[str, DerivedVariable] = None
     attributes: Dict[str, Any] = None
 
 

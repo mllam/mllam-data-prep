@@ -76,21 +76,13 @@ inputs:
   danra_additional_forcings:
     path: https://mllam-test-data.s3.eu-north-1.amazonaws.com/single_levels.zarr
     dims: [time, x, y]
-    variables:
-      - toa_radiation:
-          dependencies:
-            - time
-            - lat
-            - lon
-          method: mllam_data_prep.derived_variables.derive_toa_radiation
-      - hour_of_day:
-          dependencies:
-            - time
-          method: derive_hour_of_day
-      - day_of_year:
-          dependencies:
-            - time
-          method: derive_day_of_year
+    derived_variables:
+      toa_radiation:
+        kwargs:
+          time: time
+          lat: lat
+          lon: lon
+        function: mllam_data_prep.derived_variables.derive_toa_radiation
     dim_mapping:
       time:
         method: rename

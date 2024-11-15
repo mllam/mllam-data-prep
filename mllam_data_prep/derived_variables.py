@@ -7,48 +7,47 @@ import xarray as xr
 from loguru import logger
 
 
-def derive_variables(ds, variables):
+def derive_variables(fp, derived_variables):
     """
-    Derive the specified variables
+    Load the dataset, and derive the specified variables
 
     Parameters
     ---------
-    ds : xr.Dataset
-        The loaded and subsetted dataset
-    variables: list/dict
-        List or dictionary with variables
+    fp : str
+        Filepath to the source dataset, for example the path to a zarr dataset
+        or a netCDF file (anything that is supported by `xarray.open_dataset` will work)
+    derived_variables: dict
+        Dictionary with the variables to derive with keys as the variable names and
+        values with entries for kwargs and function to be used to derive them
 
     Returns
     -------
     ds : xr.Dataset
         Dataset with derived variables included
     """
-    variables_to_derive = {
-        k: v for elem in variables if isinstance(elem, dict) for (k, v) in elem.items()
-    }
+    logger.info("Deriving variables")
 
-    if variables_to_derive == {}:
-        pass
-    else:
-        logger.info("Deriving additional variables")
-        for _, derived_var in variables_to_derive.items():
-            # Get the function
-            func = get_derived_variable_function(derived_var.method)
-            # Currently, we're passing the whole dataset
-            ds = func(ds)
+    try:
+        ds = xr.open_zarr(fp)
+    except ValueError:
+        ds = xr.open_dataset(fp)
 
-        # Drop all the unneeded variables that have only been used to derive the
-        # additional variables. HOWEVER, it's necessary to keep variables that are
-        # also coordinates!
-        derived_variable_dependencies = []
-        for _, derived_var in variables_to_derive.items():
-            derived_variable_dependencies += derived_var.dependencies
-        variables_to_drop = [
-            var
-            for var in derived_variable_dependencies
-            if var not in list(ds._coord_names)
-        ]
-        ds = ds.drop_vars(variables_to_drop)
+    ds_subset = xr.Dataset()
+    ds_subset.attrs.update(ds.attrs)
+    # Iterate derived variables
+    for _, derived_variable in derived_variables.items():
+        required_variables = derived_variable.kwargs
+        function_name = derived_variable.function
+        # Create the input dataset containing the required variables to derive
+        # the specified variable
+        ds_input = ds[required_variables.keys()]
+        kwargs = {v: ds_input[v] for v in required_variables.values()}
+        # Get the function to be used to derive the variable
+        func = get_derived_variable_function(function_name)
+        # Calculate the derived variable
+        derived_field = func(**kwargs)
+        # Add the derived variable(s) to the subsetted dataset
+        ds_subset[derived_field.name] = derived_field
 
     return ds
 
@@ -99,37 +98,42 @@ def get_derived_variable_function(function_namespace):
     return function
 
 
-def derive_toa_radiation(ds):
+def derive_toa_radiation(lat, lon, time):
     """
     Derive approximate TOA radiation (instantaneous values [W*m**-2])
 
     Parameters
     ----------
-    ds : xr.Dataset
-        The dataset with variables needed to derive TOA radiation
+    lat : xr.DataArray
+        Latitude values
+    lon : xr.DataArray
+        Longitude values
+    time : xr.DataArray
+        Time
 
     Returns
     -------
-    ds: xr.Dataset
-        The dataset with TOA radiation added
+    toa_radiation: xr.DataArray
+        TOA radiation data-array
     """
     logger.info("Calculating top-of-atmosphere radiation")
 
     # Need to construct a new dataset with chunks since
     # lat and lon are coordinates and are therefore eagerly loaded
     ds_dict = {}
-    ds_dict["lat"] = (list(ds.lat.dims), da.from_array(ds.lat.values, chunks=(-1, -1)))
-    ds_dict["lon"] = (list(ds.lon.dims), da.from_array(ds.lon.values, chunks=(-1, -1)))
-    ds_dict["t"] = (list(ds.time.dims), da.from_array(ds.time.values, chunks=(10)))
+    ds_dict["lat"] = (list(lat.dims), da.from_array(lat.values, chunks=(-1, -1)))
+    ds_dict["lon"] = (list(lon.dims), da.from_array(lon.values, chunks=(-1, -1)))
+    ds_dict["t"] = (list(time.dims), da.from_array(time.values, chunks=(10)))
     ds_chunks = xr.Dataset(ds_dict)
 
     # Calculate TOA radiation
     toa_radiation = calc_toa_radiation(ds_chunks)
 
-    # Assign to the dataset
-    ds = ds.assign(toa_radiation=toa_radiation)
+    if isinstance(toa_radiation, xr.DataArray):
+        # Add attributes
+        toa_radiation.name = "toa_radiation"
 
-    return ds
+    return toa_radiation
 
 
 def calc_toa_radiation(ds):

@@ -283,7 +283,7 @@ def test_feature_collision(use_common_feature_var_name):
     "projection",
     [
         {
-            "crs": {
+            "__common__": {
                 "dims": "[x y]",
                 "attributes": {
                     "crs_wkt": 'GEOGCRS["WGS 84",DATUM["World Geodetic System 1984",ELLIPSOID["WGS 84",6378137,298.257223563,LENGTHUNIT["metre",1]]],CS[ellipsoidal,2],AXIS["latitude",north,ORDER[1],ANGLEUNIT["degree",0.0174532925199433]],AXIS["longitude",east,ORDER[2],ANGLEUNIT["degree",0.0174532925199433]],ID["EPSG",4326]]'
@@ -291,7 +291,7 @@ def test_feature_collision(use_common_feature_var_name):
             }
         },
         {
-            "crs": {
+            "__common__": {
                 "dims": "[x y]",
                 "attributes": {
                     "grid_mapping_name": "rotated_latitude_longitude",

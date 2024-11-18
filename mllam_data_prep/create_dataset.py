@@ -137,7 +137,7 @@ def create_dataset(config: Config):
 
         # TODO: remove this once grid_mapping is set in config file
         for var in ds.data_vars:
-            ds[var].attrs["grid_mapping"] = "crs"
+            ds[var].attrs["grid_mapping"] = "__common__"
 
         dim_mapping = input_config.dim_mapping
 
@@ -258,9 +258,9 @@ def create_dataset(config: Config):
 
     # add the projection information to the dataset
     if projections:
-        ds["crs"] = xr.DataArray(0, attrs=projection.to_cf()).astype("int16")
+        ds["__common__"] = xr.DataArray(0, attrs=projection.to_cf()).astype("int16")
         # for var in ["VARIABLES_WITH_PROKJECTION"]:
-        #     ds[var].attrs["grid_mapping"] = "crs"
+        #     ds[var].attrs["grid_mapping"] = "__common__"
 
     ds.attrs = {}
     ds.attrs["schema_version"] = config.schema_version

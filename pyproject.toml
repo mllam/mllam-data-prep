@@ -1,9 +1,12 @@
 [project]
 name = "mllam-data-prep"
-version = "0.3.0"
+version = "0.4.0"
 description = "dataset preparation for data-driven weather models"
 authors = [
     {name = "Leif Denby", email = "lcd@dmi.dk"},
+    {name = "Hauke Schulz", email = "has@dmi.dk"},
+    {name = "Emy Alerskans", email = "ea@dmi.dk"},
+    {name = "Eleni Briola", email = "elb@dmi.dk"},
 ]
 dependencies = [
     "xarray>=2024.2.0",

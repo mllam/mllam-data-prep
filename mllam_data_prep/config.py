@@ -9,18 +9,6 @@ class InvalidConfigException(Exception):
     pass
 
 
-class GlobalJSONMeta(JSONWizard.Meta):
-    """
-    Global settings for the JSON load/dump process, that should apply to
-    *all* subclasses of `JSONWizard`.
-
-    Note: it does not matter where this class is defined, as long as it's
-    declared before any methods in `JSONWizard` are called.
-    """
-
-    raise_on_unknown_json_key = True
-
-
 @dataclass
 class Range:
     """
@@ -275,7 +263,7 @@ class Output:
 
 
 @dataclass
-class Config(dataclass_wizard.YAMLWizard):
+class Config(dataclass_wizard.JSONWizard, dataclass_wizard.YAMLWizard):
     """Configuration for the model.
 
     Attributes:
@@ -304,6 +292,9 @@ class Config(dataclass_wizard.YAMLWizard):
     inputs: Dict[str, InputDataset]
     schema_version: str
     dataset_version: str
+
+    class _(JSONWizard.Meta):
+        raise_on_unknown_json_key = True
 
 
 if __name__ == "__main__":

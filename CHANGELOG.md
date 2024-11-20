@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-[All changes](https://github.com/mllam/mllam-data-prep/compare/v0.3.0...v0.4.0)
+[All changes](https://github.com/mllam/mllam-data-prep/compare/v0.4.0...HEAD)
 
 ### Added
 

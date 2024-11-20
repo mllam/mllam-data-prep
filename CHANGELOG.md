@@ -19,7 +19,7 @@ This release adds support for an optional `extra` section in the config file (fo
 
 - remove f-string from `name_format` in config examples [\#35](https://github.com/mllam/mllam-data-prep/pull/35)
 - replace global config for `dataclass_wizard` on `mllam_data_prep.config.Config` with config specific to that dataclass (to avoid conflicts with other uses of `dataclass_wizard`) [\#36](https://github.com/mllam/mllam-data-prep/pull/36)
-- Schema version bumped to `v0.5.0` to match next expected release that will support optional `extra` section in config [\#18](https://github.com/mllam/mllam-data-prep/pull/18)
+- Schema version bumped to `v0.5.0` to match release version that supports optional `extra` section in config [\#18](https://github.com/mllam/mllam-data-prep/pull/18)
 
 
 ## [v0.4.0](https://github.com/mllam/mllam-data-prep/releases/tag/v0.4.0)

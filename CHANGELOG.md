@@ -40,7 +40,7 @@ interface and addresses bugs around optional dependencies for
 
 ## [v0.3.0](https://github.com/mllam/mllam-data-prep/releases/tag/v0.3.0)
 
-[All changes](https://github.com/mllam/mllam-data-prep/compare/v0.2.0...v0.3.0)
+[All changes](https://github.com/mllam/mllam-data-prep/compare/v0.3.0...v0.2.0)
 
 ### Added
 
@@ -53,7 +53,7 @@ interface and addresses bugs around optional dependencies for
 
 ## [v0.2.0](https://github.com/mllam/mllam-data-prep/releases/tags/v0.2.0)
 
-[All changes](https://github.com/mllam/mllam-data-prep/compare/v0.1.0...v0.2.0)
+[All changes](https://github.com/mllam/mllam-data-prep/compare/v0.2.0...v0.1.0)
 
 ### Added
 

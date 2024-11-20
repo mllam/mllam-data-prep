@@ -84,11 +84,6 @@ class DimMapping:
         E.g. `{"grid_index": {"method": "stack", "dims": ["x", "y"]}}` will stack the "x" and "y"
         dimensions in the input dataset into a new "grid_index" dimension in the output.
 
-    Attributes:
-        method: The method used for mapping.
-        dims: The dimensions to be mapped.
-        name_format: The format for naming the mapped dimensions.
-
     Attributes
     ----------
     method: str
@@ -265,12 +260,6 @@ class Output:
 @dataclass
 class Config(dataclass_wizard.JSONWizard, dataclass_wizard.YAMLWizard):
     """Configuration for the model.
-
-    Attributes:
-        schema_version: Version of the config file schema.
-        dataset_version: Version of the dataset itself.
-        architecture: Information about the model architecture this dataset is intended for.
-        inputs: Input datasets for the model.
 
     Attributes
     ----------

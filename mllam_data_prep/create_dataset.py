@@ -15,6 +15,10 @@ from .ops.mapping import map_dims_and_variables
 from .ops.selection import select_by_kwargs
 from .ops.statistics import calc_stats
 
+# the `extra` field in the config that was added between v0.2.0 and v0.5.0 is
+# optional, so we can support both v0.2.0 and v0.5.0
+SUPPORTED_CONFIG_VERSIONS = ["v0.2.0", "v0.5.0"]
+
 
 def _check_dataset_attributes(ds, expected_attributes, dataset_name):
     # check that the dataset has the expected attributes with the expected values
@@ -241,10 +245,12 @@ def create_dataset_zarr(fp_config, fp_zarr: str = None):
     """
     config = Config.from_yaml_file(file=fp_config)
 
-    expected_schema_version = "v0.5.0"
-    assert (
-        config.schema_version == expected_schema_version
-    ), f"Expected schema version {expected_schema_version}, got {config.schema_version}"
+    if not config.schema_version in SUPPORTED_CONFIG_VERSIONS:
+        raise ValueError(
+            f"Unsupported schema version {config.schema_version}. Only schema versions "
+            f" {', '.join(SUPPORTED_CONFIG_VERSIONS)} are supported by mllam-data-prep "
+            f"v{__version__}."
+        )
 
     ds = create_dataset(config=config)
 

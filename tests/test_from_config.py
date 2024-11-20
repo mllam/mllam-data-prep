@@ -1,3 +1,4 @@
+import shutil
 import tempfile
 from pathlib import Path
 
@@ -331,3 +332,34 @@ def test_optional_extra_section(extra_content):
         yaml.dump(config_dict, f)
 
     mdp.create_dataset_zarr(fp_config=fp_config)
+
+
+CONFIG_REVISION_EXAMPLES_PATH = Path(__file__).parent / "config_examples"
+
+
+def find_config_revision_examples():
+    """
+    Build a dictionary of examples for each revision of the config schema
+    so that we can check that the examples are valid and up-to-date
+    """
+    examples = {}
+    for fp in CONFIG_REVISION_EXAMPLES_PATH.rglob("*.yaml"):
+        revision = fp.parent.name
+        examples[revision] = fp
+
+    return examples.values()
+
+
+@pytest.mark.parametrize("fp_example", find_config_revision_examples())
+def test_config_revision_examples(fp_example):
+    """
+    Ensure that all the examples (which may be using different config schema
+    versions)in the `config_examples` directory are valid
+    """
+    tmpdir = tempfile.TemporaryDirectory()
+
+    # copy example to tempdir
+    fp_config_copy = Path(tmpdir.name) / fp_example.name
+    shutil.copy(fp_example, fp_config_copy)
+
+    mdp.create_dataset_zarr(fp_config=fp_config_copy)

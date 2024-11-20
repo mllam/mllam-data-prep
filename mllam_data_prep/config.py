@@ -282,6 +282,10 @@ class Config(dataclass_wizard.JSONWizard, dataclass_wizard.YAMLWizard):
     inputs: Dict[str, InputDataset]
         Input datasets for the model. The keys are the names of the datasets and the values are
         the input dataset configurations.
+    extra: Dict[str, Any]
+        Extra information to include in the config file. This will be ignored by the
+        `mllam_data_prep` library, but can be used to include additional information
+        that is useful for the user.
     schema_version: str
         Version string for the config file schema.
     dataset_version: str
@@ -292,6 +296,7 @@ class Config(dataclass_wizard.JSONWizard, dataclass_wizard.YAMLWizard):
     inputs: Dict[str, InputDataset]
     schema_version: str
     dataset_version: str
+    extra: Dict[str, Any] = None
 
     class _(JSONWizard.Meta):
         raise_on_unknown_json_key = True

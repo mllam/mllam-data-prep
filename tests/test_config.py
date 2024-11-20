@@ -4,7 +4,7 @@ from dataclass_wizard.errors import MissingFields, UnknownJSONKey
 import mllam_data_prep as mdp
 
 INVALID_EXTRA_FIELDS_CONFIG_YAML = """
-schema_version: v0.1.0
+schema_version: {schema_version}
 dataset_version: v0.1.0
 
 output:

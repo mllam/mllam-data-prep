@@ -112,7 +112,7 @@ ds = mdp.create_dataset(config=config)
 A full example configuration file is given in [example.danra.yaml](example.danra.yaml), and reproduced here for completeness:
 
 ```yaml
-schema_version: v0.2.0+dev
+schema_version: v0.5.0
 dataset_version: v0.1.0
 
 output:
@@ -317,3 +317,10 @@ The `inputs` section defines the source datasets to extract data from. Each sour
   - `rename`: simply rename the dimension to the new name
   - `stack`: stack the listed dimension to create the dimension in the output
   - `stack_variables_by_var_name`: stack the dimension into the new dimension, and also stack the variable name into the new variable name. This is useful when you have multiple variables with the same dimensions that you want to stack into a single variable.
+
+
+### Config schema versioning
+
+The schema version of the configuration file is defined by the `schema_version` attribute at the top of the configuration file. This is used to keep track of changes to the configuration file format. The schema version is used to check that the configuration file is compatible with the version of `mllam-data-prep` that you are using. If the schema version of the configuration file is not compatible with the version of `mllam-data-prep` that you are using you will get an error message telling you that the schema version is not compatible.
+
+The schema version is updated whenever the configuration format changes, with the new schema version matching the minimum version of `mllam-data-prep` that is required to use the new configuration format. As `mllam-data-prep` is still in rapid development (and hasn't reached version `v1.0.0` yet) we unfortunately make no gaurantee about backward compatibility. However, the [CHANGELOG.md](CHANGELOG.md) will always contain migration instructions when the config format changes.

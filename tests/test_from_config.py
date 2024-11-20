@@ -280,3 +280,54 @@ def test_danra_example():
     fp_config = Path(__file__).parent.parent / "example.danra.yaml"
     with tempfile.TemporaryDirectory(suffix=".zarr") as tmpdir:
         mdp.create_dataset_zarr(fp_config=fp_config, fp_zarr=tmpdir)
+
+
+@pytest.mark.parametrize("extra_content", [None, {"foobar": {"baz": 42}}])
+def test_optional_extra_section(extra_content):
+    """
+    Test to ensure that the optional `extra` section of the config can contain
+    arbitrary information and is not required for the config to be valid
+    """
+    tmpdir = tempfile.TemporaryDirectory()
+    datasets = testdata.create_data_collection(
+        data_kinds=["static"], fp_root=tmpdir.name
+    )
+
+    config_dict = dict(
+        schema_version=testdata.SCHEMA_VERSION,
+        dataset_version="v0.1.0",
+        output=dict(
+            variables=dict(
+                static=["grid_index", "static_feature"],
+            ),
+        ),
+        inputs=dict(
+            danra_static=dict(
+                path=datasets["static"],
+                dims=["x", "y"],
+                variables=testdata.DEFAULT_STATIC_VARS,
+                dim_mapping=dict(
+                    grid_index=dict(
+                        method="stack",
+                        dims=["x", "y"],
+                    ),
+                    static_feature=dict(
+                        method="stack_variables_by_var_name",
+                        name_format="{var_name}",
+                    ),
+                ),
+                target_output_variable="static",
+            ),
+        ),
+    )
+
+    if extra_content is not None:
+        config_dict["extra"] = extra_content
+
+    # write yaml config to file
+    fn_config = "config.yaml"
+    fp_config = Path(tmpdir.name) / fn_config
+    with open(fp_config, "w") as f:
+        yaml.dump(config_dict, f)
+
+    mdp.create_dataset_zarr(fp_config=fp_config)

@@ -5,7 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## v0.4.0
+## Unreleased
+
+[All changes](https://github.com/mllam/mllam-data-prep/compare/v0.3.0...v0.4.0)
+
+### Added
+
+- Add optional section called `extra` to config file to allow for user-defined extra information that is ignored by `mllam-data-prep` but can be used by downstream applications. ![\#18](https://github.com/mllam/mllam-data-prep/pull/18), @leifdenby
+
+### Changed
+
+- Schema version bumped to `v0.5.0` to match next expected release that will support optional `extra` section in config [\#18](https://github.com/mllam/mllam-data-prep/pull/18)
+
+
+## [v0.4.0](https://github.com/mllam/mllam-data-prep/releases/tag/v0.4.0)
+
+[All changes](https://github.com/mllam/mllam-data-prep/compare/v0.3.0...v0.4.0)
 
 This release adds support for defining the output path in the command line
 interface and addresses bugs around optional dependencies for
@@ -25,7 +40,7 @@ interface and addresses bugs around optional dependencies for
 
 ## [v0.3.0](https://github.com/mllam/mllam-data-prep/releases/tag/v0.3.0)
 
-[All changes](https://github.com/mllam/mllam-data-prep/compare/v0.3.0...v0.2.0)
+[All changes](https://github.com/mllam/mllam-data-prep/compare/v0.2.0...v0.3.0)
 
 ### Added
 
@@ -38,7 +53,7 @@ interface and addresses bugs around optional dependencies for
 
 ## [v0.2.0](https://github.com/mllam/mllam-data-prep/releases/tags/v0.2.0)
 
-[All changes](https://github.com/mllam/mllam-data-prep/compare/v0.2.0...v0.1.0)
+[All changes](https://github.com/mllam/mllam-data-prep/compare/v0.1.0...v0.2.0)
 
 ### Added
 

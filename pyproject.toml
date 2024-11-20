@@ -1,9 +1,12 @@
 [project]
 name = "mllam-data-prep"
-version = "0.3.0"
+version = "0.4.0"
 description = "dataset preparation for data-driven weather models"
 authors = [
     {name = "Leif Denby", email = "lcd@dmi.dk"},
+    {name = "Hauke Schulz", email = "has@dmi.dk"},
+    {name = "Emy Alerskans", email = "ea@dmi.dk"},
+    {name = "Eleni Briola", email = "elb@dmi.dk"},
 ]
 dependencies = [
     "xarray>=2024.2.0",
@@ -17,13 +20,14 @@ dependencies = [
     "semver>=3.0.2",
     "rich>=13.7.1",
     "dask>=2024.2.1",
+    "psutil>=5.7.2",
 ]
 requires-python = ">=3.9"
 readme = "README.md"
 license = {text = "MIT"}
 
 [project.optional-dependencies]
-dask-distibuted = [
+dask-distributed = [
     "dask[distributed]>=2024.7.1",
     "bokeh!=3.0.*,>=2.4.2",
 ]

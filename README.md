@@ -136,7 +136,7 @@ output:
         compute_statistics:
           ops: [mean, std, diff_mean, diff_std]
           dims: [grid_index, time]
-      validation:
+      val:
         start: 1990-09-06T00:00
         end: 1990-09-07T00:00
       test:
@@ -163,7 +163,7 @@ inputs:
       state_feature:
         method: stack_variables_by_var_name
         dims: [altitude]
-        name_format: f"{var_name}{altitude}m"
+        name_format: "{var_name}{altitude}m"
       grid_index:
         method: stack
         dims: [x, y]
@@ -184,7 +184,7 @@ inputs:
         dims: [x, y]
       forcing_feature:
         method: stack_variables_by_var_name
-        name_format: f"{var_name}"
+        name_format: "{var_name}"
     target_output_variable: forcing
 
   danra_lsm:
@@ -198,7 +198,7 @@ inputs:
         dims: [x, y]
       static_feature:
         method: stack_variables_by_var_name
-        name_format: f"{var_name}"
+        name_format: "{var_name}"
     target_output_variable: static
 
 extra:
@@ -241,7 +241,7 @@ output:
         compute_statistics:
           ops: [mean, std, diff_mean, diff_std]
           dims: [grid_index, time]
-      validation:
+      val:
         start: 1990-09-06T00:00
         end: 1990-09-07T00:00
       test:
@@ -279,7 +279,7 @@ inputs:
       state_feature:
         method: stack_variables_by_var_name
         dims: [altitude]
-        name_format: f"{var_name}{altitude}m"
+        name_format: "{var_name}{altitude}m"
       grid_index:
         method: stack
         dims: [x, y]
@@ -301,7 +301,7 @@ inputs:
         dims: [x, y]
       forcing_feature:
         method: stack_variables_by_var_name
-        name_format: f"{var_name}"
+        name_format: "{var_name}"
     target_architecture_variable: forcing
 
   ...

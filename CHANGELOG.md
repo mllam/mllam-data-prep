@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v0.4.0
+
+This release adds support for defining the output path in the command line
+interface and addresses bugs around optional dependencies for
+`dask.distributed`.
+
+### Added
+
+- add optional output path argument to parser. ![\#26](https://github.com/mllam/mllam-data-prep/pull/26)
+
+### Changed
+
+- remove f-string from `name_format` in config examples [\#35](https://github.com/mllam/mllam-data-prep/pull/35)
+- fix bug by making dependency `distributed` optional ![\#27](https://github.com/mllam/mllam-data-prep/pull/27)
+- change config example to call validation split `val` instead of `validation` [\#28](https://github.com/mllam/mllam-data-prep/pull/28)
+- fix typo in install dependency `distributed` ![\#20](https://github.com/mllam/mllam-data-prep/pull/20)
+- add missing `psutil` requirement. [\#21](https://github.com/mllam/mllam-data-prep/pull/21).
+
 ## [v0.3.0](https://github.com/mllam/mllam-data-prep/releases/tag/v0.3.0)
 
 [All changes](https://github.com/mllam/mllam-data-prep/compare/v0.3.0...v0.2.0)

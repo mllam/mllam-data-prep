@@ -208,6 +208,9 @@ extra:
       central_longitude: 25.0
       central_latitude: 56.7
       standard_parallels: [56.7, 56.7]
+      globe:
+        semimajor_axis: 6367470.0
+        semiminor_axis: 6367470.0
 ```
 
 Apart from identifiers to keep track of the configuration file format version and the dataset version (for you to keep track of changes that you make to the dataset), the configuration file is divided into two main sections:

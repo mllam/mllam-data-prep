@@ -334,7 +334,7 @@ def test_optional_extra_section(extra_content):
     mdp.create_dataset_zarr(fp_config=fp_config)
 
 
-CONFIG_REVISION_EXAMPLES_PATH = Path(__file__).parent / "config_examples"
+CONFIG_REVISION_EXAMPLES_PATH = Path(__file__).parent / "old_config_schema_examples"
 
 
 def find_config_revision_examples():

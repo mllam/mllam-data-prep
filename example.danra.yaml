@@ -21,30 +21,30 @@ output:
         end: 1990-09-06T00:00
         compute_statistics:
           MeanOperator:
-            - name: mean
+            - var_name: mean
               dims: [grid_index, time]
           StdOperator:
-            - name: std
+            - var_name: std
               dims: [grid_index, time]
           DiffMeanOperator:
-            - name: diff_mean
+            - var_name: diff_mean
               dims: [grid_index, time]
-            - name: diff_time_mean
+            - var_name: diff_time_mean
               dims: [time]
           DiffStdOperator:
-            - name: diff_std
+            - var_name: diff_std
               dims: [grid_index, time]
-            - name: diff_time_std
+            - var_name: diff_time_std
               dims: [time]
           DiurnalDiffMeanOperator:
-            - name: diurnal_diff_mean
+            - var_name: diurnal_diff_mean
               dims: [grid_index, time]
-            - name: diurnal_diff_time_mean
+            - var_name: diurnal_diff_time_mean
               dims: [time]
           DiurnalDiffStdOperator:
-            - name: diurnal_diff_std
+            - var_name: diurnal_diff_std
               dims: [grid_index, time]
-            - name: diurnal_diff_time_std
+            - var_name: diurnal_diff_time_std
               dims: [time]
       val:
         start: 1990-09-06T00:00

@@ -41,9 +41,9 @@ def calc_stats(
             # of the same operator can be applied)
             for statistic in statistics:
                 operator: StatisticOperator = globals()[stat_name](
-                    ds=ds, splitting_dim=splitting_dim, name=statistic.name
+                    ds=ds, splitting_dim=splitting_dim, var_name=statistic.var_name
                 )
-                stats[statistic.name] = operator.calc_stats(statistic.dims)
+                stats[statistic.var_name] = operator.calc_stats(statistic.dims)
         else:
             raise NotImplementedError(stat_name)
 
@@ -67,7 +67,7 @@ class StatisticOperator(ABC):
 
     ds: xr.Dataset
     splitting_dim: str
-    name: str
+    var_name: str
 
     @abstractmethod
     def calc_stats(self, dims):

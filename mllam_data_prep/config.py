@@ -171,7 +171,7 @@ class Statistic:
         The dimensions to compute the statistics over, e.g. ["time", "grid_index"].
     """
 
-    name: str
+    var_name: str
     dims: List[str]
 
 

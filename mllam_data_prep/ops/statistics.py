@@ -1,12 +1,16 @@
-from typing import Dict
+"""Export functions to calculate statistics for a given Dataset."""
+
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Dict, List
 
 import xarray as xr
 
-from ..config import Statistics
+from ..config import Statistic
 
 
 def calc_stats(
-    ds: xr.Dataset, statistics_config: Statistics, splitting_dim: str
+    ds: xr.Dataset, statistic_configs: Dict[str, List[Statistic]], splitting_dim: str
 ) -> Dict[str, xr.Dataset]:
     """
     Calculate statistics for a given DataArray by applying the operations
@@ -17,11 +21,11 @@ def calc_stats(
     ----------
     ds : xr.Dataset
         Dataset to calculate statistics for
-    statistics_config : Statistics
+    statistic_configs : Statistics
         Configuration object specifying the operations and dimensions to reduce over
     splitting_dim : str
-        Dimension along which splits are made, this is used to calculate differences
-        for operations prefixed with "diff_", for example "diff_mean" or "diff_std".
+        Dimension along which splits are made, this is used to calculate difference
+        operations, for example "DiffMeanOperator" or "DiffStdOperator".
         Only the variables which actually span along the splitting_dim will be included
         in the output.
 
@@ -31,22 +35,104 @@ def calc_stats(
         Dictionary with the operation names as keys and the calculated statistics as values
     """
     stats = {}
-    for op_split in statistics_config.ops:
-        try:
-            pre_op, op = op_split.split("_")
-        except ValueError:
-            op = op_split
-            pre_op = None
-
-        if pre_op is not None:
-            if pre_op == "diff":
-                # subset to select only the variable which have the splitting_dim
-                vars_to_keep = [v for v in ds.data_vars if splitting_dim in ds[v].dims]
-                ds = ds[vars_to_keep].diff(dim=splitting_dim)
-            else:
-                raise NotImplementedError(pre_op)
-
-        fn = getattr(ds, op)
-        stats[op_split] = fn(dim=statistics_config.dims)
+    for stat_name, statistics in statistic_configs.items():
+        if stat_name in globals():
+            # Apply the operation to the dataset (multiple different configurations
+            # of the same operator can be applied)
+            for statistic in statistics:
+                operator: StatisticOperator = globals()[stat_name](
+                    ds=ds, splitting_dim=splitting_dim, var_name=statistic.var_name
+                )
+                stats[statistic.var_name] = operator.calc_stats(statistic.dims)
+        else:
+            raise NotImplementedError(stat_name)
 
     return stats
+
+
+@dataclass
+class StatisticOperator(ABC):
+    """Base class to calculate statistics for a given Dataset.
+
+    Attributes:
+    -----------
+    ds : xr.Dataset
+        Dataset to calculate statistics for
+    splitting_dim : str
+        Dimension along which splits are made, this is used to calculate difference
+        operations, for example "DiffMeanOperator" or "DiffStdOperator".
+        Only the variables which actually span along the splitting_dim will be included
+        in the output.
+    """
+
+    ds: xr.Dataset
+    splitting_dim: str
+    var_name: str
+
+    @abstractmethod
+    def calc_stats(self, dims):
+        """Override this method to implement the actual calculation"""
+
+
+class MeanOperator(StatisticOperator):
+    """Calculate the mean along the specified dimensions."""
+
+    def calc_stats(self, dims):
+        return self.ds.mean(dim=dims)
+
+
+class StdOperator(StatisticOperator):
+    """Calculate the standard deviation along the specified dimensions."""
+
+    def calc_stats(self, dims):
+        return self.ds.std(dim=dims)
+
+
+class DiffMeanOperator(StatisticOperator):
+    """Calculate the mean of the differences along the specified dimensions."""
+
+    def calc_stats(self, dims):
+        vars_to_keep = [
+            v for v in self.ds.data_vars if self.splitting_dim in self.ds[v].dims
+        ]
+        ds_diff = self.ds[vars_to_keep].diff(dim=self.splitting_dim)
+        return ds_diff.mean(dim=dims)
+
+
+class DiffStdOperator(StatisticOperator):
+    """Calculate std of the differences along the specified dimensions."""
+
+    def calc_stats(self, dims):
+        vars_to_keep = [
+            v for v in self.ds.data_vars if self.splitting_dim in self.ds[v].dims
+        ]
+        ds_diff = self.ds[vars_to_keep].diff(dim=self.splitting_dim)
+        return ds_diff.std(dim=dims)
+
+
+class DiurnalDiffMeanOperator(StatisticOperator):
+    """Calculate the mean of the diurnal differences along the specified dimensions."""
+
+    def calc_stats(self, dims):
+        vars_to_keep = [
+            v for v in self.ds.data_vars if self.splitting_dim in self.ds[v].dims
+        ]
+        ds_diff = self.ds[vars_to_keep].diff(dim=self.splitting_dim)
+
+        # Group by hour and calculate mean
+        grouped = ds_diff.groupby("time.hour")
+        return grouped.mean(dim=dims)
+
+
+class DiurnalDiffStdOperator(StatisticOperator):
+    """Calculate the std of the diurnal differences along the specified dimensions."""
+
+    def calc_stats(self, dims):
+        vars_to_keep = [
+            v for v in self.ds.data_vars if self.splitting_dim in self.ds[v].dims
+        ]
+        ds_diff = self.ds[vars_to_keep].diff(dim=self.splitting_dim)
+
+        # Group by hour and calculate mean
+        grouped = ds_diff.groupby("time.hour")
+        return grouped.std(dim=dims)

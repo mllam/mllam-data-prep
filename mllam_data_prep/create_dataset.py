@@ -213,7 +213,7 @@ def create_dataset(config: Config):
                 logger.info(f"Computing statistics for split {split_name}")
                 split_stats = calc_stats(
                     ds=ds_split,
-                    statistics_config=split_config.compute_statistics,
+                    statistic_configs=split_config.compute_statistics,
                     splitting_dim=splitting.dim,
                 )
                 for op, op_dataarrays in split_stats.items():

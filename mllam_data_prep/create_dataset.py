@@ -197,7 +197,7 @@ def create_dataset(config: Config):
                 logger.info(f"Computing statistics for split {split_name}")
                 split_stats = calc_stats(
                     ds=ds_split,
-                    statistics_config=split_config.compute_statistics,
+                    statistic_configs=split_config.compute_statistics,
                     splitting_dim=splitting.dim,
                 )
                 for op, op_dataarrays in split_stats.items():
@@ -218,9 +218,9 @@ def create_dataset(config: Config):
     ds.attrs["schema_version"] = config.schema_version
     ds.attrs["dataset_version"] = config.dataset_version
     ds.attrs["created_on"] = datetime.datetime.now().replace(microsecond=0).isoformat()
-    ds.attrs[
-        "created_with"
-    ] = "mllam-data-prep (https://github.com/mllam/mllam-data-prep)"
+    ds.attrs["created_with"] = (
+        "mllam-data-prep (https://github.com/mllam/mllam-data-prep)"
+    )
     ds.attrs["mdp_version"] = f"v{__version__}"
 
     return ds

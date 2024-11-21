@@ -157,7 +157,7 @@ class InputDataset:
 
 
 @dataclass
-class Statistics:
+class Statistic:
     """
     Define the statistics to compute for the output dataset, this includes defining
     the the statistics to compute and the dimensions to compute the statistics over.
@@ -171,7 +171,6 @@ class Statistics:
         The dimensions to compute the statistics over, e.g. ["time", "grid_index"].
     """
 
-    ops: List[str]
     dims: List[str]
 
 
@@ -193,7 +192,7 @@ class Split:
 
     start: str
     end: str
-    compute_statistics: Statistics = None
+    compute_statistics: Dict[str, Statistic] = None
 
 
 @dataclass

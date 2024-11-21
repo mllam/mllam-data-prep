@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Dict
+from typing import Dict, List
 
 import xarray as xr
 
@@ -10,7 +10,7 @@ from ..config import Statistic
 
 
 def calc_stats(
-    ds: xr.Dataset, statistic_configs: Dict[str, Statistic], splitting_dim: str
+    ds: xr.Dataset, statistic_configs: Dict[str, List[Statistic]], splitting_dim: str
 ) -> Dict[str, xr.Dataset]:
     """
     Calculate statistics for a given DataArray by applying the operations
@@ -35,10 +35,15 @@ def calc_stats(
         Dictionary with the operation names as keys and the calculated statistics as values
     """
     stats = {}
-    for stat_name, statistic in statistic_configs.items():
+    for stat_name, statistics in statistic_configs.items():
         if stat_name in globals():
-            stat: StatisticOperator = globals()[stat_name](ds, splitting_dim)
-            stats[stat.name] = stat.calc_stats(statistic.dims)
+            # Apply the operation to the dataset (multiple different configurations
+            # of the same operator can be applied)
+            for statistic in statistics:
+                operator: StatisticOperator = globals()[stat_name](
+                    ds=ds, splitting_dim=splitting_dim, name=statistic.name
+                )
+                stats[statistic.name] = operator.calc_stats(statistic.dims)
         else:
             raise NotImplementedError(stat_name)
 
@@ -62,11 +67,7 @@ class StatisticOperator(ABC):
 
     ds: xr.Dataset
     splitting_dim: str
-
-    @property
-    @abstractmethod
-    def name(self):
-        """Override property to specify the name of the statistic"""
+    name: str
 
     @abstractmethod
     def calc_stats(self, dims):
@@ -76,8 +77,6 @@ class StatisticOperator(ABC):
 class MeanOperator(StatisticOperator):
     """Calculate the mean along the specified dimensions."""
 
-    name = "mean"
-
     def calc_stats(self, dims):
         return self.ds.mean(dim=dims)
 
@@ -85,16 +84,12 @@ class MeanOperator(StatisticOperator):
 class StdOperator(StatisticOperator):
     """Calculate the standard deviation along the specified dimensions."""
 
-    name = "std"
-
     def calc_stats(self, dims):
         return self.ds.std(dim=dims)
 
 
 class DiffMeanOperator(StatisticOperator):
     """Calculate the mean of the differences along the specified dimensions."""
-
-    name = "diff_mean"
 
     def calc_stats(self, dims):
         vars_to_keep = [
@@ -107,8 +102,6 @@ class DiffMeanOperator(StatisticOperator):
 class DiffStdOperator(StatisticOperator):
     """Calculate std of the differences along the specified dimensions."""
 
-    name = "diff_std"
-
     def calc_stats(self, dims):
         vars_to_keep = [
             v for v in self.ds.data_vars if self.splitting_dim in self.ds[v].dims
@@ -117,20 +110,8 @@ class DiffStdOperator(StatisticOperator):
         return ds_diff.std(dim=dims)
 
 
-class DiffTimeMeanOperator(DiffMeanOperator):
-    """Calculate the mean of the differences along the time dimension.
-
-    This is a duplicate of the DiffMeanOperator to allow for averaging over
-    other dimensions.
-    """
-
-    name = "diff_time_mean"
-
-
 class DiurnalDiffMeanOperator(StatisticOperator):
     """Calculate the mean of the diurnal differences along the specified dimensions."""
-
-    name = "diurnal_mean"
 
     def calc_stats(self, dims):
         vars_to_keep = [
@@ -145,8 +126,6 @@ class DiurnalDiffMeanOperator(StatisticOperator):
 
 class DiurnalDiffStdOperator(StatisticOperator):
     """Calculate the std of the diurnal differences along the specified dimensions."""
-
-    name = "diurnal_std"
 
     def calc_stats(self, dims):
         vars_to_keep = [

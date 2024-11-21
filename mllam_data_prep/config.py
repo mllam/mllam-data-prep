@@ -171,6 +171,7 @@ class Statistic:
         The dimensions to compute the statistics over, e.g. ["time", "grid_index"].
     """
 
+    name: str
     dims: List[str]
 
 
@@ -192,7 +193,7 @@ class Split:
 
     start: str
     end: str
-    compute_statistics: Dict[str, Statistic] = None
+    compute_statistics: Dict[str, List[Statistic]] = None
 
 
 @dataclass

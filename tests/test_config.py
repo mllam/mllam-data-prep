@@ -2,6 +2,7 @@ import pytest
 from dataclass_wizard.errors import MissingFields, UnknownJSONKey
 
 import mllam_data_prep as mdp
+import tests.data as testdata
 
 INVALID_EXTRA_FIELDS_CONFIG_YAML = """
 schema_version: v0.1.0
@@ -36,7 +37,7 @@ def test_get_config_issues():
 
 
 VALID_EXAMPLE_CONFIG_YAML = """
-schema_version: v0.1.0
+schema_version: {schema_version}
 dataset_version: v0.1.0
 
 output:
@@ -107,7 +108,7 @@ inputs:
         method: stack_variables_by_var_name
         name_format: f"{var_name}"
     target_output_variable: forcing
-"""
+""".format(schema_version=testdata.SCHEMA_VERSION)
 
 
 def test_get_config_nested():

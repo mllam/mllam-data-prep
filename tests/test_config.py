@@ -112,6 +112,7 @@ inputs:
     schema_version=testdata.SCHEMA_VERSION
 )
 
+
 def test_get_config_nested():
     config = mdp.Config.from_yaml(VALID_EXAMPLE_CONFIG_YAML)
 

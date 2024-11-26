@@ -33,7 +33,7 @@ def _extract_grid_mapping_names(grid_mapping_attr: str) -> List[str]:
     >>> _extract_grid_mapping_names(m2)
     ['crsOSGB']
 
-    Note: merge of https://github.com/pydata/xarray/pull/9765 of will allow xarray to handle this directly.
+    Note: merge of https://github.com/pydata/xarray/pull/9765 will allow xarray to handle this directly.
     """
     if ":" not in grid_mapping_attr:
         return grid_mapping_attr.split(" ")

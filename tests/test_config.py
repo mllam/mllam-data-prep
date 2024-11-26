@@ -108,8 +108,9 @@ inputs:
         method: stack_variables_by_var_name
         name_format: f"{var_name}"
     target_output_variable: forcing
-""".format(schema_version=testdata.SCHEMA_VERSION)
-
+""".format(
+    schema_version=testdata.SCHEMA_VERSION
+)
 
 def test_get_config_nested():
     config = mdp.Config.from_yaml(VALID_EXAMPLE_CONFIG_YAML)

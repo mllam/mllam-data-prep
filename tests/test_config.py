@@ -86,7 +86,7 @@ inputs:
       state_feature:
         method: stack_variables_by_var_name
         dims: [altitude]
-        name_format: f"{var_name}{altitude}m"
+        name_format: f"{{var_name}}{{altitude}}m"
       grid_index:
         method: stack
         dims: [x, y]
@@ -106,7 +106,7 @@ inputs:
         dims: [x, y]
       forcing_feature:
         method: stack_variables_by_var_name
-        name_format: f"{var_name}"
+        name_format: f"{{var_name}}"
     target_output_variable: forcing
 """.format(
     schema_version=testdata.SCHEMA_VERSION

@@ -112,7 +112,7 @@ ds = mdp.create_dataset(config=config)
 A full example configuration file is given in [example.danra.yaml](example.danra.yaml), and reproduced here for completeness:
 
 ```yaml
-schema_version: v0.2.0
+schema_version: v0.5.0
 dataset_version: v0.1.0
 
 output:
@@ -163,7 +163,7 @@ inputs:
       state_feature:
         method: stack_variables_by_var_name
         dims: [altitude]
-        name_format: f"{var_name}{altitude}m"
+        name_format: "{var_name}{altitude}m"
       grid_index:
         method: stack
         dims: [x, y]
@@ -184,7 +184,7 @@ inputs:
         dims: [x, y]
       forcing_feature:
         method: stack_variables_by_var_name
-        name_format: f"{var_name}"
+        name_format: "{var_name}"
     target_output_variable: forcing
 
   danra_lsm:
@@ -198,15 +198,27 @@ inputs:
         dims: [x, y]
       static_feature:
         method: stack_variables_by_var_name
-        name_format: f"{var_name}"
+        name_format: "{var_name}"
     target_output_variable: static
 
+extra:
+  projection:
+    class_name: LambertConformal
+    kwargs:
+      central_longitude: 25.0
+      central_latitude: 56.7
+      standard_parallels: [56.7, 56.7]
+      globe:
+        semimajor_axis: 6367470.0
+        semiminor_axis: 6367470.0
 ```
 
 Apart from identifiers to keep track of the configuration file format version and the dataset version (for you to keep track of changes that you make to the dataset), the configuration file is divided into two main sections:
 
 - `output`: defines the variables and dimensions of the output dataset produced by `mllam-data-prep`. These are the variables and dimensions that the input datasets will be mapped to. These output variables and dimensions should match the input variables and dimensions expected by the model architecture you are training.
 - `inputs`: a list of source datasets to extract data from. These are the datasets that will be mapped to the architecture defined in the `architecture` section.
+
+If you want to add any extra information to the configuration file you can add it to the `extra` section. This section is not used or validated by `mllam-data-prep` but can be used to store any extra information you want to keep track of (for example when using `mllam-data-prep` with [neural-lam](https://github.com/mllam/neural-lam) the `extra` section is used to store the projection information).
 
 ### The `output` section
 
@@ -270,7 +282,7 @@ inputs:
       state_feature:
         method: stack_variables_by_var_name
         dims: [altitude]
-        name_format: f"{var_name}{altitude}m"
+        name_format: "{var_name}{altitude}m"
       grid_index:
         method: stack
         dims: [x, y]
@@ -292,7 +304,7 @@ inputs:
         dims: [x, y]
       forcing_feature:
         method: stack_variables_by_var_name
-        name_format: f"{var_name}"
+        name_format: "{var_name}"
     target_architecture_variable: forcing
 
   ...
@@ -308,3 +320,10 @@ The `inputs` section defines the source datasets to extract data from. Each sour
   - `rename`: simply rename the dimension to the new name
   - `stack`: stack the listed dimension to create the dimension in the output
   - `stack_variables_by_var_name`: stack the dimension into the new dimension, and also stack the variable name into the new variable name. This is useful when you have multiple variables with the same dimensions that you want to stack into a single variable.
+
+
+### Config schema versioning
+
+The schema version of the configuration file is defined by the `schema_version` attribute at the top of the configuration file. This is used to keep track of changes to the configuration file format. The schema version is used to check that the configuration file is compatible with the version of `mllam-data-prep` that you are using. If the schema version of the configuration file is not compatible with the version of `mllam-data-prep` that you are using you will get an error message telling you that the schema version is not compatible.
+
+The schema version is updated whenever the configuration format changes, with the new schema version matching the minimum version of `mllam-data-prep` that is required to use the new configuration format. As `mllam-data-prep` is still in rapid development (and hasn't reached version `v1.0.0` yet) we unfortunately make no gaurantee about backward compatibility. However, the [CHANGELOG.md](CHANGELOG.md) will always contain migration instructions when the config format changes.

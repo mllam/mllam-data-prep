@@ -201,6 +201,10 @@ def create_dataset(config: Config):
             logger.warning(
                 f"No projection information found neither in dataset {dataset_name}, nor in config."
             )
+        elif projection_crs is not None and dataset_projections:
+            logger.warning(
+                f"Projection information given in {dataset_name} is overwritten by that given in config."
+            )
         if projection_crs is not None:
             projections.extend(projection_crs.values())
 

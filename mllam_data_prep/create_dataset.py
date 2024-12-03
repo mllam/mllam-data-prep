@@ -4,6 +4,7 @@ from collections import defaultdict
 from pathlib import Path
 
 import numpy as np
+import parse
 import xarray as xr
 from loguru import logger
 from numcodecs import Blosc
@@ -18,6 +19,9 @@ from .ops.statistics import calc_stats
 # the `extra` field in the config that was added between v0.2.0 and v0.5.0 is
 # optional, so we can support both v0.2.0 and v0.5.0
 SUPPORTED_CONFIG_VERSIONS = ["v0.2.0", "v0.5.0"]
+
+STATISTICS_VARIABLE_NAME_FORMAT = "{var_name}__{split_name}__{op}"
+SOURCE_DATASET_NAME_ATTR = "source_dataset"
 
 
 def _check_dataset_attributes(ds, expected_attributes, dataset_name):
@@ -172,7 +176,7 @@ def create_dataset(config: Config):
                 f" produce variable {target_output_var} from dataset {dataset_name}"
             ) from ex
 
-        da_target.attrs["source_dataset"] = dataset_name
+        da_target.attrs[SOURCE_DATASET_NAME_ATTR] = dataset_name
 
         # only need to do selection for the coordinates that the input dataset actually has
         if output_coord_ranges is not None:
@@ -218,7 +222,10 @@ def create_dataset(config: Config):
                 )
                 for op, op_dataarrays in split_stats.items():
                     for var_name, da in op_dataarrays.items():
-                        ds[f"{var_name}__{split_name}__{op}"] = da
+                        stat_var_name = STATISTICS_VARIABLE_NAME_FORMAT.format(
+                            var_name=var_name, split_name=split_name, op=op
+                        )
+                        ds[stat_var_name] = da
 
         # add a new variable which contains the start, stop for each split, the coords would then be the split names
         # and the data would be the start, stop values
@@ -278,3 +285,44 @@ def create_dataset_zarr(fp_config, fp_zarr: str = None):
     logger.info(f"Wrote training-ready dataset to {fp_zarr}")
 
     logger.info(ds)
+
+
+def recreate_inputs(config: Config, ds: xr.Dataset):
+    """
+    Recreate the input datasets from a zarr file created by
+    `create_dataset_zarr` by applying inverse operations to each step.
+
+    Parameters
+    ----------
+    config : Config
+        The configuration object defining the input datasets and how to map them to the output dataset.
+    """
+
+    for input_name, input_config in config.inputs.items():
+        dim_mapping = input_config.dim_mapping
+        da_target = ds[input_config.target_output_variable]
+
+        # find the dim mapping item that is the one where variable names
+        # are stacked into a feature dimension
+        feature_dim_name = None
+        for output_dim, mapping_config in dim_mapping.items():
+            if mapping_config.method == "stack_variables_by_var_name":
+                feature_dim_name = output_dim
+                source_dims = mapping_config.dims
+                name_format = mapping_config.name_format
+
+        name_parts = []
+        for feature_value in da_target[feature_dim_name].values:
+            name_parts.append(parse.parse(name_format, feature_value).named)
+
+        # add a variable for each source-dimension name, so that we can unstack with this later
+        for d in source_dims:
+            values = [name_part[d] for name_part in name_parts]
+            da_target[d] = xr.DataArray(values, dims=[feature_dim_name])
+
+        if len(source_dims) == 1:
+            da_target = da_target.swap_dims({feature_dim_name: source_dims[0]})
+        else:
+            da_target = da_target.set_index({feature_dim_name: source_dims}).unstack(
+                feature_dim_name
+            )

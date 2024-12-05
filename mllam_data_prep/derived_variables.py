@@ -47,24 +47,28 @@ def derive_variables(fp, derived_variables, chunking):
         # chunked dask arrays
         chunks = {d: chunking.get(d, int(ds_input[d].count())) for d in ds_input.dims}
         required_coordinates = [
-            req_var for req_var in required_variables if req_var in ds_input.coords
+            req_var
+            for req_var in required_variables.keys()
+            if req_var in ds_input.coords
         ]
         ds_input = ds_input.drop_indexes(required_coordinates, errors="ignore")
-        for req_var in required_variables.keys():
-            if req_var in ds_input.coords and req_var in chunks:
-                ds_input = ds_input.reset_coords(req_var)
+        for req_coord in required_coordinates:
+            if req_coord in chunks:
+                ds_input = ds_input.reset_coords(req_coord)
 
         # Chunk the data variables
         ds_input = ds_input.chunk(chunks)
 
         # Calculate the derived variable
-        kwargs = {v: ds_input[v] for v in required_variables.values()}
+        kwargs = {v: ds_input[k] for k, v in required_variables.items()}
         func = get_derived_variable_function(function_name)
         derived_field = func(**kwargs)
-
+        derived_field = _return_dropped_coordinates(
+            derived_field, ds_input, required_coordinates, chunks
+        )
         ds_subset[derived_field.name] = derived_field
 
-    return ds
+    return ds_subset
 
 
 def get_derived_variable_function(function_namespace):
@@ -111,6 +115,15 @@ def get_derived_variable_function(function_namespace):
             )
 
     return function
+
+
+def _return_dropped_coordinates(derived_field, ds_input, required_coordinates, chunks):
+    """Return coordinates that have been reset."""
+    for req_coord in required_coordinates:
+        if req_coord in chunks:
+            derived_field.coords[req_coord] = ds_input[req_coord]
+
+    return derived_field
 
 
 def calculate_toa_radiation(lat, lon, time):

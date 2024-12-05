@@ -82,7 +82,7 @@ inputs:
           time: time
           lat: lat
           lon: lon
-        function: mllam_data_prep.derived_variables.derive_toa_radiation
+        function: mllam_data_prep.derived_variables.calculate_toa_radiation
     dim_mapping:
       time:
         method: rename

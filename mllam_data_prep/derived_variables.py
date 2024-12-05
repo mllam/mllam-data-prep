@@ -1,13 +1,12 @@
 import importlib
 import sys
 
-import dask.array as da
 import numpy as np
 import xarray as xr
 from loguru import logger
 
 
-def derive_variables(fp, derived_variables):
+def derive_variables(fp, derived_variables, chunking):
     """
     Load the dataset, and derive the specified variables
 
@@ -20,6 +19,9 @@ def derive_variables(fp, derived_variables):
         Dictionary with the variables to derive
         with keys as the variable names and values with entries for
         kwargs and function to use in the calculation
+    chunking: dict
+        Dictionary with keys as the dimensions to chunk along and values
+        with the chunk size
 
     Returns
     -------
@@ -35,19 +37,31 @@ def derive_variables(fp, derived_variables):
 
     ds_subset = xr.Dataset()
     ds_subset.attrs.update(ds.attrs)
-    # Iterate derived variables
     for _, derived_variable in derived_variables.items():
         required_variables = derived_variable.kwargs
         function_name = derived_variable.function
-        # Create the input dataset containing the required variables to derive
-        # the specified variable
         ds_input = ds[required_variables.keys()]
-        kwargs = {v: ds_input[v] for v in required_variables.values()}
-        # Get the function to be used to derive the variable
-        func = get_derived_variable_function(function_name)
+
+        # Any coordinates needed for the derivation, for which chunking should be performed,
+        # should be converted to variables since it is not possible for coordinates to be
+        # chunked dask arrays
+        chunks = {d: chunking.get(d, int(ds_input[d].count())) for d in ds_input.dims}
+        required_coordinates = [
+            req_var for req_var in required_variables if req_var in ds_input.coords
+        ]
+        ds_input = ds_input.drop_indexes(required_coordinates, errors="ignore")
+        for req_var in required_variables.keys():
+            if req_var in ds_input.coords and req_var in chunks:
+                ds_input = ds_input.reset_coords(req_var)
+
+        # Chunk the data variables
+        ds_input = ds_input.chunk(chunks)
+
         # Calculate the derived variable
+        kwargs = {v: ds_input[v] for v in required_variables.values()}
+        func = get_derived_variable_function(function_name)
         derived_field = func(**kwargs)
-        # Add the derived variable(s) to the subsetted dataset
+
         ds_subset[derived_field.name] = derived_field
 
     return ds
@@ -99,77 +113,49 @@ def get_derived_variable_function(function_namespace):
     return function
 
 
-def derive_toa_radiation(lat, lon, time):
+def calculate_toa_radiation(lat, lon, time):
     """
-    Derive approximate TOA radiation (instantaneous values [W*m**-2])
+    Function for calculating top-of-the-atmosphere radiation
 
     Parameters
     ----------
-    lat : xr.DataArray
+    lat : xr.DataArray or float
         Latitude values
-    lon : xr.DataArray
+    lon : xr.DataArray or float
         Longitude values
-    time : xr.DataArray
+    time : xr.DataArray or datetime object
         Time
 
     Returns
     -------
-    toa_radiation: xr.DataArray
-        TOA radiation data-array
+    toa_radiation: xr.DataArray or float
+        TOA radiation data
     """
     logger.info("Calculating top-of-atmosphere radiation")
 
-    # Need to construct a new dataset with chunks since
-    # lat and lon are coordinates and are therefore eagerly loaded
-    ds_dict = {}
-    ds_dict["lat"] = (list(lat.dims), da.from_array(lat.values, chunks=(-1, -1)))
-    ds_dict["lon"] = (list(lon.dims), da.from_array(lon.values, chunks=(-1, -1)))
-    ds_dict["t"] = (list(time.dims), da.from_array(time.values, chunks=(10)))
-    ds_chunks = xr.Dataset(ds_dict)
-
-    # Calculate TOA radiation
-    toa_radiation = calc_toa_radiation(ds_chunks)
-
-    if isinstance(toa_radiation, xr.DataArray):
-        # Add attributes
-        toa_radiation.name = "toa_radiation"
-
-    return toa_radiation
-
-
-def calc_toa_radiation(ds):
-    """
-    Function for calculation top-of-the-atmosphere radiation
-
-    Parameters
-    ----------
-    ds : xr.Dataset
-        The dataset with variables needed to derive TOA radiation
-
-    Returns
-    -------
-    toa_radiation: xr.DataArray
-        TOA radiation data-array
-    """
     # Solar constant
     E0 = 1366  # W*m**-2
 
-    day = ds.t.dt.dayofyear
-    hr_utc = ds.t.dt.hour
+    day = time.dt.dayofyear
+    hr_utc = time.dt.hour
 
     # Eq. 1.6.1a in Solar Engineering of Thermal Processes 4th ed.
     dec = np.pi / 180 * 23.45 * np.sin(2 * np.pi * (284 + day) / 365)
 
-    hr_lst = hr_utc + ds.lon / 15
+    hr_lst = hr_utc + lon / 15
     hr_angle = 15 * (hr_lst - 12)
 
     # Eq. 1.6.2 with beta=0 in Solar Engineering of Thermal Processes 4th ed.
-    cos_sza = np.sin(ds.lat * np.pi / 180) * np.sin(dec) + np.cos(
-        ds.lat * np.pi / 180
+    cos_sza = np.sin(lat * np.pi / 180) * np.sin(dec) + np.cos(
+        lat * np.pi / 180
     ) * np.cos(dec) * np.cos(hr_angle * np.pi / 180)
 
     # Where TOA radiation is negative, set to 0
     toa_radiation = xr.where(E0 * cos_sza < 0, 0, E0 * cos_sza)
+
+    if isinstance(toa_radiation, xr.DataArray):
+        # Add attributes
+        toa_radiation.name = "toa_radiation"
 
     return toa_radiation
 
@@ -232,7 +218,7 @@ def derive_day_of_year(ds):
     return ds
 
 
-def cyclic_encoding(da, da_max):
+def cyclic_encoding(data_array, da_max):
     """
     Cyclic encoding of data
 
@@ -251,7 +237,7 @@ def cyclic_encoding(da, da_max):
         Sine part of cyclically encoded input data-array
     """
 
-    da_sin = np.sin((da / da_max) * 2 * np.pi)
-    da_cos = np.cos((da / da_max) * 2 * np.pi)
+    data_array_sin = np.sin((data_array / da_max) * 2 * np.pi)
+    data_array_cos = np.cos((data_array / da_max) * 2 * np.pi)
 
-    return da_cos, da_sin
+    return data_array_cos, data_array_sin

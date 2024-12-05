@@ -105,6 +105,7 @@ def create_dataset(config: Config):
     """
     output_config = config.output
     output_coord_ranges = output_config.coord_ranges
+    chunking_config = config.output.chunking or {}
 
     dataarrays_by_target = defaultdict(list)
 
@@ -121,7 +122,9 @@ def create_dataset(config: Config):
         if variables:
             logger.info(f"Loading dataset {dataset_name} from {path} and subsetting")
             try:
-                ds = load_and_subset_dataset(fp=path, variables=variables)
+                ds = load_and_subset_dataset(
+                    fp=path, variables=variables, chunking=chunking_config
+                )
             except Exception as ex:
                 raise Exception(
                     f"Error loading dataset {dataset_name} from {path}"
@@ -137,7 +140,11 @@ def create_dataset(config: Config):
                 f"Loading dataset {dataset_name} from {path} and deriving variables"
             )
             try:
-                ds = derive_variables(fp=path, derived_variables=derived_variables)
+                ds = derive_variables(
+                    fp=path,
+                    derived_variables=derived_variables,
+                    chunking=chunking_config,
+                )
             except Exception as ex:
                 raise Exception(
                     f"Error loading dataset {dataset_name} from {path}"
@@ -196,7 +203,6 @@ def create_dataset(config: Config):
 
     # default to making a single chunk for each dimension if chunksize is not specified
     # in the config
-    chunking_config = config.output.chunking or {}
     logger.info(f"Chunking dataset with {chunking_config}")
     chunks = {d: chunking_config.get(d, int(ds[d].count())) for d in ds.dims}
     ds = ds.chunk(chunks)

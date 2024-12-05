@@ -1,7 +1,7 @@
 import xarray as xr
 
 
-def load_and_subset_dataset(fp, variables):
+def load_and_subset_dataset(fp, variables, chunking):
     """
     Load the dataset, subset the variables along the specified coordinates and
     check coordinate units
@@ -15,6 +15,9 @@ def load_and_subset_dataset(fp, variables):
         Dictionary with the variables to subset
         with keys as the variable names and values with entries for each
         coordinate and coordinate values to extract
+    chunking: dict
+        Dictionary with keys as the dimensions to chunk along and values
+        with the chunk size
     """
 
     try:
@@ -54,5 +57,8 @@ def load_and_subset_dataset(fp, variables):
             ) from ex
     else:
         raise ValueError("The `variables` argument should be a list or a dictionary")
+
+    chunks = {d: chunking.get(d, int(ds_subset[d].count())) for d in ds_subset.dims}
+    ds_subset = ds_subset.chunk(chunks)
 
     return ds_subset

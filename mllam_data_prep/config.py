@@ -53,6 +53,22 @@ class ValueSelection:
 
 
 @dataclass
+class DerivedVariable:
+    """
+    Defines a derived variables, where the kwargs (variables required
+    for the calculation) and the function (for calculating the variable)
+    are specified.
+
+    Attributes:
+        kwargs: Variables required for calculating the derived variable.
+        function: Function used to calculate the derived variable.
+    """
+
+    kwargs: Dict[str, str]
+    function: str
+
+
+@dataclass
 class DimMapping:
     """
     Defines the process for mapping dimensions and variables from an input
@@ -155,9 +171,10 @@ class InputDataset:
 
     path: str
     dims: List[str]
-    variables: Union[List[str], Dict[str, Dict[str, ValueSelection]]]
     dim_mapping: Dict[str, DimMapping]
     target_output_variable: str
+    variables: Union[List[str], Dict[str, Dict[str, ValueSelection]]] = None
+    derived_variables: Dict[str, DerivedVariable] = None
     attributes: Dict[str, Any] = None
 
 

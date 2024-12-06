@@ -78,6 +78,7 @@ class DerivedVariable:
 
     kwargs: Dict[str, str]
     function: str
+    attributes: Dict[str, Any] = None
 
 
 @dataclass
@@ -148,7 +149,8 @@ class InputDataset:
         1) the path to the dataset,
         2) the expected dimensions of the dataset,
         3) the variables to select from the dataset (and optionally subsection
-           along the coordinates for each variable) and finally
+           along the coordinates for each variable) and/or the variables to derive
+           from the dataset, and finally
         4) the method by which the dimensions and variables of the dataset are
            mapped to one of the output variables (this includes stacking of all
            the selected variables into a new single variable along a new coordinate,
@@ -179,6 +181,12 @@ class InputDataset:
         (e.g. two datasets that coincide in space and time will only differ in the feature dimension,
         so the two will be combined by concatenating along the feature dimension).
         If a single shared coordinate cannot be found then an exception will be raised.
+    derived_variables: Dict[str, DerivedVariable]
+        Dictionary of variables to derive from the dataset, where the keys are the variable names and
+        the values are dictionaries defining the necessary function and kwargs. E.g.
+        `{"toa_radiation": {"kwargs": {"time": "time", "lat": "lat", "lon": "lon"}, "function": "calculate_toa_radiation"}}`
+        would derive the "toa_radiation" variable using the `calculate_toa_radiation` function, which
+        takes `time`, `lat` and `lon` as arguments.
     """
 
     path: str

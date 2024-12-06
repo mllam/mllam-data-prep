@@ -148,6 +148,7 @@ def create_dataset(config: Config):
             except Exception as ex:
                 raise Exception(
                     f"Error loading dataset {dataset_name} from {path}"
+                    f" or deriving variables '{', '.join(list(derived_variables.keys()))}'."
                 ) from ex
             _check_dataset_attributes(
                 ds=ds,

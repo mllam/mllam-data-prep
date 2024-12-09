@@ -73,7 +73,7 @@ inputs:
         name_format: "{var_name}"
     target_output_variable: forcing
 
-  danra_additional_forcings:
+  danra_derived_forcings:
     path: https://mllam-test-data.s3.eu-north-1.amazonaws.com/single_levels.zarr
     dims: [time, x, y]
     derived_variables:

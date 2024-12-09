@@ -1,4 +1,4 @@
-schema_version: v0.5.0
+schema_version: v0.2.0
 dataset_version: v0.1.0
 
 output:
@@ -49,7 +49,7 @@ inputs:
       state_feature:
         method: stack_variables_by_var_name
         dims: [altitude]
-        name_format: "{var_name}{altitude}m"
+        name_format: f"{var_name}{altitude}m"
       grid_index:
         method: stack
         dims: [x, y]
@@ -61,32 +61,6 @@ inputs:
     variables:
       # use surface incoming shortwave radiation as forcing
       - swavr0m
-    dim_mapping:
-      time:
-        method: rename
-        dim: time
-      grid_index:
-        method: stack
-        dims: [x, y]
-      forcing_feature:
-        method: stack_variables_by_var_name
-        name_format: "{var_name}"
-    target_output_variable: forcing
-
-  danra_additional_forcings:
-    path: https://mllam-test-data.s3.eu-north-1.amazonaws.com/single_levels.zarr
-    dims: [time, x, y]
-    derived_variables:
-      toa_radiation:
-        kwargs:
-          time: time
-          lat: lat
-          lon: lon
-        function: mllam_data_prep.derived_variables.calculate_toa_radiation
-      hour_of_day:
-        kwargs:
-          time: time
-        function: mllam_data_prep.derived_variables.calculate_hour_of_day
     dim_mapping:
       time:
         method: rename
@@ -110,16 +84,5 @@ inputs:
         dims: [x, y]
       static_feature:
         method: stack_variables_by_var_name
-        name_format: "{var_name}"
+        name_format: f"{var_name}"
     target_output_variable: static
-
-extra:
-  projection:
-    class_name: LambertConformal
-    kwargs:
-      central_longitude: 25.0
-      central_latitude: 56.7
-      standard_parallels: [56.7, 56.7]
-      globe:
-        semimajor_axis: 6367470.0
-        semiminor_axis: 6367470.0

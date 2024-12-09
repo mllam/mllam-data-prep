@@ -16,6 +16,10 @@ from .ops.mapping import map_dims_and_variables
 from .ops.selection import select_by_kwargs
 from .ops.statistics import calc_stats
 
+# the `extra` field in the config that was added between v0.2.0 and v0.5.0 is
+# optional, so we can support both v0.2.0 and v0.5.0
+SUPPORTED_CONFIG_VERSIONS = ["v0.2.0", "v0.5.0"]
+
 
 def _check_dataset_attributes(ds, expected_attributes, dataset_name):
     # check that the dataset has the expected attributes with the expected values
@@ -103,6 +107,18 @@ def create_dataset(config: Config):
         The dataset created from the input datasets with a variable for each output
         as defined in the config file.
     """
+    if not config.schema_version in SUPPORTED_CONFIG_VERSIONS:
+        raise ValueError(
+            f"Unsupported schema version {config.schema_version}. Only schema versions "
+            f" {', '.join(SUPPORTED_CONFIG_VERSIONS)} are supported by mllam-data-prep "
+            f"v{__version__}."
+        )
+    if config.schema_version == "v0.2.0" and config.extra is not None:
+        raise ValueError(
+            "Config schema version v0.2.0 does not support the `extra` field. Please "
+            "update the schema version used in your config to v0.5.0."
+        )
+
     output_config = config.output
     output_coord_ranges = output_config.coord_ranges
     chunking_config = config.output.chunking or {}
@@ -268,10 +284,6 @@ def create_dataset_zarr(fp_config, fp_zarr: str = None):
         to the same directory as the config file with the extension changed to '.zarr'.
     """
     config = Config.from_yaml_file(file=fp_config)
-
-    assert (
-        config.schema_version == "v0.2.0"
-    ), f"Expected schema version v0.2.0, got {config.schema_version}"
 
     ds = create_dataset(config=config)
 

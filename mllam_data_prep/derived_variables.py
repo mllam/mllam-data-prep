@@ -78,13 +78,7 @@ def derive_variables(fp, derived_variables, chunking):
         derived_field = func(**kwargs)
 
         # Check the derived field(s)
-        derived_field = _check_field(
-            derived_field,
-            derived_variable_attributes,
-            ds_input,
-            required_coordinates,
-            chunks,
-        )
+        derived_field = _check_field(derived_field, derived_variable_attributes)
 
         # Add the derived field(s) to the subset
         if isinstance(derived_field, xr.DataArray):
@@ -99,6 +93,11 @@ def derive_variables(fp, derived_variables, chunking):
                 "Expected an instance of xr.DataArray or tuple(xr.DataArray),"
                 f" but got {type(derived_field)}."
             )
+
+        # Add back dropped coordinates
+        ds_subset = _return_dropped_coordinates(
+            ds_subset, ds_input, required_coordinates, chunks
+        )
 
     return ds_subset
 
@@ -204,9 +203,7 @@ def _get_derived_variable_function(function_namespace):
     return function
 
 
-def _check_field(
-    derived_field, derived_field_attributes, ds_input, required_coordinates, chunks
-):
+def _check_field(derived_field, derived_field_attributes):
     """
     Check the derived field.
 
@@ -217,14 +214,6 @@ def _check_field(
     derived_field_attributes: dict
         Dictionary with attributes for the derived variables.
         Defined in the config file.
-    ds_input: xr.Dataset
-        xarray dataset with variables needed to derive the specified variable
-    required_coordinates: list
-        List of coordinates required for deriving the specified variable
-    chunks: dict
-        Dictionary with keys as the dimensions to chunk along and values
-        with the chunk size, only inbcluding the dimensions that are included
-        in the output as well.
 
     Returns
     -------
@@ -233,17 +222,11 @@ def _check_field(
     """
     if isinstance(derived_field, xr.DataArray):
         derived_field = _check_attributes(derived_field, derived_field_attributes)
-        derived_field = _return_dropped_coordinates(
-            derived_field, ds_input, required_coordinates, chunks
-        )
     elif isinstance(derived_field, tuple) and all(
         isinstance(field, xr.DataArray) for field in derived_field
     ):
         for field in derived_field:
             field = _check_attributes(field, derived_field_attributes)
-            field = _return_dropped_coordinates(
-                field, ds_input, required_coordinates, chunks
-            )
     else:
         raise TypeError(
             "Expected an instance of xr.DataArray or tuple(xr.DataArray),"
@@ -302,13 +285,13 @@ def _check_attributes(field, field_attributes):
     return field
 
 
-def _return_dropped_coordinates(field, ds_input, required_coordinates, chunks):
+def _return_dropped_coordinates(ds_subset, ds_input, required_coordinates, chunks):
     """Return the coordinates that have been reset."""
     for req_coord in required_coordinates:
         if req_coord in chunks:
-            field.coords[req_coord] = ds_input[req_coord]
+            ds_subset.coords[req_coord] = ds_input[req_coord]
 
-    return field
+    return ds_subset
 
 
 def calculate_toa_radiation(lat, lon, time):

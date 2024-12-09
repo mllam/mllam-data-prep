@@ -83,6 +83,10 @@ inputs:
           lat: lat
           lon: lon
         function: mllam_data_prep.derived_variables.calculate_toa_radiation
+      hour_of_day:
+        kwargs:
+          time: time
+        function: mllam_data_prep.derived_variables.calculate_hour_of_day
     dim_mapping:
       time:
         method: rename

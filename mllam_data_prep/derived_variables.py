@@ -63,8 +63,8 @@ def derive_variables(fp, derived_variables, chunking):
             if req_coord in chunks:
                 ds_input = ds_input.reset_coords(req_coord)
 
-        # Chunk the data variables
-        ds_input = ds_input.chunk(chunks)
+        # Chunk the dataset
+        ds_input = _chunk_dataset(ds_input, chunks)
 
         # Add function arguments to kwargs
         kwargs = {}
@@ -101,6 +101,55 @@ def derive_variables(fp, derived_variables, chunking):
             )
 
     return ds_subset
+
+
+def _chunk_dataset(ds, chunks):
+    """
+    Chunk dataset and check the chunk size.
+
+    Parameters
+    ----------
+    ds: xr.Dataset
+        Dataset to be chunked
+    chunks: dict
+        Dictionary with keys as dimensions to be chunked and
+        chunk sizes as the values
+
+    Returns
+    -------
+    ds: xr.Dataset
+        Dataset with chunking applied
+    """
+    # Define the memory limit check
+    memory_limit_check = 1 * 1024**3  # 1 GB
+
+    # Check the chunk size
+    for var_name, var_data in ds.data_vars.items():
+        total_size = 1
+
+        for dim, chunk_size in chunks.items():
+            dim_size = ds.sizes.get(dim, None)
+            if dim_size is None:
+                raise KeyError(f"Dimension '{dim}' not found in the dataset.")
+            total_size *= chunk_size
+
+        dtype = var_data.dtype
+        bytes_per_element = np.dtype(dtype).itemsize
+
+        memory_usage = total_size * bytes_per_element
+
+        if memory_usage > memory_limit_check:
+            logger.warning(
+                f"The chunk size for '{var_name}' exceeds '{memory_limit_check}' GB."
+            )
+
+    # Try chunking
+    try:
+        ds = ds.chunk(chunks)
+    except Exception as ex:
+        raise Exception(f"Error chunking dataset: {ex}")
+
+    return ds
 
 
 def _get_derived_variable_function(function_namespace):

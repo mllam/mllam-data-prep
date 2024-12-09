@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [unreleased](https://github.com/mllam/mllam-data-prep/)
+
+[All changes](https://github.com/mllam/mllam-data-prep/compare/v0.5.0...HEAD)
+
+### Added
+
+- add github PR template to guide development process on github [\#44](https://github.com/mllam/mllam-data-prep/pull/44), @leifdenby
+
 ## [v0.5.0](https://github.com/mllam/mllam-data-prep/releases/tag/v0.5.0)
 
 [All changes](https://github.com/mllam/mllam-data-prep/compare/v0.4.0...v0.5.0)

@@ -50,10 +50,7 @@ def test_merging_static_and_surface_analysis():
                     train=dict(
                         start=t_train_start.isoformat(),
                         end=t_train_end.isoformat(),
-                        compute_statistics=dict(
-                            ops=["mean", "std"],
-                            dims=["time", "grid_index"],
-                        ),
+                        compute_statistics=["mean", "std"],
                     ),
                     test=dict(
                         start=t_test_start.isoformat(),

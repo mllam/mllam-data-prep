@@ -84,11 +84,6 @@ class DimMapping:
         E.g. `{"grid_index": {"method": "stack", "dims": ["x", "y"]}}` will stack the "x" and "y"
         dimensions in the input dataset into a new "grid_index" dimension in the output.
 
-    Attributes:
-        method: The method used for mapping.
-        dims: The dimensions to be mapped.
-        name_format: The format for naming the mapped dimensions.
-
     Attributes
     ----------
     method: str
@@ -162,25 +157,6 @@ class InputDataset:
 
 
 @dataclass
-class Statistics:
-    """
-    Define the statistics to compute for the output dataset, this includes defining
-    the the statistics to compute and the dimensions to compute the statistics over.
-    The statistics will be computed for each variable in the output dataset seperately.
-
-    Attributes
-    ----------
-    ops: List[str]
-        The statistics to compute, e.g. ["mean", "std", "min", "max"].
-    dims: List[str]
-        The dimensions to compute the statistics over, e.g. ["time", "grid_index"].
-    """
-
-    ops: List[str]
-    dims: List[str]
-
-
-@dataclass
 class Split:
     """
     Define the `start` and `end` coordinate value (e.g. time) for a split of the dataset and optionally
@@ -198,7 +174,7 @@ class Split:
 
     start: str
     end: str
-    compute_statistics: Statistics = None
+    compute_statistics: List[str] = None
 
 
 @dataclass
@@ -265,12 +241,6 @@ class Output:
 @dataclass
 class Config(dataclass_wizard.JSONWizard, dataclass_wizard.YAMLWizard):
     """Configuration for the model.
-
-    Attributes:
-        schema_version: Version of the config file schema.
-        dataset_version: Version of the dataset itself.
-        architecture: Information about the model architecture this dataset is intended for.
-        inputs: Input datasets for the model.
 
     Attributes
     ----------

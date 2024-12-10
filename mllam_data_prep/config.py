@@ -157,25 +157,6 @@ class InputDataset:
 
 
 @dataclass
-class Statistic:
-    """
-    Define the statistics to compute for the output dataset, this includes defining
-    the the statistics to compute and the dimensions to compute the statistics over.
-    The statistics will be computed for each variable in the output dataset seperately.
-
-    Attributes
-    ----------
-    ops: List[str]
-        The statistics to compute, e.g. ["mean", "std", "min", "max"].
-    dims: List[str]
-        The dimensions to compute the statistics over, e.g. ["time", "grid_index"].
-    """
-
-    var_name: str
-    dims: List[str]
-
-
-@dataclass
 class Split:
     """
     Define the `start` and `end` coordinate value (e.g. time) for a split of the dataset and optionally
@@ -193,7 +174,7 @@ class Split:
 
     start: str
     end: str
-    compute_statistics: Dict[str, List[Statistic]] = None
+    compute_statistics: List[str] = None
 
 
 @dataclass

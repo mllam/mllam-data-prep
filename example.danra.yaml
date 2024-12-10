@@ -20,32 +20,18 @@ output:
         start: 1990-09-03T00:00
         end: 1990-09-06T00:00
         compute_statistics:
-          MeanOperator:
-            - var_name: mean
-              dims: [grid_index, time]
-          StdOperator:
-            - var_name: std
-              dims: [grid_index, time]
-          DiffMeanOperator:
-            - var_name: diff_mean
-              dims: [grid_index, time]
-            - var_name: diff_time_mean
-              dims: [time]
-          DiffStdOperator:
-            - var_name: diff_std
-              dims: [grid_index, time]
-            - var_name: diff_time_std
-              dims: [time]
-          DiurnalDiffMeanOperator:
-            - var_name: diurnal_diff_mean
-              dims: [grid_index, time]
-            - var_name: diurnal_diff_time_mean
-              dims: [time]
-          DiurnalDiffStdOperator:
-            - var_name: diurnal_diff_std
-              dims: [grid_index, time]
-            - var_name: diurnal_diff_time_std
-              dims: [time]
+          - mean
+          - mean_per_gridpoint
+          - std
+          - std_per_gridpoint
+          - diff_mean
+          - diff_mean_per_gridpoint
+          - diff_std
+          - diff_std_per_gridpoint
+          - diurnal_diff_mean
+          - diurnal_diff_mean_per_gridpoint
+          - diurnal_diff_std
+          - diurnal_diff_std_per_gridpoint
       val:
         start: 1990-09-06T00:00
         end: 1990-09-07T00:00

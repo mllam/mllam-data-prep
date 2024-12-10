@@ -197,15 +197,15 @@ def create_dataset(config: Config):
                 logger.info(f"Computing statistics for split {split_name}")
                 split_stats = calc_stats(
                     ds=ds_split,
-                    statistic_configs=split_config.compute_statistics,
-                    splitting_dim=splitting.dim,
+                    statistic_methods=split_config.compute_statistics,
                 )
-                for op, op_dataarrays in split_stats.items():
-                    for var_name, da in op_dataarrays.items():
+                for op, ds_op in split_stats.items():
+                    for var_name, da in ds_op.items():
                         ds[f"{var_name}__{split_name}__{op}"] = da
 
-        # add a new variable which contains the start, stop for each split, the coords would then be the split names
-        # and the data would be the start, stop values
+        # Add a new variable which contains the start, stop for each split,
+        # the coords would then be the split names and the data would be the
+        # start, stop values
         split_vals = np.array([[split.start, split.end] for split in splits.values()])
         da_splits = xr.DataArray(
             split_vals,

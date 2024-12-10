@@ -1,9 +1,13 @@
 import uuid
+from pathlib import Path
+from typing import List
 
 import isodate
 import numpy as np
 import pandas as pd
 import xarray as xr
+
+import mllam_data_prep as mdp
 
 SCHEMA_VERSION = "v0.5.0"
 
@@ -29,9 +33,17 @@ ALL_DATA_KINDS = [
     "static",
 ]
 
+DEFAULT_XLIM = DEFAULT_YLIM = DEFAULT_ZLIM = (0.0, 1.0)
+
 
 def create_surface_forecast_dataset(
-    nt_analysis, nt_forecast, nx, ny, var_names=DEFAULT_FORECAST_VARS
+    nt_analysis,
+    nt_forecast,
+    nx,
+    ny,
+    var_names=DEFAULT_FORECAST_VARS,
+    xlim=DEFAULT_XLIM,
+    ylim=DEFAULT_YLIM,
 ):
     """
     Create a fake forecast dataset with `nt_analysis` analysis times, `nt_forecast`
@@ -44,8 +56,8 @@ def create_surface_forecast_dataset(
         T_START, periods=nt_forecast, freq=DT_FORECAST
     ).tz_localize(None)
 
-    x = np.arange(nx)
-    y = np.arange(ny)
+    x = np.linspace(*xlim, nx)
+    y = np.linspace(*ylim, ny)
 
     dataarrays = {}
     for var_name in var_names:
@@ -66,7 +78,12 @@ def create_surface_forecast_dataset(
 
 
 def create_surface_analysis_dataset(
-    nt_analysis, nx, ny, var_names=DEFAULT_SURFACE_ANALYSIS_VARS
+    nt_analysis,
+    nx,
+    ny,
+    var_names=DEFAULT_SURFACE_ANALYSIS_VARS,
+    xlim=DEFAULT_XLIM,
+    ylim=DEFAULT_YLIM,
 ):
     """
     Create a fake analysis dataset with `nt_analysis` analysis times, `nx` grid points
@@ -76,8 +93,8 @@ def create_surface_analysis_dataset(
         T_START, periods=nt_analysis, freq=DT_ANALYSIS
     ).tz_localize(None)
 
-    x = np.arange(nx)
-    y = np.arange(ny)
+    x = np.linspace(*xlim, nx)
+    y = np.linspace(*ylim, ny)
 
     dataarrays = {}
     for var_name in var_names:
@@ -103,6 +120,9 @@ def create_analysis_dataset_on_levels(
     nz,
     level_dim="altitude",
     var_names=DEFAULT_ATMOSPHERIC_ANALYSIS_VARS,
+    xlim=DEFAULT_XLIM,
+    ylim=DEFAULT_YLIM,
+    zlim=DEFAULT_ZLIM,
 ):
     """
     Create a fake analysis dataset with `nt_analysis` analysis times, `nx` grid points in x-direction,
@@ -120,14 +140,25 @@ def create_analysis_dataset_on_levels(
         Number of levels
     level_dim : str, optional
         Name of the level dimension, by default "altitude"
+    xlim : tuple, optional
+        Tuple of the form (xmin, xmax) defining the x-limits, by default DEFAULT_XLIM
+    ylim : tuple, optional
+        Tuple of the form (ymin, ymax) defining the y-limits, by default DEFAULT_YLIM
+    zlim : tuple, optional
+        Tuple of the form (zmin, zmax) defining the z-limits, by default DEFAULT_ZLIM
+
+    Returns
+    -------
+    xarray.Dataset
+        The created dataset
     """
     ts_analysis = pd.date_range(
         T_START, periods=nt_analysis, freq=DT_ANALYSIS
     ).tz_localize(None)
 
-    x = np.arange(nx)
-    y = np.arange(ny)
-    z = np.arange(nz)
+    x = np.linspace(*xlim, nx)
+    y = np.linspace(*ylim, ny)
+    z = np.linspace(*zlim, nz)
 
     dataarrays = {}
     for var_name in var_names:
@@ -155,6 +186,9 @@ def create_forecast_dataset_on_levels(
     nz,
     level_dim="altitude",
     var_names=DEFAULT_FORECAST_VARS,
+    xlim=DEFAULT_XLIM,
+    ylim=DEFAULT_YLIM,
+    zlim=DEFAULT_ZLIM,
 ):
     """
     Create a fake forecast dataset with `nt_analysis` analysis times, `nt_forecast`
@@ -175,6 +209,17 @@ def create_forecast_dataset_on_levels(
         Number of levels
     level_dim : str, optional
         Name of the level dimension, by default "altitude"
+    xlim : tuple, optional
+        Tuple of the form (xmin, xmax) defining the x-limits, by default DEFAULT_XLIM
+    ylim : tuple, optional
+        Tuple of the form (ymin, ymax) defining the y-limits, by default DEFAULT_YLIM
+    zlim : tuple, optional
+        Tuple of the form (zmin, zmax) defining the z-limits, by default DEFAULT_ZLIM
+
+    Returns
+    -------
+    xarray.Dataset
+        The created dataset
     """
 
     ts_analysis = pd.date_range(
@@ -184,9 +229,9 @@ def create_forecast_dataset_on_levels(
         T_START, periods=nt_forecast, freq=DT_FORECAST
     ).tz_localize(None)
 
-    x = np.arange(nx)
-    y = np.arange(ny)
-    z = np.arange(nz)
+    x = np.linspace(*xlim, nx)
+    y = np.linspace(*ylim, ny)
+    z = np.linspace(*zlim, nz)
 
     dataarrays = {}
     for var_name in var_names:
@@ -207,12 +252,32 @@ def create_forecast_dataset_on_levels(
     return ds
 
 
-def create_static_dataset(nx, ny, var_names=DEFAULT_STATIC_VARS):
+def create_static_dataset(
+    nx, ny, var_names=DEFAULT_STATIC_VARS, xlim=DEFAULT_XLIM, ylim=DEFAULT_YLIM
+):
     """
     Create a fake static dataset with `nx` grid points in x-direction and `ny` grid points in y-direction.
+
+    Parameters
+    ----------
+    nx : int
+        Number of grid points in x-direction
+    ny : int
+        Number of grid points in y-direction
+    var_names : list, optional
+        List of variable names to create, by default DEFAULT_STATIC_VARS
+    xlim : tuple, optional
+        Tuple of the form (xmin, xmax) defining the x-limits, by default DEFAULT_XLIM
+    ylim : tuple, optional
+        Tuple of the form (ymin, ymax) defining the y-limits, by default DEFAULT_YLIM
+
+    Returns
+    -------
+    xarray.Dataset
+        The created dataset
     """
-    x = np.arange(nx)
-    y = np.arange(ny)
+    x = np.linspace(*xlim, nx)
+    y = np.linspace(*ylim, ny)
 
     dataarrays = {}
     for var_name in var_names:
@@ -230,7 +295,7 @@ def create_static_dataset(nx, ny, var_names=DEFAULT_STATIC_VARS):
     return ds
 
 
-def create_data_collection(data_kinds, fp_root):
+def create_data_collection(data_kinds, fp_root, xlim=DEFAULT_XLIM, ylim=DEFAULT_YLIM):
     """
     Create a fake data collection with the given `data_kinds` and save it to `fp_root`, with
     each dataset having the `data_kind` name with a unique suffix and saved in `.zarr` format.
@@ -259,15 +324,23 @@ def create_data_collection(data_kinds, fp_root):
 
     for data_kind in data_kinds:
         if data_kind == "surface_forecast":
-            ds = create_surface_forecast_dataset(NT_ANALYSIS, NT_FORECAST, NX, NY)
+            ds = create_surface_forecast_dataset(
+                NT_ANALYSIS, NT_FORECAST, NX, NY, xlim=xlim, ylim=ylim
+            )
         elif data_kind == "surface_analysis":
-            ds = create_surface_analysis_dataset(NT_ANALYSIS, NX, NY)
+            ds = create_surface_analysis_dataset(
+                NT_ANALYSIS, NX, NY, xlim=xlim, ylim=ylim
+            )
         elif data_kind == "analysis_on_levels":
-            ds = create_analysis_dataset_on_levels(NT_ANALYSIS, NX, NY, NZ)
+            ds = create_analysis_dataset_on_levels(
+                NT_ANALYSIS, NX, NY, NZ, xlim=xlim, ylim=ylim
+            )
         elif data_kind == "forecast_on_levels":
-            ds = create_forecast_dataset_on_levels(NT_ANALYSIS, NT_FORECAST, NX, NY, NZ)
+            ds = create_forecast_dataset_on_levels(
+                NT_ANALYSIS, NT_FORECAST, NX, NY, NZ, xlim=xlim, ylim=ylim
+            )
         elif data_kind == "static":
-            ds = create_static_dataset(NX, NY)
+            ds = create_static_dataset(NX, NY, xlim=xlim, ylim=ylim)
         else:
             raise ValueError(f"Unknown data kind: {data_kind}")
 
@@ -279,3 +352,102 @@ def create_data_collection(data_kinds, fp_root):
         datasets[data_kind] = fp
 
     return datasets
+
+
+def create_input_datasets_and_config(
+    identifier: str,
+    tmpdir: Path,
+    data_categories: List[str],
+    xlim: List[float] = DEFAULT_XLIM,
+    ylim: List[float] = DEFAULT_YLIM,
+):
+    """
+    Create a config and input datasets with test data for it with a given set
+    of data categories.
+
+    Parameters
+    ----------
+    identifier : str
+        Named identifier for the data collection
+    tmpdir : Path
+        Temporary directory to save the data collection
+    data_catagories : List[str]
+        List of categories of data to create, from state/forcing/static.
+    xlim : List[float], optional
+        List of the form [xmin, xmax] defining the x-limits, by default DEFAULT_XLIM
+    ylim : List[float], optional
+        List of the form [ymin, ymax] defining the y-limits, by default DEFAULT_YLIM
+
+    Returns
+    -------
+    mdp.Config
+        The created config
+    """
+
+    output_variables = {}
+    inputs = {}
+
+    for data_category in data_categories:
+        input_dims = []
+        output_dims = []
+        if data_category in ["state", "forcing"]:
+            data_kinds = ["surface_analysis"]
+            variable_names = DEFAULT_SURFACE_ANALYSIS_VARS
+            input_dims.append("analysis_time")
+            output_dims.append("time")
+        elif data_category == "static":
+            data_kinds = ["static"]
+            variable_names = DEFAULT_STATIC_VARS
+        else:
+            raise NotImplementedError(f"Unknown data category: {data_category}")
+        input_dims.extend(["x", "y"])
+        output_dims += ["grid_index", f"{data_category}_feature"]
+
+        datasets = create_data_collection(
+            data_kinds=data_kinds,
+            fp_root=Path(tmpdir.name) / identifier,
+            xlim=xlim,
+            ylim=ylim,
+        )
+
+        assert len(datasets) == 1
+        dataset_kind, dataset_path = datasets.popitem()
+
+        output_variables[data_category] = output_dims
+        dim_mapping = {}
+
+        for d in output_dims:
+            if d == "time":
+                dim_mapping[d] = mdp.config.DimMapping(
+                    method="rename",
+                    dim="analysis_time",
+                )
+            elif d == "grid_index":
+                dim_mapping[d] = mdp.config.DimMapping(
+                    method="stack",
+                    dims=["x", "y"],
+                )
+            else:
+                dim_mapping[d] = mdp.config.DimMapping(
+                    method="stack_variables_by_var_name",
+                    name_format="{var_name}",
+                )
+
+        inputs[f"{identifier}_{dataset_kind}"] = mdp.config.InputDataset(
+            path=dataset_path,
+            dims=input_dims,
+            variables=variable_names,
+            dim_mapping=dim_mapping,
+            target_output_variable=data_category,
+        )
+
+    config = mdp.Config(
+        schema_version=SCHEMA_VERSION,
+        dataset_version="v0.1.0",
+        output=mdp.config.Output(
+            variables=output_variables,
+        ),
+        inputs=inputs,
+    )
+
+    return config

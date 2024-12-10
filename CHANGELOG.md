@@ -5,7 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## v0.4.0
+## [unreleased](https://github.com/mllam/mllam-data-prep/)
+
+[All changes](https://github.com/mllam/mllam-data-prep/compare/v0.5.0...HEAD)
+
+### Added
+
+- add github PR template to guide development process on github [\#44](https://github.com/mllam/mllam-data-prep/pull/44), @leifdenby
+
+## [v0.5.0](https://github.com/mllam/mllam-data-prep/releases/tag/v0.5.0)
+
+[All changes](https://github.com/mllam/mllam-data-prep/compare/v0.4.0...v0.5.0)
+
+This release adds support for an optional `extra` section in the config file (for user-defined extra information that is ignored by `mllam-data-prep`) and fixes a few minor issues. Note that to use `extra` section in the config file the schema version in the config file must be increased to `v0.5.0`.
+
+### Added
+
+- Add optional section called `extra` to config file to allow for user-defined extra information that is ignored by `mllam-data-prep` but can be used by downstream applications. ![\#18](https://github.com/mllam/mllam-data-prep/pull/18), @leifdenby
+
+### Changed
+
+- remove f-string from `name_format` in config examples [\#35](https://github.com/mllam/mllam-data-prep/pull/35)
+- replace global config for `dataclass_wizard` on `mllam_data_prep.config.Config` with config specific to that dataclass (to avoid conflicts with other uses of `dataclass_wizard`) [\#36](https://github.com/mllam/mllam-data-prep/pull/36)
+- Schema version bumped to `v0.5.0` to match release version that supports optional `extra` section in config [\#18](https://github.com/mllam/mllam-data-prep/pull/18)
+
+
+## [v0.4.0](https://github.com/mllam/mllam-data-prep/releases/tag/v0.4.0)
+
+[All changes](https://github.com/mllam/mllam-data-prep/compare/v0.3.0...v0.4.0)
 
 This release adds support for defining the output path in the command line
 interface and addresses bugs around optional dependencies for
@@ -17,7 +44,6 @@ interface and addresses bugs around optional dependencies for
 
 ### Changed
 
-- remove f-string from `name_format` in config examples [\#35](https://github.com/mllam/mllam-data-prep/pull/35)
 - fix bug by making dependency `distributed` optional ![\#27](https://github.com/mllam/mllam-data-prep/pull/27)
 - change config example to call validation split `val` instead of `validation` [\#28](https://github.com/mllam/mllam-data-prep/pull/28)
 - fix typo in install dependency `distributed` ![\#20](https://github.com/mllam/mllam-data-prep/pull/20)
@@ -25,7 +51,7 @@ interface and addresses bugs around optional dependencies for
 
 ## [v0.3.0](https://github.com/mllam/mllam-data-prep/releases/tag/v0.3.0)
 
-[All changes](https://github.com/mllam/mllam-data-prep/compare/v0.3.0...v0.2.0)
+[All changes](https://github.com/mllam/mllam-data-prep/compare/v0.2.0...v0.3.0)
 
 ### Added
 
@@ -38,7 +64,7 @@ interface and addresses bugs around optional dependencies for
 
 ## [v0.2.0](https://github.com/mllam/mllam-data-prep/releases/tags/v0.2.0)
 
-[All changes](https://github.com/mllam/mllam-data-prep/compare/v0.2.0...v0.1.0)
+[All changes](https://github.com/mllam/mllam-data-prep/compare/v0.1.0...v0.2.0)
 
 ### Added
 

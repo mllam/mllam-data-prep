@@ -32,6 +32,12 @@ dask-distributed = [
     "dask[distributed]>=2024.7.1",
     "bokeh!=3.0.*,>=2.4.2",
 ]
+latlon-domain-crop = [
+    "spherical-geometry>=1.3.2",
+    "cartopy>=0.23.0",
+    "gcsfs>=2024.10.0",
+    "jinja2>=3.1.4",
+]
 [build-system]
 requires = ["pdm-backend"]
 build-backend = "pdm.backend"
@@ -47,4 +53,5 @@ dev = [
     "pytest>=8.0.2",
     "ipdb>=0.13.13",
     "pre-commit>=3.7.1",
+    "ipykernel>=6.29.5",
 ]

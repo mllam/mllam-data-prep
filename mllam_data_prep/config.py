@@ -53,6 +53,23 @@ class ValueSelection:
 
 
 @dataclass
+class DerivedVariable:
+    """
+    Defines a derived variables, where the kwargs (variables required
+    for the calculation) and the function (for calculating the variable)
+    are specified.
+
+    Attributes:
+        kwargs: Variables required for calculating the derived variable.
+        function: Function used to calculate the derived variable.
+    """
+
+    kwargs: Dict[str, str]
+    function: str
+    attributes: Dict[str, Any] = None
+
+
+@dataclass
 class DimMapping:
     """
     Defines the process for mapping dimensions and variables from an input
@@ -120,7 +137,8 @@ class InputDataset:
         1) the path to the dataset,
         2) the expected dimensions of the dataset,
         3) the variables to select from the dataset (and optionally subsection
-           along the coordinates for each variable) and finally
+           along the coordinates for each variable) and/or the variables to derive
+           from the dataset, and finally
         4) the method by which the dimensions and variables of the dataset are
            mapped to one of the output variables (this includes stacking of all
            the selected variables into a new single variable along a new coordinate,
@@ -151,13 +169,20 @@ class InputDataset:
         (e.g. two datasets that coincide in space and time will only differ in the feature dimension,
         so the two will be combined by concatenating along the feature dimension).
         If a single shared coordinate cannot be found then an exception will be raised.
+    derived_variables: Dict[str, DerivedVariable]
+        Dictionary of variables to derive from the dataset, where the keys are the variable names and
+        the values are dictionaries defining the necessary function and kwargs. E.g.
+        `{"toa_radiation": {"kwargs": {"time": "time", "lat": "lat", "lon": "lon"}, "function": "calculate_toa_radiation"}}`
+        would derive the "toa_radiation" variable using the `calculate_toa_radiation` function, which
+        takes `time`, `lat` and `lon` as arguments.
     """
 
     path: str
     dims: List[str]
-    variables: Union[List[str], Dict[str, Dict[str, ValueSelection]]]
     dim_mapping: Dict[str, DimMapping]
     target_output_variable: str
+    variables: Union[List[str], Dict[str, Dict[str, ValueSelection]]] = None
+    derived_variables: Dict[str, DerivedVariable] = None
     attributes: Dict[str, Any] = None
 
 

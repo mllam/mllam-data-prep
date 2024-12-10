@@ -187,6 +187,32 @@ inputs:
         name_format: "{var_name}"
     target_output_variable: forcing
 
+  danra_derived_forcings:
+    path: https://mllam-test-data.s3.eu-north-1.amazonaws.com/single_levels.zarr
+    dims: [time, x, y]
+    derived_variables:
+      toa_radiation:
+        kwargs:
+          time: time
+          lat: lat
+          lon: lon
+        function: mllam_data_prep.derived_variables.calculate_toa_radiation
+      hour_of_day:
+        kwargs:
+          time: time
+        function: mllam_data_prep.derived_variables.calculate_hour_of_day
+    dim_mapping:
+      time:
+        method: rename
+        dim: time
+      grid_index:
+        method: stack
+        dims: [x, y]
+      forcing_feature:
+        method: stack_variables_by_var_name
+        name_format: "{var_name}"
+    target_output_variable: forcing
+
   danra_lsm:
     path: https://mllam-test-data.s3.eu-north-1.amazonaws.com/lsm.zarr
     dims: [x, y]
@@ -286,15 +312,14 @@ inputs:
       grid_index:
         method: stack
         dims: [x, y]
-    target_architecture_variable: state
+    target_output_variable: state
 
   danra_surface:
     path: https://mllam-test-data.s3.eu-north-1.amazonaws.com/single_levels.zarr
     dims: [time, x, y]
     variables:
-      # shouldn't really be using sea-surface pressure as "forcing", but don't
-      # have radiation varibles in danra yet
-      - pres_seasurface
+      # use surface incoming shortwave radiation as forcing
+      - swavr0m
     dim_mapping:
       time:
         method: rename
@@ -305,7 +330,33 @@ inputs:
       forcing_feature:
         method: stack_variables_by_var_name
         name_format: "{var_name}"
-    target_architecture_variable: forcing
+    target_output_variable: forcing
+
+  danra_derived_forcings:
+    path: https://mllam-test-data.s3.eu-north-1.amazonaws.com/single_levels.zarr
+    dims: [time, x, y]
+    derived_variables:
+      toa_radiation:
+        kwargs:
+          time: time
+          lat: lat
+          lon: lon
+        function: mllam_data_prep.derived_variables.calculate_toa_radiation
+      hour_of_day:
+        kwargs:
+          time: time
+        function: mllam_data_prep.derived_variables.calculate_hour_of_day
+    dim_mapping:
+      time:
+        method: rename
+        dim: time
+      grid_index:
+        method: stack
+        dims: [x, y]
+      forcing_feature:
+        method: stack_variables_by_var_name
+        name_format: "{var_name}"
+    target_output_variable: forcing
 
   ...
 ```
@@ -315,11 +366,15 @@ The `inputs` section defines the source datasets to extract data from. Each sour
 - `path`: the path to the source dataset. This can be a local path or a URL to e.g. a zarr dataset or netCDF file, anything that can be read by `xarray.open_dataset(...)`.
 - `dims`: the dimensions that the source dataset is expected to have. This is used to check that the source dataset has the expected dimensions and also makes it clearer in the config file what the dimensions of the source dataset are.
 - `variables`: selects which variables to extract from the source dataset. This may either be a list of variable names, or a dictionary where each key is the variable name and the value defines a dictionary of coordinates to do selection on. When doing selection you may also optionally define the units of the variable to check that the units of the variable match the units of the variable in the model architecture.
-- `target_architecture_variable`: the variable in the model architecture that the source dataset should be mapped to.
+- `target_output_variable`: the variable in the model architecture that the source dataset should be mapped to.
 - `dim_mapping`: defines how the dimensions of the source dataset should be mapped to the dimensions of the model architecture. This is done by defining a method to apply to each dimension. The methods are:
   - `rename`: simply rename the dimension to the new name
   - `stack`: stack the listed dimension to create the dimension in the output
   - `stack_variables_by_var_name`: stack the dimension into the new dimension, and also stack the variable name into the new variable name. This is useful when you have multiple variables with the same dimensions that you want to stack into a single variable.
+- `derived_variables`: defines the variables to be derived from the variables available in the source dataset. This should be a dictionary where each key is the variable to be derived and the value defines a dictionary with additional information.
+- `function`: the function to be used to derive a variable. This should be a string and may either be the full namespace of the function (e.g. `mllam_data_prep.derived_variables.calculate_toa_radiation`) or in case the function is included in the `mllam_data_prep.derived_variables` module it is enough with the function name only.
+- `kwargs`: arguments for the function used to derive a variable. This is a dictionary where each key is the variable name to select from the source dataset and each value is the named argument to `function`.
+- `attributes`: section where users can specify the attributes `units` and `long_name` as a dictionary (not included in the example config file), where the keys are the attribute names and the values are strings. If using a function defined in `mllam_data_prep.derived_variables` this section is optional as the attributes should already be defined. In this case, adding the attributes to the config file will overwrite the already-defined ones. If using an external function, where the attributes `units` and `long_name` are not set, this section is a requirement.
 
 
 ### Config schema versioning

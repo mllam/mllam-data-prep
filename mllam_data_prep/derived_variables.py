@@ -1,3 +1,4 @@
+import datetime
 import importlib
 import sys
 
@@ -317,8 +318,18 @@ def calculate_toa_radiation(lat, lon, time):
     # Solar constant
     E0 = 1366  # W*m**-2
 
-    day = time.dt.dayofyear
-    hr_utc = time.dt.hour
+    # Different handling if xr.DataArray or datetime object
+    if isinstance(time, xr.DataArray):
+        day = time.dt.dayofyear
+        hr_utc = time.dt.hour
+    elif isinstance(time, datetime.datetime):
+        day = time.timetuple().tm_yday
+        hr_utc = time.hour
+    else:
+        raise TypeError(
+            "Expected an instance of xr.DataArray or datetime object,"
+            f" but got {type(time)}."
+        )
 
     # Eq. 1.6.1a in Solar Engineering of Thermal Processes 4th ed.
     dec = np.pi / 180 * 23.45 * np.sin(2 * np.pi * (284 + day) / 365)
@@ -362,7 +373,15 @@ def calculate_hour_of_day(time):
     logger.info("Calculating hour of day")
 
     # Get the hour of the day
-    hour_of_day = time.dt.hour
+    if isinstance(time, xr.DataArray):
+        hour_of_day = time.dt.hour
+    elif isinstance(time, datetime.datetime):
+        hour_of_day = time.hour
+    else:
+        raise TypeError(
+            "Expected an instance of xr.DataArray or datetime object,"
+            f" but got {type(time)}."
+        )
 
     # Cyclic encoding of hour of day
     hour_of_day_cos, hour_of_day_sin = cyclic_encoding(hour_of_day, 24)
@@ -405,7 +424,15 @@ def calculate_day_of_year(time):
     logger.info("Calculating day of year")
 
     # Get the day of year
-    day_of_year = time.dt.dayofyear
+    if isinstance(time, xr.DataArray):
+        day_of_year = time.dt.dayofyear
+    elif isinstance(time, datetime.datetime):
+        day_of_year = time.timetuple().tm_yday
+    else:
+        raise TypeError(
+            "Expected an instance of xr.DataArray or datetime object,"
+            f" but got {type(time)}."
+        )
 
     # Cyclic encoding of day of year - use 366 to include leap years!
     day_of_year_cos, day_of_year_sin = cyclic_encoding(day_of_year, 366)

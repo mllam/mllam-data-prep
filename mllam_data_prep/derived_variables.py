@@ -456,29 +456,29 @@ def calculate_day_of_year(time):
     return day_of_year_cos, day_of_year_sin
 
 
-def cyclic_encoding(data_array, da_max):
+def cyclic_encoding(data, data_max):
     """
     Cyclic encoding of data
 
     Parameters
     ----------
-    da : xr.DataArray
-        xarray data-array that should be cyclically encoded
-    da_max: int/float
-        Maximum possible value of input data-array
+    data : xr.DataArray, float, or int
+        Data that should be cyclically encoded
+    data_max: int or float
+        Maximum possible value of input data. Should be greater than 0.
 
     Returns
     -------
-    da_cos: xr.DataArray
-        Cosine part of cyclically encoded input data-array
-    da_sin: xr.DataArray
-        Sine part of cyclically encoded input data-array
+    data_cos: xr.DataArray, float, or int
+        Cosine part of cyclically encoded input data
+    data_sin: xr.DataArray, float, or int
+        Sine part of cyclically encoded input data
     """
 
-    data_array_sin = np.sin((data_array / da_max) * 2 * np.pi)
-    data_array_cos = np.cos((data_array / da_max) * 2 * np.pi)
+    data_sin = np.sin((data / data_max) * 2 * np.pi)
+    data_cos = np.cos((data / data_max) * 2 * np.pi)
 
-    return data_array_cos, data_array_sin
+    return data_cos, data_sin
 
 
 def get_latlon_coords_for_input(ds_input):

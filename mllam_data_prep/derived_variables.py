@@ -316,15 +316,15 @@ def calculate_toa_radiation(lat, lon, time):
     logger.info("Calculating top-of-atmosphere radiation")
 
     # Solar constant
-    E0 = 1366  # W*m**-2
+    solar_constant = 1366  # W*m**-2
 
     # Different handling if xr.DataArray or datetime object
     if isinstance(time, xr.DataArray):
         day = time.dt.dayofyear
-        hr_utc = time.dt.hour
+        hour_utc = time.dt.hour
     elif isinstance(time, datetime.datetime):
         day = time.timetuple().tm_yday
-        hr_utc = time.hour
+        hour_utc = time.hour
     else:
         raise TypeError(
             "Expected an instance of xr.DataArray or datetime object,"
@@ -332,18 +332,21 @@ def calculate_toa_radiation(lat, lon, time):
         )
 
     # Eq. 1.6.1a in Solar Engineering of Thermal Processes 4th ed.
+    # dec: declination - angular position of the sun at solar noon w.r.t.
+    # the plane of the equator
     dec = np.pi / 180 * 23.45 * np.sin(2 * np.pi * (284 + day) / 365)
 
-    hr_lst = hr_utc + lon / 15
-    hr_angle = 15 * (hr_lst - 12)
+    utc_solar_time = hour_utc + lon / 15
+    hour_angle = 15 * (utc_solar_time - 12)
 
     # Eq. 1.6.2 with beta=0 in Solar Engineering of Thermal Processes 4th ed.
+    # cos_sza: Cosine of solar zenith angle
     cos_sza = np.sin(lat * np.pi / 180) * np.sin(dec) + np.cos(
         lat * np.pi / 180
-    ) * np.cos(dec) * np.cos(hr_angle * np.pi / 180)
+    ) * np.cos(dec) * np.cos(hour_angle * np.pi / 180)
 
     # Where TOA radiation is negative, set to 0
-    toa_radiation = xr.where(E0 * cos_sza < 0, 0, E0 * cos_sza)
+    toa_radiation = xr.where(solar_constant * cos_sza < 0, 0, solar_constant * cos_sza)
 
     if isinstance(toa_radiation, xr.DataArray):
         # Add attributes

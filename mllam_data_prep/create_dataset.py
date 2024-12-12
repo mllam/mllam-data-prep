@@ -127,8 +127,8 @@ def create_dataset(config: Config):
 
     for dataset_name, input_config in config.inputs.items():
         path = input_config.path
-        variables = input_config.variables or None
-        derived_variables = input_config.derived_variables or None
+        variables = input_config.variables
+        derived_variables = input_config.derived_variables
         target_output_var = input_config.target_output_variable
         expected_input_attributes = input_config.attributes or {}
         expected_input_var_dims = input_config.dims

@@ -302,9 +302,9 @@ def calculate_toa_radiation(lat, lon, time):
     Parameters
     ----------
     lat : xr.DataArray or float
-        Latitude values
+        Latitude values. Should be in the range [-90, 90]
     lon : xr.DataArray or float
-        Longitude values
+        Longitude values. Should be in the range [-180, 180] or [0, 360]
     time : xr.DataArray or datetime object
         Time
 

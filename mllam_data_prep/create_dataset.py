@@ -31,11 +31,14 @@ def _check_dataset_attributes(ds, expected_attributes, dataset_name):
 
     # check for attributes having the wrong value
     incorrect_attributes = {
-        k: v for k, v in expected_attributes.items() if ds.attrs[k] != v
+        key: val for key, val in expected_attributes.items() if ds.attrs[key] != val
     }
     if len(incorrect_attributes) > 0:
         s_list = "\n".join(
-            [f"{k}: {v} != {ds.attrs[k]}" for k, v in incorrect_attributes.items()]
+            [
+                f"{key}: {val} != {ds.attrs[key]}"
+                for key, val in incorrect_attributes.items()
+            ]
         )
         raise ValueError(
             f"Dataset {dataset_name} has the following incorrect attributes: {s_list}"

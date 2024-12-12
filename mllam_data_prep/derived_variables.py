@@ -45,9 +45,9 @@ def derive_variables(fp, derived_variables, chunking):
 
         # Separate the lat,lon from the required variables as these will be derived separately
         latlon_coords_to_include = {}
-        for k, v in list(required_kwargs.items()):
-            if k in ["lat", "lon"]:
-                latlon_coords_to_include[k] = required_kwargs.pop(k)
+        for key in list(required_kwargs.keys()):
+            if key in ["lat", "lon"]:
+                latlon_coords_to_include[key] = required_kwargs.pop(key)
 
         # Subset the dataset
         ds_input = ds[required_kwargs.keys()]
@@ -73,9 +73,9 @@ def derive_variables(fp, derived_variables, chunking):
         kwargs = {}
         if len(latlon_coords_to_include):
             latlon = get_latlon_coords_for_input(ds)
-            for k, v in latlon_coords_to_include.items():
-                kwargs[v] = latlon[k]
-        kwargs.update({v: ds_input[k] for k, v in required_kwargs.items()})
+            for key, val in latlon_coords_to_include.items():
+                kwargs[val] = latlon[key]
+        kwargs.update({val: ds_input[key] for key, val in required_kwargs.items()})
         func = _get_derived_variable_function(function_name)
         # Calculate the derived variable
         derived_field = func(**kwargs)

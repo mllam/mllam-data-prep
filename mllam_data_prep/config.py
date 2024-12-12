@@ -66,7 +66,7 @@ class DerivedVariable:
 
     kwargs: Dict[str, str]
     function: str
-    attributes: Dict[str, Any] = None
+    attributes: Dict[str, str] = None
 
 
 @dataclass

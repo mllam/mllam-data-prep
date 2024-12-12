@@ -67,7 +67,7 @@ class DerivedVariable:
 
     kwargs: Dict[str, str]
     function: str
-    attributes: Dict[str, str] = None
+    attributes: Dict[str, str] = field(default_factory=dict)
 
 
 @dataclass
@@ -184,7 +184,7 @@ class InputDataset:
     target_output_variable: str
     variables: Union[List[str], Dict[str, Dict[str, ValueSelection]]] = None
     derived_variables: Dict[str, DerivedVariable] = None
-    attributes: Dict[str, Any] = None
+    attributes: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -284,7 +284,7 @@ class Output:
 
     variables: Dict[str, List[str]]
     coord_ranges: Dict[str, Range] = None
-    chunking: Dict[str, int] = None
+    chunking: Dict[str, int] = field(default_factory=dict)
     splitting: Splitting = None
 
 

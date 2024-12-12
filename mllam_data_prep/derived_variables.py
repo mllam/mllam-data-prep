@@ -41,7 +41,7 @@ def derive_variables(fp, derived_variables, chunking):
     for _, derived_variable in derived_variables.items():
         required_kwargs = derived_variable.kwargs
         function_name = derived_variable.function
-        derived_variable_attributes = derived_variable.attributes or {}
+        derived_variable_attributes = derived_variable.attributes
 
         # Separate the lat,lon from the required variables as these will be derived separately
         latlon_coords_to_include = {}

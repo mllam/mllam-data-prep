@@ -124,7 +124,7 @@ def create_dataset(config: Config):
 
     output_config = config.output
     output_coord_ranges = output_config.coord_ranges
-    chunking_config = config.output.chunking or {}
+    chunking_config = config.output.chunking
 
     dataarrays_by_target = defaultdict(list)
 
@@ -133,7 +133,7 @@ def create_dataset(config: Config):
         variables = input_config.variables
         derived_variables = input_config.derived_variables
         target_output_var = input_config.target_output_variable
-        expected_input_attributes = input_config.attributes or {}
+        expected_input_attributes = input_config.attributes
         expected_input_var_dims = input_config.dims
 
         output_dims = output_config.variables[target_output_var]

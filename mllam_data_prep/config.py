@@ -62,6 +62,7 @@ class DerivedVariable:
     Attributes:
         kwargs: Variables required for calculating the derived variable.
         function: Function used to calculate the derived variable.
+        attributes: Attributes (e.g. `units` and `long_name`) for the derived variable.
     """
 
     kwargs: Dict[str, str]

@@ -55,7 +55,9 @@ def derive_variables(fp, derived_variables, chunking):
         # Any coordinates needed for the derivation, for which chunking should be performed,
         # should be converted to variables since it is not possible for *indexed* coordinates
         # to be chunked dask arrays
-        chunks = {d: chunking.get(d, int(ds_input[d].count())) for d in ds_input.dims}
+        chunks = {
+            dim: chunking.get(dim, int(ds_input[dim].count())) for dim in ds_input.dims
+        }
         required_coordinates = [
             req_var for req_var in required_kwargs.keys() if req_var in ds_input.coords
         ]

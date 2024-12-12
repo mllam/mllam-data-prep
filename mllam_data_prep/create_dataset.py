@@ -221,7 +221,7 @@ def create_dataset(config: Config):
     # default to making a single chunk for each dimension if chunksize is not specified
     # in the config
     logger.info(f"Chunking dataset with {chunking_config}")
-    chunks = {d: chunking_config.get(d, int(ds[d].count())) for d in ds.dims}
+    chunks = {dim: chunking_config.get(dim, int(ds[dim].count())) for dim in ds.dims}
     ds = ds.chunk(chunks)
 
     splitting = config.output.splitting

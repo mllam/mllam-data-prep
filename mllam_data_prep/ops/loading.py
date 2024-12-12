@@ -58,7 +58,9 @@ def load_and_subset_dataset(fp, variables, chunking):
     else:
         raise ValueError("The `variables` argument should be a list or a dictionary")
 
-    chunks = {d: chunking.get(d, int(ds_subset[d].count())) for d in ds_subset.dims}
+    chunks = {
+        dim: chunking.get(dim, int(ds_subset[dim].count())) for dim in ds_subset.dims
+    }
     ds_subset = ds_subset.chunk(chunks)
 
     return ds_subset

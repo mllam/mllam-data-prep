@@ -1,12 +1,10 @@
 import numpy as np
-import pyproj
 import spherical_geometry as sg
 import xarray as xr
-from loguru import logger
 from spherical_geometry.polygon import SphericalPolygon
 
 
-def _get_latlon_coords(da):
+def _get_latlon_coords(da: xr.DataArray) -> tuple:
     """
     Get the latlon coordinates of a DataArray.
 
@@ -25,53 +23,42 @@ def _get_latlon_coords(da):
     elif "lat" in da.coords and "lon" in da.coords:
         return (da.lat, da.lon)
     else:
-        raise Exception()
+        raise Exception("Could not find lat/lon coordinates in DataArray.")
 
 
-def _add_latlon(ds):
-    logger.warning(
-        "Could not find lat/lon coordinates. Assuming equal area projection "
-        "centered on (lat, lon) = (0, 0) for now. This should be replaced!"
-    )
-
-    # create a local equal area projection centered on Denmark (Høje Taastrup)
-    # for now
-    da_x = ds.coords["x"]
-    da_y = ds.coords["y"]
-    proj = pyproj.Proj(proj="laea", lon_0=12.25, lat_0=55.65)
-    lon, lat = proj(da_x.values, da_y.values, inverse=True)
-    da_lat = xr.DataArray(lat, coords=da_x.coords, dims=da_x.dims)
-    da_lon = xr.DataArray(lon, coords=da_y.coords, dims=da_y.dims)
-
-    ds.coords["lon"] = da_lon
-    ds.coords["lat"] = da_lat
-
-    return ds
-
-
-def create_convex_hull_mask(ds, ds_reference):
+def create_convex_hull_mask(ds: xr.Dataset, ds_reference: xr.Dataset) -> xr.DataArray:
     """
     Create a grid-point mask for lat/lon coordinates in `da` indicating which
     points are interior to the convex hull of the lat/lon coordinates of
     `da_ref`.
-    """
-    # TODO: this should be replaced with a function to get the true lat/lon coordinates
-    _add_latlon(ds)
-    _add_latlon(ds_reference)
 
+    Parameters
+    ----------
+    ds : xarray.Dataset
+        The dataset for which to create the mask.
+    ds_reference : xarray.Dataset
+        The reference dataset from which to create the convex hull of the coordinates.
+
+    Returns
+    -------
+    xarray.DataArray
+        A boolean mask indicating which points are interior to the convex hull.
+    """
     da_lat, da_lon = _get_latlon_coords(ds)
     da_lat_ref, da_lon_ref = _get_latlon_coords(ds_reference)
 
-    assert da_lat.dims == da_lon.dims == da_lat_ref.dims == da_lon_ref.dims
+    assert da_lat.dims == da_lon.dims
+    assert da_lat_ref.dims == da_lon_ref.dims
 
     # latlon to (x, y, z) on unit sphere
-    pts_ref_xyz = np.array(sg.vector.lonlat_to_vector(da_lon_ref, da_lat_ref)).T
+    da_ref_xyz = _latlon_to_unit_sphere_xyz(da_lat=da_lat_ref, da_lon=da_lon_ref)
 
-    chull_lam = SphericalPolygon.convex_hull(pts_ref_xyz)
+    chull_lam = SphericalPolygon.convex_hull(da_ref_xyz.values)
 
+    # call .load() to avoid using dask arrays in the following apply_ufunc
     da_interior_mask = xr.apply_ufunc(
-        chull_lam.contains_lonlat, da_lon, da_lat, vectorize=True
-    )
+        chull_lam.contains_lonlat, da_lon.load(), da_lat.load(), vectorize=True
+    ).astype(bool)
     da_interior_mask.attrs[
         "long_name"
     ] = "contained in convex hull of source dataset (da_ref)"
@@ -79,35 +66,133 @@ def create_convex_hull_mask(ds, ds_reference):
     return da_interior_mask
 
 
-def boundary_crop_gridpoints_with_latlon_convex_hull(
-    ds, ds_reference, grid_index_dim="grid_index", max_dist=0.2
-):
-    raise NotImplementedError()
-    # da_interior_mask = create_convex_hull_mask(ds=ds, ds_reference=ds_reference)
+def _latlon_to_unit_sphere_xyz(
+    da_lat: xr.DataArray, da_lon: xr.DataArray
+) -> xr.DataArray:
+    """
+    Convert lat/lon coordinates to (x, y, z) on the unit sphere.
 
-    # points = _get_latlon_coords(ds)
-    # points_lam = _get_latlon_coords(ds_reference)
+    Parameters
+    ----------
+    da_lat : xarray.DataArray
+        Latitude coordinates.
+    da_lon : xarray.DataArray
+        Longitude coordinates.
 
-    # latlon to (x, y, z) on unit sphere
-    # pts_xyz = np.array(sg.vector.lonlat_to_vector(points[:, 0], points[:, 1])).T
-    # pts_lam_xyz = np.array(
-    #     sg.vector.lonlat_to_vector(points_lam[:, 0], points_lam[:, 1])
-    # ).T
+    Returns
+    -------
+    xr.DataArray
+        The (x, y, z) coordinates on the unit sphere as an xarray.DataArray
+        with dimensions (grid_index, component).
+    """
+    pts_xyz = np.array(sg.vector.lonlat_to_vector(da_lon, da_lat)).T
+    da_xyz = xr.DataArray(
+        pts_xyz, coords=da_lat.coords, dims=list(da_lat.dims) + ["xyz"]
+    )
+    return da_xyz
 
-    # da_xyz = xr.DataArray(pts_xyz, coords=ds.coords, dims=[grid_index_dim, "xyz"])
 
-    # chull_lam = SphericalPolygon.convex_hull(pts_lam_xyz)
+def distance_to_convex_hull_boundary(
+    ds: xr.Dataset, ds_reference: xr.Dataset, grid_index_dim: str = "grid_index"
+) -> xr.DataArray:
+    """
+    For all points in `ds` that are external to the convex hull of the points in
+    `ds_reference`, calculate the minimum distance to the convex hull boundary.
 
-    # # Finding the boundary points inside the convec hull is what takes time. Possibly speed up by restricting to a subset of points_ that are within some distance from area center or similar?
-    # msk_in = np.array([chull_lam.contains_lonlat(x[0], x[1]) for x in points])
-    # da_interior_mask = xr.DataArray(msk_in, coords=ds.coords, dims=[grid_index_dim])
-    # ds_reference = ds.where(da_interior_mask, drop=True)
+    Parameters
+    ----------
+    ds : xarray.Dataset
+        The dataset for which to calculate the distance.
+    ds_reference : xarray.Dataset
+        The reference dataset from which to calculate the convex hull boundary.
+    grid_index_dim : str, optional
+        The name of the grid index dimension in `ds` and `ds_reference`.
 
-    # Distances from all boundary points outside the region to the closest point inside
-    # d = np.array(
-    #     [np.min(np.arccos(np.dot(pts_lam_xyz, pt_xyz))) for pt_xyz in pts_xyz[~msk_in]]
-    # )
+    Returns
+    -------
+    xarray.DataArray
+        The minimum distance to the convex hull boundary.
+    """
+    # rename the grid index dimension in ds_reference to avoid conflicts (since
+    # the grid index dimension otherwise has the same name in both datasets,
+    # and later we will want to find the minimum distance for each point in ds
+    # to all points in ds_reference)
+    ds_reference_separate_gridindex = ds_reference.rename(
+        {grid_index_dim: "grid_index_ref"}
+    )
 
-    # Define boundary distance and mask boundary points outside that are closer
-    # This is now in radians but should be defined as meters based on Earth radius
-    # ii = d < max_dist
+    # create a mask from the convex hull of ds_reference for the grid points in ds
+    da_ch_mask = create_convex_hull_mask(
+        ds=ds, ds_reference=ds_reference_separate_gridindex
+    )
+
+    # only consider points that are external to the convex hull
+    ds_exterior = ds.where(~da_ch_mask, drop=True)
+
+    da_xyz = _latlon_to_unit_sphere_xyz(ds_exterior.lat, ds_exterior.lon)
+    da_xyz_ref = _latlon_to_unit_sphere_xyz(
+        ds_reference_separate_gridindex.lat, ds_reference_separate_gridindex.lon
+    )
+
+    def calc_dist(da_pt_xyz):
+        dotproduct = np.dot(da_xyz_ref, da_pt_xyz.T)
+        val = np.min(np.arccos(dotproduct))
+        return val
+
+    da_mindist_to_ref = xr.apply_ufunc(
+        calc_dist,
+        da_xyz,
+        input_core_dims=[["xyz"]],
+        output_core_dims=[[]],
+        vectorize=True,
+    )
+    da_mindist_to_ref.attrs[
+        "long_name"
+    ] = "minimum distance to convex hull boundary of reference dataset"
+    da_mindist_to_ref.attrs["units"] = "radians"
+
+    return da_mindist_to_ref
+
+
+def crop_to_within_convex_hull_margin(
+    ds: xr.Dataset,
+    ds_reference: xr.Dataset,
+    grid_index_dim: str = "grid_index",
+    max_dist: float = 2.0,
+) -> xr.Dataset:
+    """
+    Crop grid points (with coordinates given in lat/lon) in `ds` that are
+    within a certain distance (within the margin of a given width) of the
+    convex hull boundary of the points in `ds_reference`. The margin is
+    measured in degrees.
+
+    ┌────── Margin ───────────┐
+    │                         │
+    │    ┌─ Convex hull ─┐    │
+    │    │               │    │
+    │    │               │    │
+    │    │               │    │
+    │    │               │    │
+    │    │               │    │
+    │    └───────────────┘    │
+    │    included in crop     │
+    └─────────────────────────┘
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+        The dataset to crop.
+    ds_reference : xarray.Dataset
+        The reference dataset from which to calculate the convex hull boundary.
+    grid_index_dim : str, optional
+        The name of the grid index dimension in `ds` and `ds_reference`.
+    """
+    da_min_dist_to_ref = distance_to_convex_hull_boundary(
+        ds, ds_reference, grid_index_dim=grid_index_dim
+    )
+
+    max_dist_radians = max_dist * np.pi / 180.0
+
+    da_boundary_mask = da_min_dist_to_ref < max_dist_radians
+
+    return ds.where(da_boundary_mask, drop=True)

@@ -230,6 +230,14 @@ def create_dataset(config: Config):
         )
         ds["splits"] = da_splits
 
+    # ensure any dimensions for which coordinate values aren't yet set that
+    # these are given integer values. This will for example apply when stacking
+    # (x, y)-coordinates to a grid-index coordinate. These need unique values
+    # for later reference.
+    for d in ds.dims:
+        if d not in ds.coords:
+            ds[d] = np.arange(ds[d].size)
+
     ds.attrs = {}
     ds.attrs["schema_version"] = config.schema_version
     ds.attrs["dataset_version"] = config.dataset_version

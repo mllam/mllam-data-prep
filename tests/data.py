@@ -7,6 +7,11 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
+try:
+    import pyproj
+except ImportError:
+    pyproj = None
+
 import mllam_data_prep as mdp
 
 SCHEMA_VERSION = "v0.5.0"
@@ -295,7 +300,42 @@ def create_static_dataset(
     return ds
 
 
-def create_data_collection(data_kinds, fp_root, xlim=DEFAULT_XLIM, ylim=DEFAULT_YLIM):
+def _add_latlon(ds: xr.Dataset) -> xr.Dataset:
+    """
+    Add latitude and longitude coordinates to the dataset using a local equal
+    area projection centered on Denmark.
+    """
+    if pyproj is None:
+        raise ImportError("pyproj is required for this function")
+
+    da_x = ds.coords["x"]
+    da_y = ds.coords["y"]
+    xs, ys = np.meshgrid(da_x, da_y, indexing="ij")
+    proj = pyproj.Proj(proj="laea", lon_0=12.25, lat_0=55.65)
+    lon, lat = proj(xs, ys, inverse=True)
+    dims = da_x.dims + da_y.dims
+    coords = {d: ds.coords[d] for d in dims}
+    da_lat = xr.DataArray(lat, coords=coords, dims=dims)
+    da_lon = xr.DataArray(lon, coords=coords, dims=dims)
+
+    ds.coords["lon"] = da_lon
+    ds.coords["lat"] = da_lat
+
+    return ds
+
+
+def create_data_collection(
+    data_kinds,
+    fp_root,
+    xlim=DEFAULT_XLIM,
+    ylim=DEFAULT_YLIM,
+    nx=NX,
+    ny=NY,
+    nz=NZ,
+    nt_analysis=NT_ANALYSIS,
+    nt_forecast=NT_FORECAST,
+    add_latlon=False,
+):
     """
     Create a fake data collection with the given `data_kinds` and save it to `fp_root`, with
     each dataset having the `data_kind` name with a unique suffix and saved in `.zarr` format.
@@ -307,6 +347,20 @@ def create_data_collection(data_kinds, fp_root, xlim=DEFAULT_XLIM, ylim=DEFAULT_
         List of data kinds to create, e.g. ["surface_forecast", "static"]
     fp_root : str
         Root directory to save the data collection
+    xlim : tuple, optional
+        Tuple of the form (xmin, xmax) defining the x-limits, by default DEFAULT_XLIM
+    ylim : tuple, optional
+        Tuple of the form (ymin, ymax) defining the y-limits, by default DEFAULT_YLIM
+    nx : int, optional
+        Number of grid points in x-direction, by default NX
+    ny : int, optional
+        Number of grid points in y-direction, by default NY
+    nz : int, optional
+        Number of levels, by default NZ
+    nt_analysis : int, optional
+        Number of analysis times, by default NT_ANALYSIS
+    nt_forecast : int, optional
+        Number of forecast times, by default NT_FORECAST
 
     Returns
     -------
@@ -325,27 +379,41 @@ def create_data_collection(data_kinds, fp_root, xlim=DEFAULT_XLIM, ylim=DEFAULT_
     for data_kind in data_kinds:
         if data_kind == "surface_forecast":
             ds = create_surface_forecast_dataset(
-                NT_ANALYSIS, NT_FORECAST, NX, NY, xlim=xlim, ylim=ylim
+                nt_analysis=nt_analysis,
+                nt_forecast=nt_forecast,
+                nx=nx,
+                ny=ny,
+                xlim=xlim,
+                ylim=ylim,
             )
         elif data_kind == "surface_analysis":
             ds = create_surface_analysis_dataset(
-                NT_ANALYSIS, NX, NY, xlim=xlim, ylim=ylim
+                nt_analysis=nt_analysis, nx=nx, ny=ny, xlim=xlim, ylim=ylim
             )
         elif data_kind == "analysis_on_levels":
             ds = create_analysis_dataset_on_levels(
-                NT_ANALYSIS, NX, NY, NZ, xlim=xlim, ylim=ylim
+                nt_analysis=nt_analysis, nx=nx, ny=ny, nz=nz, xlim=xlim, ylim=ylim
             )
         elif data_kind == "forecast_on_levels":
             ds = create_forecast_dataset_on_levels(
-                NT_ANALYSIS, NT_FORECAST, NX, NY, NZ, xlim=xlim, ylim=ylim
+                nt_analysis=nt_analysis,
+                nt_forecast=nt_forecast,
+                nx=nx,
+                ny=ny,
+                nz=nz,
+                xlim=xlim,
+                ylim=ylim,
             )
         elif data_kind == "static":
-            ds = create_static_dataset(NX, NY, xlim=xlim, ylim=ylim)
+            ds = create_static_dataset(nx=nx, ny=ny, xlim=xlim, ylim=ylim)
         else:
             raise ValueError(f"Unknown data kind: {data_kind}")
 
         identifier = str(uuid.uuid4())
         dataset_name = f"{data_kind}_{identifier}"
+
+        if add_latlon:
+            ds = _add_latlon(ds)
 
         fp = f"{fp_root}/{dataset_name}.zarr"
         ds.to_zarr(fp, mode="w")
@@ -360,6 +428,9 @@ def create_input_datasets_and_config(
     data_categories: List[str],
     xlim: List[float] = DEFAULT_XLIM,
     ylim: List[float] = DEFAULT_YLIM,
+    nx: int = NX,
+    ny: int = NY,
+    add_latlon: bool = False,
 ):
     """
     Create a config and input datasets with test data for it with a given set
@@ -377,6 +448,10 @@ def create_input_datasets_and_config(
         List of the form [xmin, xmax] defining the x-limits, by default DEFAULT_XLIM
     ylim : List[float], optional
         List of the form [ymin, ymax] defining the y-limits, by default DEFAULT_YLIM
+    nx : int, optional
+        Number of grid points in x-direction, by default NX
+    ny : int, optional
+        Number of grid points in y-direction, by default NY
 
     Returns
     -------
@@ -408,6 +483,9 @@ def create_input_datasets_and_config(
             fp_root=Path(tmpdir.name) / identifier,
             xlim=xlim,
             ylim=ylim,
+            nx=nx,
+            ny=ny,
+            add_latlon=add_latlon,
         )
 
         assert len(datasets) == 1

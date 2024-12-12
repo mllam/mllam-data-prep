@@ -10,6 +10,7 @@ from numcodecs import Blosc
 
 from . import __version__
 from .config import Config, InvalidConfigException
+from .ops.cropping import crop_to_within_convex_hull_margin
 from .ops.loading import load_and_subset_dataset
 from .ops.mapping import map_dims_and_variables
 from .ops.selection import select_by_kwargs
@@ -116,6 +117,14 @@ def create_dataset(config: Config):
         raise ValueError(
             "Config schema version v0.2.0 does not support the `extra` field. Please "
             "update the schema version used in your config to v0.5.0."
+        )
+
+    # parse the interior domain config already here if domain cropping is
+    # enabled, so that we can alert the user quickly if the config is invalid
+    ds_interior_domain = None
+    if config.output.domain_cropping is not None:
+        config_interior_domain = Config.from_yaml_file(
+            file=config.output.domain_cropping.interior_dataset_config_path
         )
 
     output_config = config.output
@@ -237,6 +246,18 @@ def create_dataset(config: Config):
     for d in ds.dims:
         if d not in ds.coords:
             ds[d] = np.arange(ds[d].size)
+
+    if config.output.domain_cropping is not None:
+        domain_cropping = config.output.domain_cropping
+        ds_interior_domain = create_dataset(config=config_interior_domain)
+        logger.info(
+            f"Cropping dataset to within convex hull margin of {ds_interior_domain} with a margin of {domain_cropping.margin_width_degrees} degrees"
+        )
+        ds = crop_to_within_convex_hull_margin(
+            ds=ds,
+            ds_reference=ds_interior_domain,
+            max_dist=domain_cropping.margin_width_degrees,
+        )
 
     ds.attrs = {}
     ds.attrs["schema_version"] = config.schema_version

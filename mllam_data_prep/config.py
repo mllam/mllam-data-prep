@@ -218,6 +218,25 @@ class Splitting:
 
 
 @dataclass
+class ConvexHullPaddingCrop:
+    """
+    Define the method for cropping the domain of the output dataset, this includes defining
+    the method to use for cropping the domain and the parameters for the method.
+
+    Attributes
+    ----------
+    margin_width_degrees: float
+        The width (in degrees) of the margin applied to the convex hull
+        boundary of the interior dataset used to define the cropping domain.
+    interior_dataset_config_path: str
+        The path to the configuration file for the dataset defining the interior domain
+    """
+
+    margin_width_degrees: float
+    interior_dataset_config_path: str
+
+
+@dataclass
 class Output:
     """
     Definition of the output dataset that will be created by the dataset generation, you should
@@ -260,6 +279,7 @@ class Output:
     coord_ranges: Dict[str, Range] = None
     chunking: Dict[str, int] = None
     splitting: Splitting = None
+    domain_cropping: ConvexHullPaddingCrop = None
 
 
 @dataclass

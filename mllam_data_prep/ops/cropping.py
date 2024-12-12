@@ -23,6 +23,9 @@ def _get_latlon_coords(da: xr.DataArray) -> tuple:
     elif "lat" in da.coords and "lon" in da.coords:
         return (da.lat, da.lon)
     else:
+        import ipdb
+
+        ipdb.set_trace()
         raise Exception("Could not find lat/lon coordinates in DataArray.")
 
 

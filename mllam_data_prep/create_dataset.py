@@ -148,11 +148,6 @@ def create_dataset(config: Config):
                 raise Exception(
                     f"Error loading dataset {dataset_name} from {path}"
                 ) from ex
-            _check_dataset_attributes(
-                ds=ds,
-                expected_attributes=expected_input_attributes,
-                dataset_name=dataset_name,
-            )
 
         if derived_variables:
             logger.info(
@@ -169,11 +164,11 @@ def create_dataset(config: Config):
                     f"Error loading dataset {dataset_name} from {path}"
                     f" or deriving variables '{', '.join(list(derived_variables.keys()))}'."
                 ) from ex
-            _check_dataset_attributes(
-                ds=ds,
-                expected_attributes=expected_input_attributes,
-                dataset_name=dataset_name,
-            )
+        _check_dataset_attributes(
+            ds=ds,
+            expected_attributes=expected_input_attributes,
+            dataset_name=dataset_name,
+        )
 
         dim_mapping = input_config.dim_mapping
 

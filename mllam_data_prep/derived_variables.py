@@ -36,8 +36,8 @@ def derive_variables(fp, derived_variables, chunking):
     except ValueError:
         ds = xr.open_dataset(fp)
 
-    ds_subset = xr.Dataset()
-    ds_subset.attrs.update(ds.attrs)
+    ds_derived_vars = xr.Dataset()
+    ds_derived_vars.attrs.update(ds.attrs)
     for _, derived_variable in derived_variables.items():
         required_kwargs = derived_variable.kwargs
         function_name = derived_variable.function
@@ -49,7 +49,7 @@ def derive_variables(fp, derived_variables, chunking):
             if key in ["lat", "lon"]:
                 latlon_coords_to_include[key] = required_kwargs.pop(key)
 
-        # Subset the dataset
+        # Get input dataset for calculating derived variables
         ds_input = ds[required_kwargs.keys()]
 
         # Any coordinates needed for the derivation, for which chunking should be performed,
@@ -83,14 +83,14 @@ def derive_variables(fp, derived_variables, chunking):
         # Check the derived field(s)
         derived_field = _check_field(derived_field, derived_variable_attributes)
 
-        # Add the derived field(s) to the subset
+        # Add the derived field(s) to the dataset
         if isinstance(derived_field, xr.DataArray):
-            ds_subset[derived_field.name] = derived_field
+            ds_derived_vars[derived_field.name] = derived_field
         elif isinstance(derived_field, tuple) and all(
             isinstance(field, xr.DataArray) for field in derived_field
         ):
             for field in derived_field:
-                ds_subset[field.name] = field
+                ds_derived_vars[field.name] = field
         else:
             raise TypeError(
                 "Expected an instance of xr.DataArray or tuple(xr.DataArray),"
@@ -98,11 +98,11 @@ def derive_variables(fp, derived_variables, chunking):
             )
 
         # Add back dropped coordinates
-        ds_subset = _return_dropped_coordinates(
-            ds_subset, ds_input, required_coordinates, chunks
+        ds_derived_vars = _return_dropped_coordinates(
+            ds_derived_vars, ds_input, required_coordinates, chunks
         )
 
-    return ds_subset
+    return ds_derived_vars
 
 
 def _chunk_dataset(ds, chunks):
@@ -288,14 +288,16 @@ def _check_attributes(field, field_attributes):
     return field
 
 
-def _return_dropped_coordinates(ds_subset, ds_input, required_coordinates, chunks):
+def _return_dropped_coordinates(
+    ds_derived_vars, ds_input, required_coordinates, chunks
+):
     """
     Return the coordinates that have been reset.
 
     Parameters
     ----------
-    ds_subset: xr.Dataset
-        Subsetted dataset with derived variables
+    ds_derived_vars: xr.Dataset
+        Dataset with derived variables
     ds_input: xr.Dataset
         Input dataset for deriving variables
     required_coordinates: List[str]
@@ -306,14 +308,14 @@ def _return_dropped_coordinates(ds_subset, ds_input, required_coordinates, chunk
 
     Returns
     -------
-    ds_subset: xr.Dataset
-        Subsetted dataset with dropped coordinates returned
+    ds_derived_vars: xr.Dataset
+        Dataset with derived variables, now also with dropped coordinates returned
     """
     for req_coord in required_coordinates:
         if req_coord in chunks:
-            ds_subset.coords[req_coord] = ds_input[req_coord]
+            ds_derived_vars.coords[req_coord] = ds_input[req_coord]
 
-    return ds_subset
+    return ds_derived_vars
 
 
 def calculate_toa_radiation(lat, lon, time):

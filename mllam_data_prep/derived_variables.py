@@ -16,17 +16,17 @@ def derive_variables(fp, derived_variables, chunking):
     fp : str
         Filepath to the source dataset, for example the path to a zarr dataset
         or a netCDF file (anything that is supported by `xarray.open_dataset` will work)
-    derived_variables : dict
+    derived_variables : Dict[str, DerivedVariable]
         Dictionary with the variables to derive
         with keys as the variable names and values with entries for
         kwargs and function to use in the calculation
-    chunking: dict
+    chunking: Dict[str, int]
         Dictionary with keys as the dimensions to chunk along and values
         with the chunk size
 
     Returns
     -------
-    ds : xr.Dataset
+    xr.Dataset
         Dataset with derived variables included
     """
     logger.info("Deriving variables")
@@ -113,7 +113,7 @@ def _chunk_dataset(ds, chunks):
     ----------
     ds: xr.Dataset
         Dataset to be chunked
-    chunks: dict
+    chunks: Dict[str, int]
         Dictionary with keys as dimensions to be chunked and
         chunk sizes as the values
 
@@ -212,15 +212,15 @@ def _check_field(derived_field, derived_field_attributes):
 
     Parameters
     ----------
-    derived_field: xr.DataArray or tuple
+    derived_field: Union[xr.DataArray, Tuple[xr.DataArray]]
         The derived variable
-    derived_field_attributes: dict
+    derived_field_attributes: Dict[str, str]
         Dictionary with attributes for the derived variables.
         Defined in the config file.
 
     Returns
     -------
-    derived_field: xr.DataArray or tuple
+    derived_field: Union[xr.DataArray, Tuple[xr.DataArray]]
         The derived field
     """
     if isinstance(derived_field, xr.DataArray):
@@ -245,15 +245,15 @@ def _check_attributes(field, field_attributes):
 
     Parameters
     ----------
-    field: xr.DataArray or tuple
+    field: Union[xr.DataArray, Tuple[xr.DataArray]]
         The derived field
-    field_attributes: dict
+    field_attributes: Dict[str, str]
         Dictionary with attributes for the derived variables.
         Defined in the config file.
 
     Returns
     -------
-    field: xr.DataArray or tuple
+    field: Union[xr.DataArray, Tuple[xr.DataArray]]
         The derived field
     """
     for attribute in ["units", "long_name"]:
@@ -289,7 +289,26 @@ def _check_attributes(field, field_attributes):
 
 
 def _return_dropped_coordinates(ds_subset, ds_input, required_coordinates, chunks):
-    """Return the coordinates that have been reset."""
+    """
+    Return the coordinates that have been reset.
+
+    Parameters
+    ----------
+    ds_subset: xr.Dataset
+        Subsetted dataset with derived variables
+    ds_input: xr.Dataset
+        Input dataset for deriving variables
+    required_coordinates: List[str]
+        List of coordinates required for the derived variable
+    chunks: Dict[str, int]
+        Dictionary with keys as dimensions to be chunked and
+        chunk sizes as the values
+
+    Returns
+    -------
+    ds_subset: xr.Dataset
+        Subsetted dataset with dropped coordinates returned
+    """
     for req_coord in required_coordinates:
         if req_coord in chunks:
             ds_subset.coords[req_coord] = ds_input[req_coord]
@@ -303,16 +322,16 @@ def calculate_toa_radiation(lat, lon, time):
 
     Parameters
     ----------
-    lat : xr.DataArray or float
+    lat : Union[xr.DataArray, float]
         Latitude values. Should be in the range [-90, 90]
-    lon : xr.DataArray or float
+    lon : Union[xr.DataArray, float]
         Longitude values. Should be in the range [-180, 180] or [0, 360]
-    time : xr.DataArray or datetime object
+    time : Union[xr.DataArray, datetime.datetime]
         Time
 
     Returns
     -------
-    toa_radiation: xr.DataArray or float
+    toa_radiation : Union[xr.DataArray, float]
         TOA radiation data
     """
     logger.info("Calculating top-of-atmosphere radiation")
@@ -365,14 +384,14 @@ def calculate_hour_of_day(time):
 
     Parameters
     ----------
-    time : xr.DataArray or datetime object
+    time : Union[xr.DataArray, datetime.datetime]
         Time
 
     Returns
     -------
-    hour_of_day_cos: xr.DataArray or float
+    hour_of_day_cos: Union[xr.DataArray, float]
         cosine of the hour of day
-    hour_of_day_sin: xr.DataArray or float
+    hour_of_day_sin: Union[xr.DataArray, float]
         sine of the hour of day
     """
     logger.info("Calculating hour of day")
@@ -416,14 +435,14 @@ def calculate_day_of_year(time):
 
     Parameters
     ----------
-    time : xr.DataArray or datetime object
+    time : Union[xr.DataArray, datetime.datetime]
         Time
 
     Returns
     -------
-    day_of_year_cos: xr.DataArray or float
+    day_of_year_cos: Union[xr.DataArray, float]
         cosine of the day of year
-    day_of_year_sin: xr.DataArray or float
+    day_of_year_sin: Union[xr.DataArray, float]
         sine of the day of year
     """
     logger.info("Calculating day of year")
@@ -467,16 +486,16 @@ def cyclic_encoding(data, data_max):
 
     Parameters
     ----------
-    data : xr.DataArray, float, or int
+    data : Union[xr.DataArray, float, int]
         Data that should be cyclically encoded
-    data_max: int or float
+    data_max: Union[int, float]
         Maximum possible value of input data. Should be greater than 0.
 
     Returns
     -------
-    data_cos: xr.DataArray, float, or int
+    data_cos: Union[xr.DataArray, float, int]
         Cosine part of cyclically encoded input data
-    data_sin: xr.DataArray, float, or int
+    data_sin: Union[xr.DataArray, float, int]
         Sine part of cyclically encoded input data
     """
 

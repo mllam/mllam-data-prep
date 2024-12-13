@@ -172,13 +172,7 @@ def _get_derived_variable_function(function_namespace):
     calling_module = globals()["__name__"]
 
     # Get module and function names
-    function_namespace_list = function_namespace.rsplit(".")
-    if len(function_namespace_list) > 1:
-        function_name = function_namespace_list[-1]
-        module_name = ".".join(elem for elem in function_namespace_list[:-1])
-    else:
-        module_name = ""
-        function_name = function_namespace_list[0]
+    module_name, _, function_name = function_namespace.rpartition(".")
 
     # Check if the module_name is pointing to here (the calling module or empty "")
     # If it does, then use globals() to get the function otherwise import the

@@ -138,7 +138,7 @@ class InputDataset:
         1) the path to the dataset,
         2) the expected dimensions of the dataset,
         3) the variables to select from the dataset (and optionally subsection
-           along the coordinates for each variable) and/or the variables to derive
+           along the coordinates for each variable) or the variables to derive
            from the dataset, and finally
         4) the method by which the dimensions and variables of the dataset are
            mapped to one of the output variables (this includes stacking of all

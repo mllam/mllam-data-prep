@@ -7,19 +7,18 @@ import xarray as xr
 from loguru import logger
 
 
-def derive_variables(fp, derived_variables, chunking):
+def derive_variables(ds, derived_variables, chunking):
     """
     Load the dataset, and derive the specified variables
 
     Parameters
     ---------
-    fp : str
-        Filepath to the source dataset, for example the path to a zarr dataset
-        or a netCDF file (anything that is supported by `xarray.open_dataset` will work)
+    ds : xr.Dataset
+        Source dataset
     derived_variables : Dict[str, DerivedVariable]
-        Dictionary with the variables to derive
-        with keys as the variable names and values with entries for
-        kwargs and function to use in the calculation
+        Dictionary with the variables to derive with keys as the variable
+        names and values with entries for kwargs and function to use in
+        the calculation
     chunking: Dict[str, int]
         Dictionary with keys as the dimensions to chunk along and values
         with the chunk size
@@ -29,12 +28,6 @@ def derive_variables(fp, derived_variables, chunking):
     xr.Dataset
         Dataset with derived variables included
     """
-    logger.info("Deriving variables")
-
-    try:
-        ds = xr.open_zarr(fp)
-    except ValueError:
-        ds = xr.open_dataset(fp)
 
     ds_derived_vars = xr.Dataset()
     ds_derived_vars.attrs.update(ds.attrs)

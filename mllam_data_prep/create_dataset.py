@@ -11,7 +11,7 @@ from numcodecs import Blosc
 from . import __version__
 from .config import Config, InvalidConfigException
 from .derived_variables import derive_variables
-from .ops.loading import load_and_subset_dataset
+from .ops.loading import load_dataset, subset_dataset
 from .ops.mapping import map_dims_and_variables
 from .ops.selection import select_by_kwargs
 from .ops.statistics import calc_stats
@@ -138,32 +138,37 @@ def create_dataset(config: Config):
 
         output_dims = output_config.variables[target_output_var]
 
+        logger.info(f"Loading dataset {dataset_name} from {path}")
+        try:
+            ds_source = load_dataset(fp=path)
+        except Exception as ex:
+            raise Exception(f"Error loading dataset {dataset_name} from {path}") from ex
+
         if variables:
-            logger.info(f"Loading dataset {dataset_name} from {path} and subsetting")
+            logger.info(f"Subsetting dataset {dataset_name}")
             try:
-                ds = load_and_subset_dataset(
-                    fp=path, variables=variables, chunking=chunking_config
+                ds = subset_dataset(
+                    ds=ds_source, variables=variables, chunking=chunking_config
                 )
             except Exception as ex:
                 raise Exception(
-                    f"Error loading dataset {dataset_name} from {path}"
+                    f"Error subsetting dataset {dataset_name} from {path}"
                 ) from ex
 
         if derived_variables:
-            logger.info(
-                f"Loading dataset {dataset_name} from {path} and deriving variables"
-            )
+            logger.info(f"Deriving variables from {dataset_name}")
             try:
                 ds = derive_variables(
-                    fp=path,
+                    ds=ds_source,
                     derived_variables=derived_variables,
                     chunking=chunking_config,
                 )
             except Exception as ex:
                 raise Exception(
-                    f"Error loading dataset {dataset_name} from {path}"
-                    f" or deriving variables '{', '.join(list(derived_variables.keys()))}'."
+                    f"Error deriving variables '{', '.join(list(derived_variables.keys()))}'"
+                    f" from dataset {dataset_name} from {path}"
                 ) from ex
+
         _check_dataset_attributes(
             ds=ds,
             expected_attributes=expected_input_attributes,

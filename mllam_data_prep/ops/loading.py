@@ -1,16 +1,39 @@
 import xarray as xr
 
 
-def load_and_subset_dataset(fp, variables, chunking):
+def load_dataset(fp):
     """
-    Load the dataset, subset the variables along the specified coordinates and
-    check coordinate units
+    Load the dataset
 
     Parameters
     ----------
     fp : str
         Filepath to the source dataset, for example the path to a zarr dataset
         or a netCDF file (anything that is supported by `xarray.open_dataset` will work)
+
+    Returns
+    -------
+    ds: xr.Dataset
+        Source dataset
+    """
+
+    try:
+        ds = xr.open_zarr(fp)
+    except ValueError:
+        ds = xr.open_dataset(fp)
+
+    return ds
+
+
+def subset_dataset(ds, variables, chunking):
+    """
+    Load the dataset, subset the variables along the specified coordinates and
+    check coordinate units
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+        Source dataset
     variables : dict
         Dictionary with the variables to subset
         with keys as the variable names and values with entries for each
@@ -19,11 +42,6 @@ def load_and_subset_dataset(fp, variables, chunking):
         Dictionary with keys as the dimensions to chunk along and values
         with the chunk size
     """
-
-    try:
-        ds = xr.open_zarr(fp)
-    except ValueError:
-        ds = xr.open_dataset(fp)
 
     ds_subset = xr.Dataset()
     ds_subset.attrs.update(ds.attrs)

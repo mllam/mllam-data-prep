@@ -67,7 +67,7 @@ class DerivedVariable:
 
     kwargs: Dict[str, str]
     function: str
-    attributes: Dict[str, str] = field(default_factory=dict)
+    attributes: Optional[Dict[str, str]] = field(default_factory=dict)
 
 
 @dataclass
@@ -182,9 +182,9 @@ class InputDataset:
     dims: List[str]
     dim_mapping: Dict[str, DimMapping]
     target_output_variable: str
-    variables: Union[List[str], Dict[str, Dict[str, ValueSelection]]] = None
-    derived_variables: Dict[str, DerivedVariable] = None
-    attributes: Dict[str, Any] = field(default_factory=dict)
+    variables: Optional[Union[List[str], Dict[str, Dict[str, ValueSelection]]]] = None
+    derived_variables: Optional[Dict[str, DerivedVariable]] = None
+    attributes: Optional[Dict[str, Any]] = field(default_factory=dict)
 
 
 @dataclass

@@ -37,6 +37,10 @@ def derive_variables(ds, derived_variables, chunking):
         derived_variable_attributes = derived_variable.attributes
 
         # Separate the lat,lon from the required variables as these will be derived separately
+        logger.warning(
+            "Assuming that the lat/lon coordinates are given as variables called"
+            " 'lat' and 'lon'."
+        )
         latlon_coords_to_include = {}
         for key in list(required_kwargs.keys()):
             if key in ["lat", "lon"]:

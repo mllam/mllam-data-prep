@@ -153,11 +153,6 @@ class InputDataset:
     dims: List[str]
         List of the expected dimensions of the dataset. E.g. `["time", "x", "y"]`.
         These will be checked to ensure consistency of the dataset being read.
-    variables: Union[List[str], Dict[str, Dict[str, ValueSelection]]]
-        List of the variables to select from the dataset. E.g. `["temperature", "precipitation"]`
-        or a dictionary where the keys are the variable names and the values are dictionaries
-        defining the selection for each variable. E.g. `{"temperature": levels: {"values": [1000, 950, 900]}}`
-        would select the "temperature" variable and only the levels 1000, 950, and 900.
     dim_mapping: Dict[str, DimMapping]
         Mapping of the variables and dimensions in the input dataset to the dimensions of the
         output variable (`target_output_variable`). The key is the name of the output dimension to map to
@@ -170,12 +165,19 @@ class InputDataset:
         (e.g. two datasets that coincide in space and time will only differ in the feature dimension,
         so the two will be combined by concatenating along the feature dimension).
         If a single shared coordinate cannot be found then an exception will be raised.
+    variables: Union[List[str], Dict[str, Dict[str, ValueSelection]]]
+        List of the variables to select from the dataset. E.g. `["temperature", "precipitation"]`
+        or a dictionary where the keys are the variable names and the values are dictionaries
+        defining the selection for each variable. E.g. `{"temperature": levels: {"values": [1000, 950, 900]}}`
+        would select the "temperature" variable and only the levels 1000, 950, and 900.
     derived_variables: Dict[str, DerivedVariable]
         Dictionary of variables to derive from the dataset, where the keys are the variable names and
         the values are dictionaries defining the necessary function and kwargs. E.g.
         `{"toa_radiation": {"kwargs": {"time": "time", "lat": "lat", "lon": "lon"}, "function": "calculate_toa_radiation"}}`
         would derive the "toa_radiation" variable using the `calculate_toa_radiation` function, which
         takes `time`, `lat` and `lon` as arguments.
+    attributes: Dict[str, Any]
+        Optional dictionary with dataset attributes.
     """
 
     path: str

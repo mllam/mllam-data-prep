@@ -212,7 +212,7 @@ def _check_attributes(field, field_attributes):
 
     Parameters
     ----------
-    field: Union[xr.DataArray, Tuple[xr.DataArray]]
+    field: xr.DataArray
         The derived field
     field_attributes: Dict[str, str]
         Dictionary with attributes for the derived variables.
@@ -220,7 +220,7 @@ def _check_attributes(field, field_attributes):
 
     Returns
     -------
-    field: Union[xr.DataArray, Tuple[xr.DataArray]]
+    field: xr.DataArray
         The derived field
     """
     for attribute in ["units", "long_name"]:

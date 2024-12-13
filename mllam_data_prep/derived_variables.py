@@ -166,27 +166,20 @@ def _get_derived_variable_function(function_namespace):
     # Get the name of the calling module
     calling_module = globals()["__name__"]
 
-    if "." in function_namespace:
-        # If the function name is a full namespace, get module and function names
-        module_name, function_name = function_namespace.rsplit(".", 1)
-
-        # Check if the module_name is pointing to here (the calling module),
-        # and if it does then use globals() to get the function otherwise
-        # import the correct module and get the correct function
-        if module_name == calling_module:
-            function = globals().get(function_name)
-        else:
-            # Check if the module is already imported
-            if module_name in sys.modules:
-                module = module_name
-            else:
-                module = importlib.import_module(module_name)
-
-            # Get the function from the module
-            function = getattr(module, function_name)
+    # Get module and function names
+    function_namespace_list = function_namespace.rsplit(".")
+    if len(function_namespace_list) > 1:
+        function_name = function_namespace_list[-1]
+        module_name = ".".join(elem for elem in function_namespace_list[:-1])
     else:
-        # If function name only get it from the calling module (here)
-        function = globals().get(function_namespace)
+        module_name = ""
+        function_name = function_namespace_list[0]
+
+    # Check if the module_name is pointing to here (the calling module or empty "")
+    # If it does, then use globals() to get the function otherwise import the
+    # correct module and get the correct function
+    if module_name in [calling_module, ""]:
+        function = globals().get(function_name)
         if not function:
             raise TypeError(
                 f"Function '{function_namespace}' was not found in '{calling_module}'."
@@ -195,6 +188,15 @@ def _get_derived_variable_function(function_namespace):
                 " want to use a function defined outside of of the current module"
                 f" '{calling_module}'."
             )
+    else:
+        # Check if the module is already imported
+        if module_name in sys.modules:
+            module = module_name
+        else:
+            module = importlib.import_module(module_name)
+
+        # Get the function from the module
+        function = getattr(module, function_name)
 
     return function
 

@@ -264,19 +264,18 @@ def _check_attributes(field, field_attributes):
                     " of the config file either. Make sure that you add it to the"
                     f" 'attributes' section of the derived variable '{field.name}'."
                 )
+        elif attribute in field_attributes.keys():
+            logger.warning(
+                f"The attribute '{attribute}' of the derived field"
+                f" {field.name} is being overwritten from"
+                f" '{field.attrs[attribute]}' to"
+                f" '{field_attributes[attribute]}' according"
+                " to specification in the config file."
+            )
+            field.attrs[attribute] = field_attributes[attribute]
         else:
-            if attribute in field_attributes.keys():
-                logger.warning(
-                    f"The attribute '{attribute}' of the derived field"
-                    f" {field.name} is being overwritten from"
-                    f" '{field.attrs[attribute]}' to"
-                    f" '{field_attributes[attribute]}' according"
-                    " to specification in the config file."
-                )
-                field.attrs[attribute] = field_attributes[attribute]
-            else:
-                # Attributes are set and nothing has been defined in the config file
-                pass
+            # Attributes are set and nothing has been defined in the config file
+            pass
 
     return field
 

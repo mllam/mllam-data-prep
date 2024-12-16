@@ -69,5 +69,5 @@ def test_create_convex_hull_mask():
     )
 
     # check that there are fewer points in this margin region
-    n_points_margin_region = da_convex_hull_margin_crop.count().values
+    n_points_margin_region = da_convex_hull_margin_crop.count()
     assert n_points_margin_region < n_outside

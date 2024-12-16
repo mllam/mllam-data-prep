@@ -44,19 +44,13 @@ inputs:
       time:
         method: rename
         dim: time
-      x:
-        method: rename
-        dim: longitude
-      y:
-        method: rename
-        dim: latitude
       forcing_feature:
         method: stack_variables_by_var_name
         dims: [level]
         name_format: "{var_name}{level}hPa"
       grid_index:
         method: stack
-        dims: [x, y]
+        dims: [longitude, latitude]
     target_output_variable: forcing
 
   era5_surface:
@@ -68,18 +62,12 @@ inputs:
       time:
         method: rename
         dim: time
-      x:
-        method: rename
-        dim: longitude
-      y:
-        method: rename
-        dim: latitude
       forcing_feature:
         method: stack_variables_by_var_name
         name_format: "{var_name}"
       grid_index:
         method: stack
-        dims: [x, y]
+        dims: [longitude, latitude]
     target_output_variable: forcing
 
   era5_static:
@@ -88,18 +76,12 @@ inputs:
     variables:
       - land_sea_mask
     dim_mapping:
-      x:
-        method: rename
-        dim: longitude
-      y:
-        method: rename
-        dim: latitude
       static_feature:
         method: stack_variables_by_var_name
         name_format: "{var_name}"
       grid_index:
         method: stack
-        dims: [x, y]
+        dims: [longitude, latitude]
     target_output_variable: static
 
 extra:

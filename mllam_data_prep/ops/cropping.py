@@ -23,9 +23,6 @@ def _get_latlon_coords(da: xr.DataArray) -> tuple:
     elif "lat" in da.coords and "lon" in da.coords:
         return (da.lat, da.lon)
     else:
-        import ipdb
-
-        ipdb.set_trace()
         raise Exception("Could not find lat/lon coordinates in DataArray.")
 
 
@@ -132,9 +129,9 @@ def distance_to_convex_hull_boundary(
     # only consider points that are external to the convex hull
     ds_exterior = ds.where(~da_ch_mask, drop=True)
 
-    da_xyz = _latlon_to_unit_sphere_xyz(ds_exterior.lat, ds_exterior.lon)
+    da_xyz = _latlon_to_unit_sphere_xyz(*_get_latlon_coords(ds_exterior))
     da_xyz_ref = _latlon_to_unit_sphere_xyz(
-        ds_reference_separate_gridindex.lat, ds_reference_separate_gridindex.lon
+        *_get_latlon_coords(ds_reference_separate_gridindex)
     )
 
     def calc_dist(da_pt_xyz):

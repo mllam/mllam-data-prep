@@ -1,3 +1,11 @@
+"""
+Handle deriving new variables (xr.DataArrays) from an individual input dataset
+that has been loaded. This makes it possible to for example add fields that can
+be derived from analytical expressions and are functions of coordinate values
+(e.g. top-of-atmosphere incoming radiation is a function of time and lat/lon location),
+but also of other physical fields (wind-speed is a function of both meridional
+and zonal wind components).
+"""
 import datetime
 import importlib
 import sys

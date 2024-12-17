@@ -57,17 +57,21 @@ class DerivedVariable:
     """
     Defines a derived variables, where the kwargs (variables required
     for the calculation) and the function (for calculating the variable)
-    are specified.
+    are specified. Optionally, in case a function does not return an
+    `xr.DataArray` with the required attributes (`units` and `long_name`) set,
+    these should be specified in `attrs`, e.g.
+    {"attrs": "units": "W*m**-2, "long_name": "top-of-the-atmosphere radiation"}.
+    Additional attributes can also be set if desired.
 
     Attributes:
         kwargs: Variables required for calculating the derived variable.
         function: Function used to calculate the derived variable.
-        attributes: Attributes (e.g. `units` and `long_name`) for the derived variable.
+        attrs: Attributes (e.g. `units` and `long_name`) to set for the derived variable.
     """
 
     kwargs: Dict[str, str]
     function: str
-    attributes: Optional[Dict[str, str]] = field(default_factory=dict)
+    attrs: Optional[Dict[str, str]] = field(default_factory=dict)
 
 
 @dataclass
@@ -171,11 +175,8 @@ class InputDataset:
         defining the selection for each variable. E.g. `{"temperature": levels: {"values": [1000, 950, 900]}}`
         would select the "temperature" variable and only the levels 1000, 950, and 900.
     derived_variables: Dict[str, DerivedVariable]
-        Dictionary of variables to derive from the dataset, where the keys are the variable names and
-        the values are dictionaries defining the necessary function and kwargs. E.g.
-        `{"toa_radiation": {"kwargs": {"time": "time", "lat": "lat", "lon": "lon"}, "function": "calculate_toa_radiation"}}`
-        would derive the "toa_radiation" variable using the `calculate_toa_radiation` function, which
-        takes `time`, `lat` and `lon` as arguments.
+        Dictionary of variables to derive from the dataset, where the keys are the names variables will be given and
+        the values are `DerivedVariable` definitions that specify how to derive a variable.
     attributes: Dict[str, Any]
         Optional dictionary with dataset attributes.
     """

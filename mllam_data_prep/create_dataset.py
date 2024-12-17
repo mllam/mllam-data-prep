@@ -11,10 +11,11 @@ from numcodecs import Blosc
 from . import __version__
 from .config import Config, InvalidConfigException
 from .derived_variables import derive_variables
-from .ops.loading import load_dataset, subset_dataset
+from .ops.loading import load_input_dataset
 from .ops.mapping import map_dims_and_variables
 from .ops.selection import select_by_kwargs
 from .ops.statistics import calc_stats
+from .ops.subsetting import subset_dataset
 
 # the `extra` field in the config that was added between v0.2.0 and v0.5.0 is
 # optional, so we can support both v0.2.0 and v0.5.0
@@ -140,20 +141,20 @@ def create_dataset(config: Config):
 
         logger.info(f"Loading dataset {dataset_name} from {path}")
         try:
-            ds_source = load_dataset(fp=path)
+            ds_input = load_input_dataset(fp=path)
         except Exception as ex:
             raise Exception(f"Error loading dataset {dataset_name} from {path}") from ex
 
         if variables:
             logger.info(f"Subsetting dataset {dataset_name}")
             ds = subset_dataset(
-                ds=ds_source, variables=variables, chunking=chunking_config
+                ds=ds_input, variables=variables, chunking=chunking_config
             )
 
         if derived_variables:
             logger.info(f"Deriving variables from {dataset_name}")
             ds = derive_variables(
-                ds=ds_source,
+                ds=ds_input,
                 derived_variables=derived_variables,
                 chunking=chunking_config,
             )

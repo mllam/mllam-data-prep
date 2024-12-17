@@ -6,6 +6,8 @@ import numpy as np
 import xarray as xr
 from loguru import logger
 
+from .chunking import check_chunk_size
+
 
 def derive_variables(ds, derived_variables, chunking):
     """
@@ -105,7 +107,7 @@ def derive_variables(ds, derived_variables, chunking):
 
 def _chunk_dataset(ds, chunks):
     """
-    Chunk dataset and check the chunk size.
+    Check the chunk size and chunk dataset.
 
     Parameters
     ----------
@@ -120,28 +122,8 @@ def _chunk_dataset(ds, chunks):
     ds: xr.Dataset
         Dataset with chunking applied
     """
-    # Define the memory limit check
-    memory_limit_check = 1 * 1024**3  # 1 GB
-
     # Check the chunk size
-    for var_name, var_data in ds.data_vars.items():
-        total_size = 1
-
-        for dim, chunk_size in chunks.items():
-            dim_size = ds.sizes.get(dim, None)
-            if dim_size is None:
-                raise KeyError(f"Dimension '{dim}' not found in the dataset.")
-            total_size *= chunk_size
-
-        dtype = var_data.dtype
-        bytes_per_element = np.dtype(dtype).itemsize
-
-        memory_usage = total_size * bytes_per_element
-
-        if memory_usage > memory_limit_check:
-            logger.warning(
-                f"The chunk size for '{var_name}' exceeds '{memory_limit_check}' GB."
-            )
+    check_chunk_size(ds, chunks)
 
     # Try chunking
     try:

@@ -146,28 +146,17 @@ def create_dataset(config: Config):
 
         if variables:
             logger.info(f"Subsetting dataset {dataset_name}")
-            try:
-                ds = subset_dataset(
-                    ds=ds_source, variables=variables, chunking=chunking_config
-                )
-            except Exception as ex:
-                raise Exception(
-                    f"Error subsetting dataset {dataset_name} from {path}"
-                ) from ex
+            ds = subset_dataset(
+                ds=ds_source, variables=variables, chunking=chunking_config
+            )
 
         if derived_variables:
             logger.info(f"Deriving variables from {dataset_name}")
-            try:
-                ds = derive_variables(
-                    ds=ds_source,
-                    derived_variables=derived_variables,
-                    chunking=chunking_config,
-                )
-            except Exception as ex:
-                raise Exception(
-                    f"Error deriving variables '{', '.join(list(derived_variables.keys()))}'"
-                    f" from dataset {dataset_name} from {path}"
-                ) from ex
+            ds = derive_variables(
+                ds=ds_source,
+                derived_variables=derived_variables,
+                chunking=chunking_config,
+            )
 
         _check_dataset_attributes(
             ds=ds,

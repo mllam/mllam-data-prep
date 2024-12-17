@@ -177,8 +177,6 @@ class InputDataset:
     derived_variables: Dict[str, DerivedVariable]
         Dictionary of variables to derive from the dataset, where the keys are the names variables will be given and
         the values are `DerivedVariable` definitions that specify how to derive a variable.
-    attributes: Dict[str, Any]
-        Optional dictionary with dataset attributes.
     """
 
     path: str

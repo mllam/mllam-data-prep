@@ -277,7 +277,7 @@ def _return_dropped_coordinates(
 
 def calculate_toa_radiation(lat, lon, time):
     """
-    Function for calculating top-of-the-atmosphere radiation
+    Function for calculating top-of-atmosphere incoming radiation
 
     Parameters
     ----------
@@ -291,9 +291,9 @@ def calculate_toa_radiation(lat, lon, time):
     Returns
     -------
     toa_radiation : Union[xr.DataArray, float]
-        TOA radiation data
+        Top-of-atmosphere incoming radiation
     """
-    logger.info("Calculating top-of-atmosphere radiation")
+    logger.info("Calculating top-of-atmosphere incoming radiation")
 
     # Solar constant
     solar_constant = 1366  # W*m**-2
@@ -331,7 +331,7 @@ def calculate_toa_radiation(lat, lon, time):
     if isinstance(toa_radiation, xr.DataArray):
         # Add attributes
         toa_radiation.name = "toa_radiation"
-        toa_radiation.attrs["long_name"] = "top-of-the-atmosphere radiation"
+        toa_radiation.attrs["long_name"] = "top-of-atmosphere incoming radiation"
         toa_radiation.attrs["units"] = "W*m**-2"
 
     return toa_radiation

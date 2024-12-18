@@ -16,6 +16,8 @@ from loguru import logger
 
 from .chunking import check_chunk_size
 
+REQUIRED_FIELD_ATTRIBUTES = ["units", "long_name"]
+
 
 def derive_variables(ds, derived_variables, chunking):
     """
@@ -44,7 +46,7 @@ def derive_variables(ds, derived_variables, chunking):
     for _, derived_variable in derived_variables.items():
         required_kwargs = derived_variable.kwargs
         function_name = derived_variable.function
-        derived_variable_attributes = derived_variable.attrs
+        expected_field_attributes = derived_variable.attrs
 
         # Separate the lat,lon from the required variables as these will be derived separately
         logger.warning(
@@ -87,17 +89,18 @@ def derive_variables(ds, derived_variables, chunking):
         # Calculate the derived variable
         derived_field = func(**kwargs)
 
-        # Check the derived field(s) and add it to the dataset
+        # Check that the derived field has the necessary attributes (REQUIRED_FIELD_ATTRIBUTES)
+        # set and add it to the dataset
         if isinstance(derived_field, xr.DataArray):
-            derived_field = _check_attributes(
-                derived_field, derived_variable_attributes
+            derived_field = _check_for_required_attributes(
+                derived_field, expected_field_attributes
             )
             ds_derived_vars[derived_field.name] = derived_field
         elif isinstance(derived_field, tuple) and all(
             isinstance(field, xr.DataArray) for field in derived_field
         ):
             for field in derived_field:
-                field = _check_attributes(field, derived_variable_attributes)
+                field = _check_for_required_attributes(field, expected_field_attributes)
                 ds_derived_vars[field.name] = field
         else:
             raise TypeError(
@@ -190,7 +193,7 @@ def _get_derived_variable_function(function_namespace):
     return function
 
 
-def _check_attributes(field, field_attributes):
+def _check_for_required_attributes(field, expected_attributes):
     """
     Check the attributes of the derived variable.
 
@@ -198,8 +201,8 @@ def _check_attributes(field, field_attributes):
     ----------
     field: xr.DataArray
         The derived field
-    field_attributes: Dict[str, str]
-        Dictionary with attributes for the derived variables.
+    expected_attributes: Dict[str, str]
+        Dictionary with expected attributes for the derived variables.
         Defined in the config file.
 
     Returns
@@ -207,32 +210,36 @@ def _check_attributes(field, field_attributes):
     field: xr.DataArray
         The derived field
     """
-    for attribute in ["units", "long_name"]:
+    for attribute in REQUIRED_FIELD_ATTRIBUTES:
         if attribute not in field.attrs or field.attrs[attribute] is None:
-            if attribute in field_attributes.keys():
-                field.attrs[attribute] = field_attributes[attribute]
+            if attribute in expected_attributes.keys():
+                field.attrs[attribute] = expected_attributes[attribute]
             else:
                 # The expected attributes are empty and the attributes have not been
                 # set during the calculation of the derived variable
-                raise ValueError(
-                    f"The attribute '{attribute}' has not been set for the derived"
-                    f" variable '{field.name}' (most likely because you are using a"
-                    " function external to `mlllam-data-prep` to derive the field)."
-                    " This attribute has not been defined in the 'attributes' section"
-                    " of the config file either. Make sure that you add it to the"
-                    f" 'attributes' section of the derived variable '{field.name}'."
+                raise KeyError(
+                    f'The attribute "{attribute}" has not been set for the derived'
+                    f' variable "{field.name}". This is most likely because you are'
+                    " using a function external to `mlllam-data-prep` to derive the field,"
+                    f" in which the required attributes ({', '.join(REQUIRED_FIELD_ATTRIBUTES)})"
+                    " are not set. If they are not set in the function call when deriving the field,"
+                    ' they can be set in the config file by adding an "attrs" section under the'
+                    f' "{field.name}" derived variable section. For example, if the required attributes'
+                    f" ({', '.join(REQUIRED_FIELD_ATTRIBUTES)}) are not set for a derived variable named"
+                    f' "toa_radiation" they can be set by adding the following to the config file:'
+                    ' {"attrs": {"units": "W*m**-2", "long_name": "top-of-atmosphere incoming radiation"}}.'
                 )
-        elif attribute in field_attributes.keys():
+        elif attribute in expected_attributes.keys():
             logger.warning(
                 f"The attribute '{attribute}' of the derived field"
                 f" {field.name} is being overwritten from"
                 f" '{field.attrs[attribute]}' to"
-                f" '{field_attributes[attribute]}' according"
-                " to specification in the config file."
+                f" '{expected_attributes[attribute]}' according"
+                " to the specification in the config file."
             )
-            field.attrs[attribute] = field_attributes[attribute]
+            field.attrs[attribute] = expected_attributes[attribute]
         else:
-            # Attributes are set and nothing has been defined in the config file
+            # Attributes are set in the funciton and nothing has been defined in the config file
             pass
 
     return field

@@ -43,6 +43,10 @@ def derive_variables(ds, derived_variables, chunking):
 
     ds_derived_vars = xr.Dataset()
     ds_derived_vars.attrs.update(ds.attrs)
+    # Add dimensions to the new dataset
+    for dim in ds.dims:
+        ds_derived_vars = ds_derived_vars.assign_coords({dim: ds.coords[dim]})
+
     for _, derived_variable in derived_variables.items():
         required_kwargs = derived_variable.kwargs
         function_name = derived_variable.function

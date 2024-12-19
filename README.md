@@ -320,22 +320,8 @@ inputs:
     variables:
       # use surface incoming shortwave radiation as forcing
       - swavr0m
-    dim_mapping:
-      time:
-        method: rename
-        dim: time
-      grid_index:
-        method: stack
-        dims: [x, y]
-      forcing_feature:
-        method: stack_variables_by_var_name
-        name_format: "{var_name}"
-    target_output_variable: forcing
-
-  danra_derived_forcings:
-    path: https://mllam-test-data.s3.eu-north-1.amazonaws.com/single_levels.zarr
-    dims: [time, x, y]
     derived_variables:
+      # derive variables to be used as forcings
       toa_radiation:
         kwargs:
           time: time

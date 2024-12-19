@@ -19,14 +19,16 @@ from .chunking import check_chunk_size
 REQUIRED_FIELD_ATTRIBUTES = ["units", "long_name"]
 
 
-def derive_variables(ds, derived_variables, chunking):
+def derive_variables(ds, ds_input, derived_variables, chunking):
     """
     Load the dataset, and derive the specified variables
 
     Parameters
     ---------
     ds : xr.Dataset
-        Source dataset
+        Output dataset
+    ds_input : xr.Dataset
+        Input/source dataset
     derived_variables : Dict[str, DerivedVariable]
         Dictionary with the variables to derive with keys as the variable
         names and values with entries for kwargs and function to use in
@@ -41,11 +43,7 @@ def derive_variables(ds, derived_variables, chunking):
         Dataset with derived variables included
     """
 
-    ds_derived_vars = xr.Dataset()
-    ds_derived_vars.attrs.update(ds.attrs)
-    # Add dimensions to the new dataset
-    for dim in ds.dims:
-        ds_derived_vars = ds_derived_vars.assign_coords({dim: ds.coords[dim]})
+    target_dims = list(ds_input.sizes.keys())
 
     for _, derived_variable in derived_variables.items():
         required_kwargs = derived_variable.kwargs
@@ -62,63 +60,69 @@ def derive_variables(ds, derived_variables, chunking):
             if key in ["lat", "lon"]:
                 latlon_coords_to_include[key] = required_kwargs.pop(key)
 
-        # Get input dataset for calculating derived variables
-        ds_input = ds[required_kwargs.keys()]
+        # Get subset of input dataset for calculating derived variables
+        ds_subset = ds_input[required_kwargs.keys()]
 
         # Any coordinates needed for the derivation, for which chunking should be performed,
         # should be converted to variables since it is not possible for *indexed* coordinates
         # to be chunked dask arrays
         chunks = {
-            dim: chunking.get(dim, int(ds_input[dim].count())) for dim in ds_input.dims
+            dim: chunking.get(dim, int(ds_subset[dim].count()))
+            for dim in ds_subset.dims
         }
         required_coordinates = [
-            req_var for req_var in required_kwargs.keys() if req_var in ds_input.coords
+            req_var for req_var in required_kwargs.keys() if req_var in ds_subset.coords
         ]
-        ds_input = ds_input.drop_indexes(required_coordinates, errors="ignore")
+        ds_subset = ds_subset.drop_indexes(required_coordinates, errors="ignore")
         for req_coord in required_coordinates:
             if req_coord in chunks:
-                ds_input = ds_input.reset_coords(req_coord)
+                ds_subset = ds_subset.reset_coords(req_coord)
 
         # Chunk the dataset
-        ds_input = _chunk_dataset(ds_input, chunks)
+        ds_subset = _chunk_dataset(ds_subset, chunks)
 
         # Add function arguments to kwargs
         kwargs = {}
         if len(latlon_coords_to_include):
-            latlon = get_latlon_coords_for_input(ds)
+            latlon = get_latlon_coords_for_input(ds_input)
             for key, val in latlon_coords_to_include.items():
                 kwargs[val] = latlon[key]
-        kwargs.update({val: ds_input[key] for key, val in required_kwargs.items()})
+        kwargs.update({val: ds_subset[key] for key, val in required_kwargs.items()})
         func = _get_derived_variable_function(function_name)
         # Calculate the derived variable
         derived_field = func(**kwargs)
 
         # Check that the derived field has the necessary attributes (REQUIRED_FIELD_ATTRIBUTES)
-        # set and add it to the dataset
+        # set, return any dropped/reset coordinates, align it to the output dataset dimensions
+        # (if necessary) and add it to the dataset
         if isinstance(derived_field, xr.DataArray):
             derived_field = _check_for_required_attributes(
                 derived_field, expected_field_attributes
             )
             derived_field = _return_dropped_coordinates(
-                derived_field, ds_input, required_coordinates, chunks
+                derived_field, ds_subset, required_coordinates, chunks
             )
-            ds_derived_vars[derived_field.name] = derived_field
+            derived_field = _align_derived_variable(
+                derived_field, ds_input, target_dims
+            )
+            ds[derived_field.name] = derived_field
         elif isinstance(derived_field, tuple) and all(
             isinstance(field, xr.DataArray) for field in derived_field
         ):
             for field in derived_field:
                 field = _check_for_required_attributes(field, expected_field_attributes)
                 field = _return_dropped_coordinates(
-                    field, ds_input, required_coordinates, chunks
+                    field, ds_subset, required_coordinates, chunks
                 )
-                ds_derived_vars[field.name] = field
+                field = _align_derived_variable(field, ds_input, target_dims)
+                ds[field.name] = field
         else:
             raise TypeError(
                 "Expected an instance of xr.DataArray or tuple(xr.DataArray),"
                 f" but got {type(derived_field)}."
             )
 
-    return ds_derived_vars
+    return ds
 
 
 def _chunk_dataset(ds, chunks):
@@ -250,7 +254,7 @@ def _check_for_required_attributes(field, expected_attributes):
     return field
 
 
-def _return_dropped_coordinates(derived_field, ds_input, required_coordinates, chunks):
+def _return_dropped_coordinates(derived_field, ds, required_coordinates, chunks):
     """
     Return the coordinates that have been dropped/reset.
 
@@ -258,8 +262,8 @@ def _return_dropped_coordinates(derived_field, ds_input, required_coordinates, c
     ----------
     derived_field: xr.Dataset
         Derived variable
-    ds_input: xr.Dataset
-        Input dataset for deriving variables
+    ds: xr.Dataset
+        Dataset with required coordinatwes
     required_coordinates: List[str]
         List of coordinates required for the derived variable
     chunks: Dict[str, int]
@@ -269,13 +273,48 @@ def _return_dropped_coordinates(derived_field, ds_input, required_coordinates, c
     Returns
     -------
     derived_field: xr.Dataset
-        Dataset with derived variables, now also with dropped coordinates returned
+        Derived variable, now also with dropped coordinates returned
     """
     for req_coord in required_coordinates:
         if req_coord in chunks:
-            derived_field.coords[req_coord] = ds_input[req_coord]
+            derived_field.coords[req_coord] = ds[req_coord]
 
     return derived_field
+
+
+def _align_derived_variable(field, ds, target_dims):
+    """
+    Align a derived variable to the target dimensions (ignoring non-dimension coordinates).
+
+    Parameters
+    ----------
+    field: xr.DataArray
+        Derived field to align
+    ds: xr.Dataset
+        Target dataset
+    target_dims: List[str]
+        Dimensions to align to (e.g. 'time', 'y', 'x')
+
+    Returns
+    -------
+    field: xr.DataArray
+        The derived field aligned to the target dimensions
+    """
+    # Ensure that dimensions are ordered correctly
+    field = field.transpose(
+        *[dim for dim in target_dims if dim in field.dims], missing_dims="ignore"
+    )
+
+    # Add missing dimensions explicitly
+    for dim in target_dims:
+        if dim not in field.dims:
+            field = field.expand_dims({dim: ds.sizes[dim]})
+
+    # Broadcast to match only the target dimensions
+    broadcast_shape = {dim: ds[dim] for dim in target_dims if dim in ds.dims}
+    field = field.broadcast_like(xr.Dataset(coords=broadcast_shape))
+
+    return field
 
 
 def calculate_toa_radiation(lat, lon, time):
@@ -467,6 +506,6 @@ def cyclic_encoding(data, data_max):
     return data_cos, data_sin
 
 
-def get_latlon_coords_for_input(ds_input):
+def get_latlon_coords_for_input(ds):
     """Dummy function for getting lat and lon."""
-    return ds_input[["lat", "lon"]].chunk(-1, -1)
+    return ds[["lat", "lon"]].chunk(-1, -1)

@@ -10,10 +10,12 @@ from numcodecs import Blosc
 
 from . import __version__
 from .config import Config, InvalidConfigException
-from .ops.loading import load_and_subset_dataset
+from .ops.derived_variables import derive_variables
+from .ops.loading import load_input_dataset
 from .ops.mapping import map_dims_and_variables
 from .ops.selection import select_by_kwargs
 from .ops.statistics import calc_stats
+from .ops.subsetting import subset_dataset
 
 # the `extra` field in the config that was added between v0.2.0 and v0.5.0 is
 # optional, so we can support both v0.2.0 and v0.5.0
@@ -30,11 +32,14 @@ def _check_dataset_attributes(ds, expected_attributes, dataset_name):
 
     # check for attributes having the wrong value
     incorrect_attributes = {
-        k: v for k, v in expected_attributes.items() if ds.attrs[k] != v
+        key: val for key, val in expected_attributes.items() if ds.attrs[key] != val
     }
     if len(incorrect_attributes) > 0:
         s_list = "\n".join(
-            [f"{k}: {v} != {ds.attrs[k]}" for k, v in incorrect_attributes.items()]
+            [
+                f"{key}: {val} != {ds.attrs[key]}"
+                for key, val in incorrect_attributes.items()
+            ]
         )
         raise ValueError(
             f"Dataset {dataset_name} has the following incorrect attributes: {s_list}"
@@ -120,23 +125,50 @@ def create_dataset(config: Config):
 
     output_config = config.output
     output_coord_ranges = output_config.coord_ranges
+    chunking_config = config.output.chunking
 
     dataarrays_by_target = defaultdict(list)
 
     for dataset_name, input_config in config.inputs.items():
         path = input_config.path
         variables = input_config.variables
+        derived_variables = input_config.derived_variables
         target_output_var = input_config.target_output_variable
-        expected_input_attributes = input_config.attributes or {}
+        expected_input_attributes = input_config.attributes
         expected_input_var_dims = input_config.dims
 
         output_dims = output_config.variables[target_output_var]
 
         logger.info(f"Loading dataset {dataset_name} from {path}")
         try:
-            ds = load_and_subset_dataset(fp=path, variables=variables)
+            ds_input = load_input_dataset(fp=path)
         except Exception as ex:
             raise Exception(f"Error loading dataset {dataset_name} from {path}") from ex
+
+        # Initialize the output dataset and add dimensions
+        ds = xr.Dataset()
+        ds.attrs.update(ds_input.attrs)
+        for dim in ds_input.dims:
+            ds = ds.assign_coords({dim: ds_input.coords[dim]})
+
+        if variables:
+            logger.info(f"Subsetting dataset {dataset_name}")
+            ds = subset_dataset(
+                ds_subset=ds,
+                ds_input=ds_input,
+                variables=variables,
+                chunking=chunking_config,
+            )
+
+        if derived_variables:
+            logger.info(f"Deriving variables from {dataset_name}")
+            ds = derive_variables(
+                ds=ds,
+                ds_input=ds_input,
+                derived_variables=derived_variables,
+                chunking=chunking_config,
+            )
+
         _check_dataset_attributes(
             ds=ds,
             expected_attributes=expected_input_attributes,
@@ -191,9 +223,8 @@ def create_dataset(config: Config):
 
     # default to making a single chunk for each dimension if chunksize is not specified
     # in the config
-    chunking_config = config.output.chunking or {}
     logger.info(f"Chunking dataset with {chunking_config}")
-    chunks = {d: chunking_config.get(d, int(ds[d].count())) for d in ds.dims}
+    chunks = {dim: chunking_config.get(dim, int(ds[dim].count())) for dim in ds.dims}
     ds = ds.chunk(chunks)
 
     splitting = config.output.splitting

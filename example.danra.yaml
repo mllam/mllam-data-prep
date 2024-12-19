@@ -61,6 +61,18 @@ inputs:
     variables:
       # use surface incoming shortwave radiation as forcing
       - swavr0m
+    derived_variables:
+      # derive variables to be used as forcings
+      toa_radiation:
+        kwargs:
+          time: time
+          lat: lat
+          lon: lon
+        function: mllam_data_prep.ops.derived_variables.calculate_toa_radiation
+      hour_of_day:
+        kwargs:
+          time: time
+        function: mllam_data_prep.ops.derived_variables.calculate_hour_of_day
     dim_mapping:
       time:
         method: rename

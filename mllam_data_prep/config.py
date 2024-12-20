@@ -328,6 +328,54 @@ class Config(dataclass_wizard.JSONWizard, dataclass_wizard.YAMLWizard):
     class _(JSONWizard.Meta):
         raise_on_unknown_json_key = True
 
+    @staticmethod
+    def load_config(*args, **kwargs):
+        """
+        Wrapper function for `from_yaml_file` to load config file and validate that:
+        - either `variables` or `derived_variables` are present in the config
+        - if both `variables` and `derived_variables` are present, that they don't
+          add the same variables to the dataset
+
+        Parameters
+        ----------
+        *args: Positional arguments for `from_yaml_file`
+        **kwargs: Keyword arguments for `from_yaml_file`
+
+        Returns
+        -------
+        config: Config
+        """
+
+        # Load the config
+        config = Config.from_yaml_file(*args, **kwargs)
+
+        for input_dataset in config.inputs.values():
+            if not input_dataset.variables and not input_dataset.derived_variables:
+                raise InvalidConfigException(
+                    "At least one of the keys `variables` and `derived_variables` must be included"
+                    " in the input dataset."
+                )
+            elif input_dataset.variables and input_dataset.derived_variables:
+                # Check so that there are no overlapping variables
+                if isinstance(input_dataset.variables, list):
+                    variable_vars = input_dataset.variables
+                elif isinstance(input_dataset.variables, dict):
+                    variable_vars = input_dataset.variables.keys()
+                else:
+                    raise TypeError(
+                        f"Expected an instance of list or dict, but got {type(input_dataset.variables)}."
+                    )
+                derived_variable_vars = input_dataset.derived_variables.keys()
+                common_vars = list(set(variable_vars) & set(derived_variable_vars))
+                if len(common_vars) > 0:
+                    raise InvalidConfigException(
+                        "Both `variables` and `derived_variables` include the following variables name(s):"
+                        f" '{', '.join(common_vars)}'. This is not allowed. Make sure that there"
+                        " are no overlapping variable names between `variables` and `derived_variables`,"
+                        f" either by renaming or removing '{', '.join(common_vars)}' from one of them."
+                    )
+        return config
+
 
 if __name__ == "__main__":
     import argparse
@@ -338,7 +386,7 @@ if __name__ == "__main__":
     )
     args = argparser.parse_args()
 
-    config = Config.from_yaml_file(args.f)
+    config = Config.load_config(args.f)
     import rich
 
     rich.print(config)

@@ -286,7 +286,7 @@ def create_dataset_zarr(fp_config, fp_zarr: str = None):
         The path to the zarr file to write the dataset to. If not provided, the zarr file will be written
         to the same directory as the config file with the extension changed to '.zarr'.
     """
-    config = Config.from_yaml_file(file=fp_config)
+    config = Config.load_config(file=fp_config)
 
     ds = create_dataset(config=config)
 

@@ -103,7 +103,7 @@ The package can also be used as a python module to create datasets directly, for
 import mllam_data_prep as mdp
 
 config_path = "example.danra.yaml"
-config = mdp.Config.from_yaml_file(config_path)
+config = mdp.Config.load_config(config_path)
 ds = mdp.create_dataset(config=config)
 ```
 

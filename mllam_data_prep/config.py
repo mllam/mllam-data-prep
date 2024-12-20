@@ -53,6 +53,28 @@ class ValueSelection:
 
 
 @dataclass
+class DerivedVariable:
+    """
+    Defines a derived variables, where the kwargs (variables required
+    for the calculation) and the function (for calculating the variable)
+    are specified. Optionally, in case a function does not return an
+    `xr.DataArray` with the required attributes (`units` and `long_name`) set,
+    these should be specified in `attrs`, e.g.
+    {"attrs": "units": "W*m**-2, "long_name": "top-of-the-atmosphere radiation"}.
+    Additional attributes can also be set if desired.
+
+    Attributes:
+        kwargs: Variables required for calculating the derived variable.
+        function: Function used to calculate the derived variable.
+        attrs: Attributes (e.g. `units` and `long_name`) to set for the derived variable.
+    """
+
+    kwargs: Dict[str, str]
+    function: str
+    attrs: Optional[Dict[str, str]] = field(default_factory=dict)
+
+
+@dataclass
 class DimMapping:
     """
     Defines the process for mapping dimensions and variables from an input
@@ -120,7 +142,8 @@ class InputDataset:
         1) the path to the dataset,
         2) the expected dimensions of the dataset,
         3) the variables to select from the dataset (and optionally subsection
-           along the coordinates for each variable) and finally
+           along the coordinates for each variable) or the variables to derive
+           from the dataset, and finally
         4) the method by which the dimensions and variables of the dataset are
            mapped to one of the output variables (this includes stacking of all
            the selected variables into a new single variable along a new coordinate,
@@ -134,11 +157,6 @@ class InputDataset:
     dims: List[str]
         List of the expected dimensions of the dataset. E.g. `["time", "x", "y"]`.
         These will be checked to ensure consistency of the dataset being read.
-    variables: Union[List[str], Dict[str, Dict[str, ValueSelection]]]
-        List of the variables to select from the dataset. E.g. `["temperature", "precipitation"]`
-        or a dictionary where the keys are the variable names and the values are dictionaries
-        defining the selection for each variable. E.g. `{"temperature": levels: {"values": [1000, 950, 900]}}`
-        would select the "temperature" variable and only the levels 1000, 950, and 900.
     dim_mapping: Dict[str, DimMapping]
         Mapping of the variables and dimensions in the input dataset to the dimensions of the
         output variable (`target_output_variable`). The key is the name of the output dimension to map to
@@ -151,14 +169,23 @@ class InputDataset:
         (e.g. two datasets that coincide in space and time will only differ in the feature dimension,
         so the two will be combined by concatenating along the feature dimension).
         If a single shared coordinate cannot be found then an exception will be raised.
+    variables: Union[List[str], Dict[str, Dict[str, ValueSelection]]]
+        List of the variables to select from the dataset. E.g. `["temperature", "precipitation"]`
+        or a dictionary where the keys are the variable names and the values are dictionaries
+        defining the selection for each variable. E.g. `{"temperature": levels: {"values": [1000, 950, 900]}}`
+        would select the "temperature" variable and only the levels 1000, 950, and 900.
+    derived_variables: Dict[str, DerivedVariable]
+        Dictionary of variables to derive from the dataset, where the keys are the names variables will be given and
+        the values are `DerivedVariable` definitions that specify how to derive a variable.
     """
 
     path: str
     dims: List[str]
-    variables: Union[List[str], Dict[str, Dict[str, ValueSelection]]]
     dim_mapping: Dict[str, DimMapping]
     target_output_variable: str
-    attributes: Dict[str, Any] = None
+    variables: Optional[Union[List[str], Dict[str, Dict[str, ValueSelection]]]] = None
+    derived_variables: Optional[Dict[str, DerivedVariable]] = None
+    attributes: Optional[Dict[str, Any]] = field(default_factory=dict)
 
 
 @dataclass
@@ -258,7 +285,7 @@ class Output:
 
     variables: Dict[str, List[str]]
     coord_ranges: Dict[str, Range] = None
-    chunking: Dict[str, int] = None
+    chunking: Dict[str, int] = field(default_factory=dict)
     splitting: Splitting = None
 
 
@@ -301,6 +328,54 @@ class Config(dataclass_wizard.JSONWizard, dataclass_wizard.YAMLWizard):
     class _(JSONWizard.Meta):
         raise_on_unknown_json_key = True
 
+    @staticmethod
+    def load_config(*args, **kwargs):
+        """
+        Wrapper function for `from_yaml_file` to load config file and validate that:
+        - either `variables` or `derived_variables` are present in the config
+        - if both `variables` and `derived_variables` are present, that they don't
+          add the same variables to the dataset
+
+        Parameters
+        ----------
+        *args: Positional arguments for `from_yaml_file`
+        **kwargs: Keyword arguments for `from_yaml_file`
+
+        Returns
+        -------
+        config: Config
+        """
+
+        # Load the config
+        config = Config.from_yaml_file(*args, **kwargs)
+
+        for input_dataset in config.inputs.values():
+            if not input_dataset.variables and not input_dataset.derived_variables:
+                raise InvalidConfigException(
+                    "At least one of the keys `variables` and `derived_variables` must be included"
+                    " in the input dataset."
+                )
+            elif input_dataset.variables and input_dataset.derived_variables:
+                # Check so that there are no overlapping variables
+                if isinstance(input_dataset.variables, list):
+                    variable_vars = input_dataset.variables
+                elif isinstance(input_dataset.variables, dict):
+                    variable_vars = input_dataset.variables.keys()
+                else:
+                    raise TypeError(
+                        f"Expected an instance of list or dict, but got {type(input_dataset.variables)}."
+                    )
+                derived_variable_vars = input_dataset.derived_variables.keys()
+                common_vars = list(set(variable_vars) & set(derived_variable_vars))
+                if len(common_vars) > 0:
+                    raise InvalidConfigException(
+                        "Both `variables` and `derived_variables` include the following variables name(s):"
+                        f" '{', '.join(common_vars)}'. This is not allowed. Make sure that there"
+                        " are no overlapping variable names between `variables` and `derived_variables`,"
+                        f" either by renaming or removing '{', '.join(common_vars)}' from one of them."
+                    )
+        return config
+
 
 if __name__ == "__main__":
     import argparse
@@ -311,7 +386,7 @@ if __name__ == "__main__":
     )
     args = argparser.parse_args()
 
-    config = Config.from_yaml_file(args.f)
+    config = Config.load_config(args.f)
     import rich
 
     rich.print(config)

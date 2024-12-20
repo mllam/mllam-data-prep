@@ -103,7 +103,7 @@ The package can also be used as a python module to create datasets directly, for
 import mllam_data_prep as mdp
 
 config_path = "example.danra.yaml"
-config = mdp.Config.from_yaml_file(config_path)
+config = mdp.Config.load_config(config_path)
 ds = mdp.create_dataset(config=config)
 ```
 
@@ -175,6 +175,18 @@ inputs:
     variables:
       # use surface incoming shortwave radiation as forcing
       - swavr0m
+    derived_variables:
+      # derive variables to be used as forcings
+      toa_radiation:
+        kwargs:
+          time: time
+          lat: lat
+          lon: lon
+        function: mllam_data_prep.ops.derived_variables.calculate_toa_radiation
+      hour_of_day:
+        kwargs:
+          time: time
+        function: mllam_data_prep.ops.derived_variables.calculate_hour_of_day
     dim_mapping:
       time:
         method: rename
@@ -286,15 +298,26 @@ inputs:
       grid_index:
         method: stack
         dims: [x, y]
-    target_architecture_variable: state
+    target_output_variable: state
 
   danra_surface:
     path: https://mllam-test-data.s3.eu-north-1.amazonaws.com/single_levels.zarr
     dims: [time, x, y]
     variables:
-      # shouldn't really be using sea-surface pressure as "forcing", but don't
-      # have radiation varibles in danra yet
-      - pres_seasurface
+      # use surface incoming shortwave radiation as forcing
+      - swavr0m
+    derived_variables:
+      # derive variables to be used as forcings
+      toa_radiation:
+        kwargs:
+          time: time
+          lat: lat
+          lon: lon
+        function: mllam_data_prep.derived_variables.calculate_toa_radiation
+      hour_of_day:
+        kwargs:
+          time: time
+        function: mllam_data_prep.derived_variables.calculate_hour_of_day
     dim_mapping:
       time:
         method: rename
@@ -305,7 +328,7 @@ inputs:
       forcing_feature:
         method: stack_variables_by_var_name
         name_format: "{var_name}"
-    target_architecture_variable: forcing
+    target_output_variable: forcing
 
   ...
 ```
@@ -315,11 +338,44 @@ The `inputs` section defines the source datasets to extract data from. Each sour
 - `path`: the path to the source dataset. This can be a local path or a URL to e.g. a zarr dataset or netCDF file, anything that can be read by `xarray.open_dataset(...)`.
 - `dims`: the dimensions that the source dataset is expected to have. This is used to check that the source dataset has the expected dimensions and also makes it clearer in the config file what the dimensions of the source dataset are.
 - `variables`: selects which variables to extract from the source dataset. This may either be a list of variable names, or a dictionary where each key is the variable name and the value defines a dictionary of coordinates to do selection on. When doing selection you may also optionally define the units of the variable to check that the units of the variable match the units of the variable in the model architecture.
-- `target_architecture_variable`: the variable in the model architecture that the source dataset should be mapped to.
+- `target_output_variable`: the variable in the model architecture that the source dataset should be mapped to.
 - `dim_mapping`: defines how the dimensions of the source dataset should be mapped to the dimensions of the model architecture. This is done by defining a method to apply to each dimension. The methods are:
   - `rename`: simply rename the dimension to the new name
   - `stack`: stack the listed dimension to create the dimension in the output
   - `stack_variables_by_var_name`: stack the dimension into the new dimension, and also stack the variable name into the new variable name. This is useful when you have multiple variables with the same dimensions that you want to stack into a single variable.
+- `derived_variables`: defines the variables to be derived from the variables available in the source dataset. This should be a dictionary where each key is the variable to be derived and the value defines a dictionary with the following additional information. See the 'Derived Variables' section for more details.
+  - `function`: the function to be used to derive a variable. This should be a string and may either be the full namespace of the function (e.g. `mllam_data_prep.ops.derived_variables.calculate_toa_radiation`) or in case the function is included in the `mllam_data_prep.ops.derived_variables` module it is enough with the function name only.
+  - `kwargs`: arguments for the function used to derive a variable. This is a dictionary where each key is the name of the variables to select from the source dataset and each value is the named argument to `function`.
+
+#### Derived Variables
+Variables that are not part of the source dataset but can be derived from variables in the source dataset can also be included. They should be defined in their own section, called `derived_variables` as illustrated in the example config above and in the `example.danra.yaml` config file.
+
+To derive the variables, the function to be used to derive the variable (`function`) and the arguments to this function (`kwargs`) need to be specified, as explained above. In addition, an optional section called `attrs` can be added. In this section, the user can add attributes to the derived variable, as illustrated below.
+```yaml
+    derived_variables:
+      toa_radiation:
+        kwargs:
+          time: time
+          lat: lat
+          lon: lon
+        function: mllam_data_prep.derived_variables.calculate_toa_radiation
+        attrs:
+          units: W*m**-2
+          long_name: top-of-atmosphere incoming radiation
+```
+
+Note that the attributes `units` and `long_name` are required. This means that if the function used to derive a variable does not set these attributes they are **required** to be set in the config file. If using a function defined in `mllam_data_prep.ops.derived_variables` the `attrs` section is optional as the attributes should already be defined. In this case, adding the `units` and `long_name` attributes to the `attrs` section of the derived variable in config file will overwrite the already-defined attributes from the function.
+
+Currently, the following derived variables are included as part of `mllam-data-prep`:
+- `toa_radiation`:
+  - Top-of-atmosphere incoming radiation
+  - function: `mllam_data_prep.ops.derived_variables.calculate_toa_radiation`
+- `hour_of_day`:
+  - Hour of day (cyclically encoded)
+  - function: `mllam_data_prep.ops.derived_variables.calculate_hour_of_day`
+- `day_of_year`:
+  - Day of year (cyclically encoded)
+  - function: `mllam_data_prep.ops.derived_variables.calculate_day_of_year`
 
 
 ### Config schema versioning

@@ -6,7 +6,6 @@ be derived from analytical expressions and are functions of coordinate values
 but also of other physical fields (wind-speed is a function of both meridional
 and zonal wind components).
 """
-import datetime
 import importlib
 import sys
 
@@ -47,7 +46,7 @@ def derive_variables(ds, ds_input, derived_variables, chunking):
 
     for _, derived_variable in derived_variables.items():
         required_kwargs = derived_variable.kwargs
-        function_name = derived_variable.function
+        function_namespace = derived_variable.function
         expected_field_attributes = derived_variable.attrs
 
         # Separate the lat,lon from the required variables as these will be derived separately
@@ -88,7 +87,7 @@ def derive_variables(ds, ds_input, derived_variables, chunking):
             for key, val in latlon_coords_to_include.items():
                 kwargs[val] = latlon[key]
         kwargs.update({val: ds_subset[key] for key, val in required_kwargs.items()})
-        func = _get_derived_variable_function(function_name)
+        func = _get_derived_variable_function(function_namespace)
         # Calculate the derived variable
         derived_field = func(**kwargs)
 
@@ -133,42 +132,24 @@ def _get_derived_variable_function(function_namespace):
     Parameters
     ----------
     function_namespace: str
-        The full function namespace or just the function name
-        if it is a function included in this module.
+        The full function namespace
 
     Returns
     -------
     function: object
         Function for deriving the specified variable
     """
-    # Get the name of the calling module
-    calling_module = globals()["__name__"]
-
     # Get module and function names
     module_name, _, function_name = function_namespace.rpartition(".")
 
-    # Check if the module_name is pointing to here (the calling module or empty "")
-    # If it does, then use globals() to get the function otherwise import the
-    # correct module and get the correct function
-    if module_name in [calling_module, ""]:
-        function = globals().get(function_name)
-        if not function:
-            raise TypeError(
-                f"Function '{function_namespace}' was not found in '{calling_module}'."
-                f" Check that you have specified the correct function name"
-                " and/or that you have defined the full function namespace if you"
-                " want to use a function defined outside of of the current module"
-                f" '{calling_module}'."
-            )
+    # Import the module (if necessary)
+    if module_name in sys.modules:
+        module = sys.modules[module_name]
     else:
-        # Check if the module is already imported
-        if module_name in sys.modules:
-            module = module_name
-        else:
-            module = importlib.import_module(module_name)
+        module = importlib.import_module(module_name)
 
-        # Get the function from the module
-        function = getattr(module, function_name)
+    # Get the function from the module
+    function = getattr(module, function_name)
 
     return function
 
@@ -286,170 +267,6 @@ def _align_derived_variable(field, ds, target_dims):
     field = field.broadcast_like(xr.Dataset(coords=broadcast_shape))
 
     return field
-
-
-def calculate_toa_radiation(lat, lon, time):
-    """
-    Function for calculating top-of-atmosphere incoming radiation
-
-    Parameters
-    ----------
-    lat : Union[xr.DataArray, float]
-        Latitude values. Should be in the range [-90, 90]
-    lon : Union[xr.DataArray, float]
-        Longitude values. Should be in the range [-180, 180] or [0, 360]
-    time : Union[xr.DataArray, datetime.datetime]
-        Time
-
-    Returns
-    -------
-    toa_radiation : Union[xr.DataArray, float]
-        Top-of-atmosphere incoming radiation
-    """
-    logger.info("Calculating top-of-atmosphere incoming radiation")
-
-    # Solar constant
-    solar_constant = 1366  # W*m**-2
-
-    # Different handling if xr.DataArray or datetime object
-    if isinstance(time, xr.DataArray):
-        day = time.dt.dayofyear
-        hour_utc = time.dt.hour
-    elif isinstance(time, datetime.datetime):
-        day = time.timetuple().tm_yday
-        hour_utc = time.hour
-    else:
-        raise TypeError(
-            "Expected an instance of xr.DataArray or datetime object,"
-            f" but got {type(time)}."
-        )
-
-    # Eq. 1.6.1a in Solar Engineering of Thermal Processes 4th ed.
-    # dec: declination - angular position of the sun at solar noon w.r.t.
-    # the plane of the equator
-    dec = np.pi / 180 * 23.45 * np.sin(2 * np.pi * (284 + day) / 365)
-
-    utc_solar_time = hour_utc + lon / 15
-    hour_angle = 15 * (utc_solar_time - 12)
-
-    # Eq. 1.6.2 with beta=0 in Solar Engineering of Thermal Processes 4th ed.
-    # cos_sza: Cosine of solar zenith angle
-    cos_sza = np.sin(lat * np.pi / 180) * np.sin(dec) + np.cos(
-        lat * np.pi / 180
-    ) * np.cos(dec) * np.cos(hour_angle * np.pi / 180)
-
-    # Where TOA radiation is negative, set to 0
-    toa_radiation = xr.where(solar_constant * cos_sza < 0, 0, solar_constant * cos_sza)
-
-    if isinstance(toa_radiation, xr.DataArray):
-        # Add attributes
-        toa_radiation.name = "toa_radiation"
-        toa_radiation.attrs["long_name"] = "top-of-atmosphere incoming radiation"
-        toa_radiation.attrs["units"] = "W*m**-2"
-
-    return toa_radiation
-
-
-def calculate_hour_of_day(time):
-    """
-    Function for calculating hour of day features with a cyclic encoding
-
-    Parameters
-    ----------
-    time : Union[xr.DataArray, datetime.datetime]
-        Time
-
-    Returns
-    -------
-    hour_of_day_cos: Union[xr.DataArray, float]
-        cosine of the hour of day
-    hour_of_day_sin: Union[xr.DataArray, float]
-        sine of the hour of day
-    """
-    logger.info("Calculating hour of day")
-
-    # Get the hour of the day
-    if isinstance(time, xr.DataArray):
-        hour_of_day = time.dt.hour
-    elif isinstance(time, datetime.datetime):
-        hour_of_day = time.hour
-    else:
-        raise TypeError(
-            "Expected an instance of xr.DataArray or datetime object,"
-            f" but got {type(time)}."
-        )
-
-    # Cyclic encoding of hour of day
-    hour_of_day_cos, hour_of_day_sin = cyclic_encoding(hour_of_day, 24)
-
-    if isinstance(hour_of_day_cos, xr.DataArray):
-        # Add attributes
-        hour_of_day_cos.name = "hour_of_day_cos"
-        hour_of_day_cos.attrs[
-            "long_name"
-        ] = "Cosine component of cyclically encoded hour of day"
-        hour_of_day_cos.attrs["units"] = "1"
-
-    if isinstance(hour_of_day_sin, xr.DataArray):
-        # Add attributes
-        hour_of_day_sin.name = "hour_of_day_sin"
-        hour_of_day_sin.attrs[
-            "long_name"
-        ] = "Sine component of cyclically encoded hour of day"
-        hour_of_day_sin.attrs["units"] = "1"
-
-    return hour_of_day_cos, hour_of_day_sin
-
-
-def calculate_day_of_year(time):
-    """
-    Function for calculating day of year features with a cyclic encoding
-
-    Parameters
-    ----------
-    time : Union[xr.DataArray, datetime.datetime]
-        Time
-
-    Returns
-    -------
-    day_of_year_cos: Union[xr.DataArray, float]
-        cosine of the day of year
-    day_of_year_sin: Union[xr.DataArray, float]
-        sine of the day of year
-    """
-    logger.info("Calculating day of year")
-
-    # Get the day of year
-    if isinstance(time, xr.DataArray):
-        day_of_year = time.dt.dayofyear
-    elif isinstance(time, datetime.datetime):
-        day_of_year = time.timetuple().tm_yday
-    else:
-        raise TypeError(
-            "Expected an instance of xr.DataArray or datetime object,"
-            f" but got {type(time)}."
-        )
-
-    # Cyclic encoding of day of year - use 366 to include leap years!
-    day_of_year_cos, day_of_year_sin = cyclic_encoding(day_of_year, 366)
-
-    if isinstance(day_of_year_cos, xr.DataArray):
-        # Add attributes
-        day_of_year_cos.name = "day_of_year_cos"
-        day_of_year_cos.attrs[
-            "long_name"
-        ] = "Cosine component of cyclically encoded day of year"
-        day_of_year_cos.attrs["units"] = "1"
-
-    if isinstance(day_of_year_sin, xr.DataArray):
-        # Add attributes
-        day_of_year_sin.name = "day_of_year_sin"
-        day_of_year_sin.attrs[
-            "long_name"
-        ] = "Sine component of cyclically encoded day of year"
-        day_of_year_sin.attrs["units"] = "1"
-
-    return day_of_year_cos, day_of_year_sin
 
 
 def cyclic_encoding(data, data_max):

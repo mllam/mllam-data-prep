@@ -68,11 +68,11 @@ inputs:
           time: time
           lat: lat
           lon: lon
-        function: mllam_data_prep.ops.derived_variables.calculate_toa_radiation
+        function: mllam_data_prep.ops.derive_variable.physical_field.calculate_toa_radiation
       hour_of_day:
         kwargs:
           time: time
-        function: mllam_data_prep.ops.derived_variables.calculate_hour_of_day
+        function: mllam_data_prep.ops.derive_variable.time_components.calculate_hour_of_day
     dim_mapping:
       time:
         method: rename

@@ -11,7 +11,7 @@ from numcodecs import Blosc
 from . import __version__
 from .config import Config, InvalidConfigException
 from .ops.chunking import chunk_dataset
-from .ops.derived_variables import derive_variables
+from .ops.derive_variable.dispatcher import derive_variables
 from .ops.loading import load_input_dataset
 from .ops.mapping import map_dims_and_variables
 from .ops.selection import select_by_kwargs

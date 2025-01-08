@@ -13,7 +13,7 @@ import numpy as np
 import xarray as xr
 from loguru import logger
 
-from .chunking import chunk_dataset
+from ..chunking import chunk_dataset
 
 REQUIRED_FIELD_ATTRIBUTES = ["units", "long_name"]
 

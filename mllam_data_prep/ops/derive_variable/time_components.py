@@ -7,7 +7,7 @@ import datetime
 import xarray as xr
 from loguru import logger
 
-from ..derived_variables import cyclic_encoding
+from .dispatcher import cyclic_encoding
 
 
 def calculate_hour_of_day(time):

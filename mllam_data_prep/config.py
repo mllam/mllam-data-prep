@@ -349,11 +349,13 @@ class Config(dataclass_wizard.JSONWizard, dataclass_wizard.YAMLWizard):
         # Load the config
         config = Config.from_yaml_file(*args, **kwargs)
 
-        for input_dataset in config.inputs.values():
+        for input_dataset_name, input_dataset in config.inputs.items():
             if not input_dataset.variables and not input_dataset.derived_variables:
                 raise InvalidConfigException(
-                    "At least one of the keys `variables` and `derived_variables` must be included"
-                    " in the input dataset."
+                    f"Input dataset '{input_dataset_name}' is missing the keys `variables` and/or"
+                    " `derived_variables`. Make sure that you update the config so that the input"
+                    f" dataset '{input_dataset_name}' contains at least either a `variables` or"
+                    " `derived_variables` section."
                 )
             elif input_dataset.variables and input_dataset.derived_variables:
                 # Check so that there are no overlapping variables

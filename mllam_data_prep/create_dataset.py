@@ -10,7 +10,7 @@ from numcodecs import Blosc
 
 from . import __version__
 from .config import Config, InvalidConfigException
-from .ops.cropping import crop_to_within_convex_hull_margin
+from .ops.cropping import crop_with_convex_hull
 from .ops.loading import load_and_subset_dataset
 from .ops.mapping import map_dims_and_variables
 from .ops.selection import select_by_kwargs
@@ -253,10 +253,11 @@ def create_dataset(config: Config):
         logger.info(
             f"Cropping dataset to within convex hull margin of {ds_interior_domain} with a margin of {domain_cropping.margin_width_degrees} degrees"
         )
-        ds = crop_to_within_convex_hull_margin(
+        ds = crop_with_convex_hull(
             ds=ds,
             ds_reference=ds_interior_domain,
-            max_dist=domain_cropping.margin_width_degrees,
+            margin_thickness=domain_cropping.margin_width_degrees,
+            include_interior=False,
         )
 
     ds.attrs = {}

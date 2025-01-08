@@ -23,7 +23,6 @@ def check_chunk_size(ds, chunks):
         Dataset with chunking applied
     """
 
-    # Check the chunk size
     for var_name, var_data in ds.data_vars.items():
         total_size = 1
 
@@ -42,3 +41,32 @@ def check_chunk_size(ds, chunks):
             logger.warning(
                 f"The chunk size for '{var_name}' exceeds '{CHUNK_MAX_SIZE_WARNING}' GB."
             )
+
+
+def chunk_dataset(ds, chunks):
+    """
+    Check the chunk size and chunk dataset.
+
+    Parameters
+    ----------
+    ds: xr.Dataset
+        Dataset to be chunked
+    chunks: Dict[str, int]
+        Dictionary with keys as dimensions to be chunked and
+        chunk sizes as the values
+
+    Returns
+    -------
+    ds: xr.Dataset
+        Dataset with chunking applied
+    """
+    # Check the chunk size
+    check_chunk_size(ds, chunks)
+
+    # Try chunking
+    try:
+        ds = ds.chunk(chunks)
+    except Exception as ex:
+        raise Exception(f"Error chunking dataset: {ex}")
+
+    return ds

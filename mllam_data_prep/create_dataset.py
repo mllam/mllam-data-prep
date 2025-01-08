@@ -10,6 +10,7 @@ from numcodecs import Blosc
 
 from . import __version__
 from .config import Config, InvalidConfigException
+from .ops.chunking import chunk_dataset
 from .ops.derived_variables import derive_variables
 from .ops.loading import load_input_dataset
 from .ops.mapping import map_dims_and_variables
@@ -157,7 +158,6 @@ def create_dataset(config: Config):
                 ds_subset=ds,
                 ds_input=ds_input,
                 variables=variables,
-                chunking=chunking_config,
             )
 
         if derived_variables:
@@ -225,7 +225,7 @@ def create_dataset(config: Config):
     # in the config
     logger.info(f"Chunking dataset with {chunking_config}")
     chunks = {dim: chunking_config.get(dim, int(ds[dim].count())) for dim in ds.dims}
-    ds = ds.chunk(chunks)
+    ds = chunk_dataset(ds, chunks)
 
     splitting = config.output.splitting
 

@@ -1,4 +1,4 @@
-def subset_dataset(ds_subset, ds_input, variables, chunking):
+def subset_dataset(ds_subset, ds_input, variables):
     """
     Select specific variables from the provided the dataset, subset the
     variables along the specified coordinates and check coordinate units
@@ -13,9 +13,6 @@ def subset_dataset(ds_subset, ds_input, variables, chunking):
         Dictionary with the variables to subset
         with keys as the variable names and values with entries for each
         coordinate and coordinate values to extract
-    chunking: dict
-        Dictionary with keys as the dimensions to chunk along and values
-        with the chunk size
     """
 
     if isinstance(variables, dict):
@@ -48,10 +45,5 @@ def subset_dataset(ds_subset, ds_input, variables, chunking):
             ) from ex
     else:
         raise ValueError("The `variables` argument should be a list or a dictionary")
-
-    chunks = {
-        dim: chunking.get(dim, int(ds_subset[dim].count())) for dim in ds_subset.dims
-    }
-    ds_subset = ds_subset.chunk(chunks)
 
     return ds_subset

@@ -14,7 +14,7 @@ import numpy as np
 import xarray as xr
 from loguru import logger
 
-from .chunking import check_chunk_size
+from .chunking import chunk_dataset
 
 REQUIRED_FIELD_ATTRIBUTES = ["units", "long_name"]
 
@@ -79,7 +79,7 @@ def derive_variables(ds, ds_input, derived_variables, chunking):
                 ds_subset = ds_subset.reset_coords(req_coord)
 
         # Chunk the dataset
-        ds_subset = _chunk_dataset(ds_subset, chunks)
+        ds_subset = chunk_dataset(ds_subset, chunks)
 
         # Add function arguments to kwargs
         kwargs = {}
@@ -121,35 +121,6 @@ def derive_variables(ds, ds_input, derived_variables, chunking):
                 "Expected an instance of xr.DataArray or tuple(xr.DataArray),"
                 f" but got {type(derived_field)}."
             )
-
-    return ds
-
-
-def _chunk_dataset(ds, chunks):
-    """
-    Check the chunk size and chunk dataset.
-
-    Parameters
-    ----------
-    ds: xr.Dataset
-        Dataset to be chunked
-    chunks: Dict[str, int]
-        Dictionary with keys as dimensions to be chunked and
-        chunk sizes as the values
-
-    Returns
-    -------
-    ds: xr.Dataset
-        Dataset with chunking applied
-    """
-    # Check the chunk size
-    check_chunk_size(ds, chunks)
-
-    # Try chunking
-    try:
-        ds = ds.chunk(chunks)
-    except Exception as ex:
-        raise Exception(f"Error chunking dataset: {ex}")
 
     return ds
 

@@ -79,10 +79,14 @@ def test_toa_radiation(lat, lon, time):
         side_effect=mock_cyclic_encoding,
     ):
         if isinstance(time, (xr.DataArray, datetime.datetime)):
-            mdp.ops.derived_variables.calculate_toa_radiation(lat, lon, time)
+            mdp.ops.derive_variable.physical_field.calculate_toa_radiation(
+                lat, lon, time
+            )
         else:
             with pytest.raises(TypeError):
-                mdp.ops.derived_variables.calculate_toa_radiation(lat, lon, time)
+                mdp.ops.derive_variable.physical_field.calculate_toa_radiation(
+                    lat, lon, time
+                )
 
 
 @pytest.mark.parametrize("time", TIME)
@@ -95,10 +99,10 @@ def test_hour_of_day(time):
         side_effect=mock_cyclic_encoding,
     ):
         if isinstance(time, (xr.DataArray, datetime.datetime)):
-            mdp.ops.derived_variables.calculate_hour_of_day(time)
+            mdp.ops.derive_variable.time_components.calculate_hour_of_day(time)
         else:
             with pytest.raises(TypeError):
-                mdp.ops.derived_variables.calculate_hour_of_day(time)
+                mdp.ops.derive_variable.time_components.calculate_hour_of_day(time)
 
 
 @pytest.mark.parametrize("time", TIME)
@@ -111,7 +115,7 @@ def test_day_of_year(time):
         side_effect=mock_cyclic_encoding,
     ):
         if isinstance(time, (xr.DataArray, datetime.datetime)):
-            mdp.ops.derived_variables.calculate_day_of_year(time)
+            mdp.ops.derive_variable.time_components.calculate_day_of_year(time)
         else:
             with pytest.raises(TypeError):
-                mdp.ops.derived_variables.calculate_day_of_year(time)
+                mdp.ops.derive_variable.time_components.calculate_day_of_year(time)

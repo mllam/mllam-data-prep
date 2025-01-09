@@ -172,7 +172,7 @@ def crop_with_convex_hull(
     ds_reference: xr.Dataset,
     grid_index_dim: str = "grid_index",
     margin_thickness: float = 2.0,
-    include_interior: bool = True,
+    include_interior_points: bool = True,
     return_mask=False,
 ) -> xr.Dataset:
     """
@@ -206,7 +206,7 @@ def crop_with_convex_hull(
         degrees. Points within this margin will be included in the output.
     """
     if margin_thickness == 0.0:
-        if not include_interior:
+        if not include_interior_points:
             raise Exception(
                 "With no margin and exclude_interior=False, all points would be excluded."
             )
@@ -222,7 +222,7 @@ def crop_with_convex_hull(
         max_dist_radians = margin_thickness * np.pi / 180.0
         da_boundary_mask = da_min_dist_to_ref < max_dist_radians
 
-        if not include_interior:
+        if not include_interior_points:
             da_mask = da_boundary_mask
         else:
             da_interior_points = da_ch_mask.where(da_ch_mask, drop=True)

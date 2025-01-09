@@ -251,13 +251,16 @@ def create_dataset(config: Config):
         domain_cropping = config.output.domain_cropping
         ds_interior_domain = create_dataset(config=config_interior_domain)
         logger.info(
-            f"Cropping dataset to within convex hull margin of {ds_interior_domain} with a margin of {domain_cropping.margin_width_degrees} degrees"
+            f"Cropping dataset using convex of {config.output.domain_cropping.interior_dataset_config_path} dataset "
+            f"applying margin of {domain_cropping.margin_width_degrees} degrees "
+            f"{'including' if domain_cropping.include_interior_points else 'excluding'} "
+            f"interior points"
         )
         ds = crop_with_convex_hull(
             ds=ds,
             ds_reference=ds_interior_domain,
             margin_thickness=domain_cropping.margin_width_degrees,
-            include_interior=False,
+            include_interior_points=domain_cropping.include_interior_points,
         )
 
     ds.attrs = {}

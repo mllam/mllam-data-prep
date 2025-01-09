@@ -17,7 +17,7 @@ dependencies = [
     "isodate>=0.6.1",
     "requests>=2.31.0",
     "aiohttp>=3.9.3",
-    "dataclass-wizard>=0.22.3",
+    "dataclass-wizard==0.30.0",
     "semver>=3.0.2",
     "rich>=13.7.1",
     "dask>=2024.2.1",

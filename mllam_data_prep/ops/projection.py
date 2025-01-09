@@ -11,6 +11,10 @@ class ProjectionInconsistencyWarning(Warning):
     pass
 
 
+class ProjectionCompatibilityWarning(Warning):
+    pass
+
+
 def _extract_grid_mapping_names(grid_mapping_attr: str) -> List[str]:
     """Extract grid mapping names from the grid_mapping attribute.
 
@@ -69,6 +73,73 @@ def _get_projection_mappings(dataset: xr.Dataset) -> Dict[str, Any]:
             gm = _extract_grid_mapping_names(dataset[var].attrs["grid_mapping"])
             projections[var] = gm
     return projections
+
+
+def check_projection_compatibility(proj: Dict[str, Union[str, dict]]) -> None:
+    """Check if the projection is compatible with mllam software.
+
+    Checks:
+    - if information is given as WKT string
+    - if the WKT string includes a BBOX definition
+
+    Parameters
+    ----------
+    proj : Dict[str, Union[str, dict]]
+        Projection information as a dictionary with the projection
+        variable names as keys and the projection attributes as values
+
+    Examples
+    --------
+    >>> proj1 = {"crs_wkt": "EPSG:4326"}
+    >>> check_projection_compatibility(proj1)
+    >>> crs_wkt = (
+    ...     'GEOGCRS["WGS 84",ENSEMBLE["World Geodetic System 1984 ensemble",'
+    ...     'MEMBER["World Geodetic System 1984 (Transit)"],'
+    ...     'MEMBER["World Geodetic System 1984 (G730)"],'
+    ...     'MEMBER["World Geodetic System 1984 (G873)"],'
+    ...     'MEMBER["World Geodetic System 1984 (G1150)"],'
+    ...     'MEMBER["World Geodetic System 1984 (G1674)"],'
+    ...     'MEMBER["World Geodetic System 1984 (G1762)"],'
+    ...     'MEMBER["World Geodetic System 1984 (G2139)"],'
+    ...     'MEMBER["World Geodetic System 1984 (G2296)"],'
+    ...     'ELLIPSOID["WGS 84",6378137,298.257223563,'
+    ...     'LENGTHUNIT["metre",1]],ENSEMBLEACCURACY[2.0]],'
+    ...     'PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433]],'
+    ...     'CS[ellipsoidal,2],AXIS["geodetic latitude (Lat)",north,'
+    ...     'ORDER[1],ANGLEUNIT["degree",0.0174532925199433]],'
+    ...     'AXIS["geodetic longitude (Lon)",east,ORDER[2],'
+    ...     'ANGLEUNIT["degree",0.0174532925199433]],'
+    ...     'USAGE[SCOPE["Horizontal component of 3D system."],'
+    ...     'AREA["World."],],ID["EPSG",4326]]'
+    ... )
+    >>> proj2 = {"crs_wkt": crs_wkt}
+    >>> check_projection_compatibility(proj2)
+    Traceback (most recent call last):
+       ...
+    mllam_data_prep.ops.projection.ProjectionCompatibilityWarning: WKT string should include a BBOX definition to be compatible with e.g. cartopy.
+    >>> proj3 = {
+    ...     "semi_major_axis": 6367470.0,
+    ...     "semi_minor_axis": 6367470.0,
+    ...     "reference_ellipsoid_name": "Sphere",
+    ...     "grid_mapping_name": "lambert_conformal_conic",
+    ...     "standard_parallel": [0.0567, 0.0567],
+    ...     "latitude_of_projection_origin": 0.0567,
+    ...     "longitude_of_central_meridian": 0.025,
+    ...  }
+    >>> check_projection_compatibility(proj3)
+    Traceback (most recent call last):
+       ...
+    KeyError: 'Projection information must contain a WKT string.'
+    """
+    if "crs_wkt" not in proj:
+        raise KeyError("Projection information must contain a WKT string.")
+
+    if "BBOX" not in pyproj.CRS.from_cf(proj).to_wkt():
+        raise ProjectionCompatibilityWarning(
+            "WKT string should include a BBOX definition to be compatible with e.g. cartopy."
+        )
+
+    return
 
 
 def validate_projection_consistency(

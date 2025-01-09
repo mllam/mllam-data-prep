@@ -14,7 +14,9 @@ from .config import Config, InvalidConfigException
 from .ops.loading import load_and_subset_dataset
 from .ops.mapping import map_dims_and_variables
 from .ops.projection import (
+    ProjectionCompatibilityWarning,
     ProjectionInconsistencyWarning,
+    check_projection_compatibility,
     get_projection_crs,
     validate_projection_consistency,
 )
@@ -225,6 +227,12 @@ def create_dataset(config: Config):
         except ProjectionInconsistencyWarning as e:
             logger.warning(f"Projection information might be ambiguous: {e}")
         projection = pyproj.CRS.from_cf(projections[0])
+        try:
+            check_projection_compatibility(projection)
+        except ProjectionCompatibilityWarning:
+            logger.warning(
+                "WKT string should include a BBOX definition to be compatible with e.g. cartopy."
+            )
 
         # TODO: generalize the retrieval of x and y coords
         # coords = (dataarrays_by_target[target_output_var][0]['x'], dataarrays_by_target[target_output_var][0]['y'])

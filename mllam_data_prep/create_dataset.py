@@ -197,7 +197,8 @@ def create_dataset(config: Config):
                 f"Projection information not found in dataset {dataset_name}, using projection information from config."
             )
             projection_crs = {
-                crs_var: p.attributes for crs_var, p in dataset_projections.items()
+                crs_var: {"crs_wkt": p.crs_wkt}
+                for crs_var, p in dataset_projections.items()
             }
         elif projection_crs is None and not dataset_projections:
             logger.warning(
@@ -207,6 +208,10 @@ def create_dataset(config: Config):
             logger.warning(
                 f"Projection information given in {dataset_name} is overwritten by that given in config."
             )
+            projection_crs = {
+                crs_var: {"crs_wkt": p.crs_wkt}
+                for crs_var, p in dataset_projections.items()
+            }
         if projection_crs is not None:
             projections.extend(projection_crs.values())
 
@@ -228,7 +233,7 @@ def create_dataset(config: Config):
             logger.warning(f"Projection information might be ambiguous: {e}")
         projection = pyproj.CRS.from_cf(projections[0])
         try:
-            check_projection_compatibility(projection)
+            check_projection_compatibility(projections[0])
         except ProjectionCompatibilityWarning:
             logger.warning(
                 "WKT string should include a BBOX definition to be compatible with e.g. cartopy."

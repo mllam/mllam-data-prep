@@ -120,14 +120,15 @@ class Projection:
     ----------
     dims : List[str]
         The dimensions of the projection, usually ["x", "y"].
-    attributes : Dict[str, Any]
-        The attributes that define the projection. The attributes need to adhere to the CF-conventions
-        and contain either a `crs_wkt` attribute or individual attributes that are specific to the used projection.
-        If both are given, then the `crs_wkt` attribute will be used to create the projection object.
+    crs_wkt : str
+        The well-known text (WKT) representation of the CRS. For compatibility with cartopy the WKT string
+        needs to contain a BBOX parameter, e.g. `crs_wkt = "PROJCS[...], BBOX[...]"`.
+        Registered CRSs at e.g. EPSG can be used as well, e.g. `crs_wkt = "EPSG:4326"`. These often will resolve to
+        a WKT string that includes the BBOX parameter (see https://epsg.io/4326).
     """
 
     dims: List[str]
-    attributes: Dict[str, Any]
+    crs_wkt: str
 
 
 @dataclass
@@ -182,8 +183,8 @@ class InputDataset:
     ]
     dim_mapping: Dict[str, DimMapping]
     target_output_variable: str
+    projections: Dict[str, Projection]
     attributes: Dict[str, Any] = None
-    projections: Optional[Dict[str, Projection]] = None
 
 
 @dataclass

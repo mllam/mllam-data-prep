@@ -79,6 +79,10 @@ inputs:
         altitude:
           values: [100, ]
           units: m
+    projections:
+      danra_projection:
+        dims: [x, y]
+        crs_wkt: {crs_wkt}
     dim_mapping:
       time:
         method: rename
@@ -97,6 +101,10 @@ inputs:
     dims: [time, x, y]
     variables:
       - pres_seasurface
+    projections:
+      danra_projection:
+        dims: [x, y]
+        crs_wkt: {crs_wkt}
     dim_mapping:
       time:
         method: rename
@@ -109,7 +117,8 @@ inputs:
         name_format: f"{{var_name}}"
     target_output_variable: forcing
 """.format(
-    schema_version=testdata.SCHEMA_VERSION
+    schema_version=testdata.SCHEMA_VERSION,
+    crs_wkt=testdata.DANRA_CRS_WKT,
 )
 
 

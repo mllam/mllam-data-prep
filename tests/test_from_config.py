@@ -71,6 +71,12 @@ def test_merging_static_and_surface_analysis():
                 path=datasets["surface_analysis"],
                 dims=["analysis_time", "x", "y"],
                 variables=testdata.DEFAULT_SURFACE_ANALYSIS_VARS,
+                projections=dict(
+                    danra_projection=dict(
+                        dims=["x", "y"],
+                        crs_wkt=testdata.DANRA_CRS_WKT,
+                    )
+                ),
                 dim_mapping=dict(
                     time=dict(
                         method="rename",
@@ -91,6 +97,12 @@ def test_merging_static_and_surface_analysis():
                 path=datasets["static"],
                 dims=["x", "y"],
                 variables=testdata.DEFAULT_STATIC_VARS,
+                projections=dict(
+                    danra_projection=dict(
+                        dims=["x", "y"],
+                        crs_wkt=testdata.DANRA_CRS_WKT,
+                    )
+                ),
                 dim_mapping=dict(
                     grid_index=dict(
                         method="stack",
@@ -164,6 +176,12 @@ def test_time_selection(source_data_contains_time_range, time_stepsize):
                 path=datasets["surface_analysis"],
                 dims=["analysis_time", "x", "y"],
                 variables=testdata.DEFAULT_SURFACE_ANALYSIS_VARS,
+                projections=dict(
+                    danra_projection=dict(
+                        dims=["x", "y"],
+                        crs_wkt=testdata.DANRA_CRS_WKT,
+                    )
+                ),
                 dim_mapping=dict(
                     time=dict(
                         method="rename",
@@ -232,6 +250,12 @@ def test_feature_collision(use_common_feature_var_name):
                 path=datasets["surface_analysis"],
                 dims=["analysis_time", "x", "y"],
                 variables=testdata.DEFAULT_SURFACE_ANALYSIS_VARS,
+                projections=dict(
+                    danra_projection=dict(
+                        dims=["x", "y"],
+                        crs_wkt=testdata.DANRA_CRS_WKT,
+                    )
+                ),
                 dim_mapping={
                     "time": dict(
                         method="rename",
@@ -252,6 +276,12 @@ def test_feature_collision(use_common_feature_var_name):
                 path=datasets["static"],
                 dims=["x", "y"],
                 variables=testdata.DEFAULT_STATIC_VARS,
+                projections=dict(
+                    danra_projection=dict(
+                        dims=["x", "y"],
+                        crs_wkt=testdata.DANRA_CRS_WKT,
+                    )
+                ),
                 dim_mapping={
                     "grid_index": dict(
                         dims=["x", "y"],
@@ -284,23 +314,12 @@ def test_feature_collision(use_common_feature_var_name):
     "projection",
     [
         {
-            "__common__": {
+            "proj1": {
                 "dims": "[x y]",
-                "attributes": {
-                    "crs_wkt": 'GEOGCRS["WGS 84",DATUM["World Geodetic System 1984",ELLIPSOID["WGS 84",6378137,298.257223563,LENGTHUNIT["metre",1]]],CS[ellipsoidal,2],AXIS["latitude",north,ORDER[1],ANGLEUNIT["degree",0.0174532925199433]],AXIS["longitude",east,ORDER[2],ANGLEUNIT["degree",0.0174532925199433]],ID["EPSG",4326]]'
-                },
+                "crs_wkt": """PROJCRS["DMI HARMONIE DANRA lambert projection", BASEGEOGCRS["DMI HARMONIE DANRA lambert CRS", DATUM["DMI HARMONIE DANRA lambert datum", ELLIPSOID["Sphere", 6367470, 0, LENGTHUNIT["metre", 1, ID["EPSG", 9001]]]], PRIMEM["Greenwich", 0, ANGLEUNIT["degree", 0.0174532925199433, ID["EPSG", 8901]]], ID["EPSG",4035]], CONVERSION["Lambert Conic Conformal (2SP)", METHOD["Lambert Conic Conformal (2SP)", ID["EPSG", 9802]], PARAMETER["Latitude of false origin", 56.7, ANGLEUNIT["degree", 0.0174532925199433, ID["EPSG", 8821]]], PARAMETER["Longitude of false origin", 25, ANGLEUNIT["degree", 0.0174532925199433, ID["EPSG", 8822]]], PARAMETER["Latitude of 1st standard parallel", 56.7, ANGLEUNIT["degree", 0.0174532925199433, ID["EPSG", 8823]]], PARAMETER["Latitude of 2nd standard parallel", 56.7, ANGLEUNIT["degree", 0.0174532925199433, ID["EPSG", 8824]]], PARAMETER["Easting at false origin", 0, LENGTHUNIT["metre", 1, ID["EPSG", 8826]]], PARAMETER["Northing at false origin", 0, LENGTHUNIT["metre", 1, ID["EPSG", 8827]]]], CS[Cartesian, 2], AXIS["(E)", east, ORDER[1], LENGTHUNIT["metre", 1, ID["EPSG", 9001]]], AXIS["(N)", north, ORDER[2], LENGTHUNIT["metre", 1, ID["EPSG", 9001]]], USAGE[AREA["Denmark and surrounding regions"], BBOX[47, -3, 65, 25], SCOPE["Danra reanalysis projection"]]]""",
             }
         },
-        {
-            "__common__": {
-                "dims": "[x y]",
-                "attributes": {
-                    "grid_mapping_name": "rotated_latitude_longitude",
-                    "grid_north_pole_latitude": 10,
-                    "grid_north_pole_longitude": 50,
-                },
-            }
-        },
+        {"proj2": {"dims": "[x y]", "crs_wkt": "EPSG:4326"}},
     ],
 )
 def test_projection_from_config(projection: Dict):
@@ -317,24 +336,12 @@ def test_projection_from_config(projection: Dict):
     config = mdp.Config.from_yaml(config_yaml)
 
     ds = mdp.create_dataset(config=config)
-    # Test CF-conform projection variable attributes
-    # for var in set(ds.data_vars).intersection(VARIABLES_ON_PROJECTION):
-    #     assert "grid_mapping" in ds[var].attrs
-    #     assert ds[var].attrs["grid_mapping"] in projection.keys()
-    # for var in set(ds.data_vars).difference(VARIABLES_ON_PROJECTION):
-    #     assert "grid_mapping" not in ds[var].attrs
 
     for proj in projection.keys():
         assert proj in ds, "Projection variable not found in dataset"
-        if "crs_wkt" in projection[proj]["attributes"]:
-            assert pyproj.CRS.from_wkt(
-                ds[proj].attrs["crs_wkt"]
-            ) == pyproj.CRS.from_wkt(projection[proj]["attributes"]["crs_wkt"])
-        else:
-            ds[proj].attrs.pop("crs_wkt")
-            assert pyproj.CRS.from_cf(ds[proj].attrs) == pyproj.CRS.from_cf(
-                projection[proj]["attributes"]
-            )
+        assert pyproj.CRS.from_wkt(ds[proj].attrs["crs_wkt"]) == pyproj.CRS.from_wkt(
+            projection[proj]["crs_wkt"]
+        ), "CRS mismatch"
 
 
 def test_danra_example():
@@ -367,6 +374,12 @@ def test_optional_extra_section(extra_content):
                 path=datasets["static"],
                 dims=["x", "y"],
                 variables=testdata.DEFAULT_STATIC_VARS,
+                projections=dict(
+                    danra_projection=dict(
+                        dims=["x", "y"],
+                        crs_wkt=testdata.DANRA_CRS_WKT,
+                    )
+                ),
                 dim_mapping=dict(
                     grid_index=dict(
                         method="stack",

@@ -339,8 +339,10 @@ def test_projection_from_config(projection: Dict):
 
     for proj in projection.keys():
         assert proj in ds, "Projection variable not found in dataset"
-        assert pyproj.CRS.from_wkt(ds[proj].attrs["crs_wkt"]) == pyproj.CRS.from_wkt(
-            projection[proj]["crs_wkt"]
+        assert pyproj.CRS.from_cf(
+            {"crs_wkt": ds[proj].attrs["crs_wkt"]}
+        ) == pyproj.CRS.from_cf(
+            {"crs_wkt": projection[proj]["crs_wkt"]}
         ), "CRS mismatch"
 
 

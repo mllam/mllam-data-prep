@@ -130,7 +130,7 @@ def create_dataset(config: Config):
     output_coord_ranges = output_config.coord_ranges
 
     dataarrays_by_target = defaultdict(list)
-    projections = []
+    projections = {}
 
     for dataset_name, input_config in config.inputs.items():
         path = input_config.path
@@ -153,9 +153,39 @@ def create_dataset(config: Config):
             dataset_name=dataset_name,
         )
 
+        # get the projection information from the dataset and update it with the projection
+        # information given in the input config
+        # TODO: read the projection information from the config
+        try:
+            projection_crs = get_projection_crs(ds)
+        except ValueError:
+            projection_crs = None
+        if projection_crs is None and dataset_projections:
+            logger.warning(
+                f"Projection information not found in dataset {dataset_name}, using projection information from config."
+            )
+            projection_crs = {
+                crs_var: {"crs_wkt": p.crs_wkt}
+                for crs_var, p in dataset_projections.items()
+            }
+        elif projection_crs is None and not dataset_projections:
+            logger.warning(
+                f"No projection information found neither in dataset {dataset_name}, nor in config."
+            )
+        elif projection_crs is not None and dataset_projections:
+            logger.warning(
+                f"Projection information given in {dataset_name} is overwritten by that given in config."
+            )
+            projection_crs = {
+                crs_var: {"crs_wkt": p.crs_wkt}
+                for crs_var, p in dataset_projections.items()
+            }
+        if projection_crs is not None:
+            projections.update(projection_crs)
+
         # TODO: remove this once grid_mapping is set in config file
         for var in ds.data_vars:
-            ds[var].attrs["grid_mapping"] = "__common__"
+            ds[var].attrs["grid_mapping"] = list(projection_crs.keys())[0]
 
         dim_mapping = input_config.dim_mapping
 
@@ -188,33 +218,6 @@ def create_dataset(config: Config):
 
         da_target.attrs["source_dataset"] = dataset_name
 
-        # get the projection information from the dataset and update it with the projection
-        # information given in the input config
-        # TODO: read the projection information from the config
-        projection_crs = get_projection_crs(ds)
-        if projection_crs is None and dataset_projections:
-            logger.warning(
-                f"Projection information not found in dataset {dataset_name}, using projection information from config."
-            )
-            projection_crs = {
-                crs_var: {"crs_wkt": p.crs_wkt}
-                for crs_var, p in dataset_projections.items()
-            }
-        elif projection_crs is None and not dataset_projections:
-            logger.warning(
-                f"No projection information found neither in dataset {dataset_name}, nor in config."
-            )
-        elif projection_crs is not None and dataset_projections:
-            logger.warning(
-                f"Projection information given in {dataset_name} is overwritten by that given in config."
-            )
-            projection_crs = {
-                crs_var: {"crs_wkt": p.crs_wkt}
-                for crs_var, p in dataset_projections.items()
-            }
-        if projection_crs is not None:
-            projections.extend(projection_crs.values())
-
         # only need to do selection for the coordinates that the input dataset actually has
         if output_coord_ranges is not None:
             selection_kwargs = {}
@@ -228,12 +231,12 @@ def create_dataset(config: Config):
     # validate projections across input datasets
     if projections:
         try:
-            validate_projection_consistency(projections)
+            validate_projection_consistency(projections.values())
         except ProjectionInconsistencyWarning as e:
             logger.warning(f"Projection information might be ambiguous: {e}")
-        projection = pyproj.CRS.from_cf(projections[0])
+        projection = pyproj.CRS.from_cf(list(projections.values())[0])
         try:
-            check_projection_compatibility(projections[0])
+            check_projection_compatibility(list(projections.values())[0])
         except ProjectionCompatibilityWarning:
             logger.warning(
                 "WKT string should include a BBOX definition to be compatible with e.g. cartopy."
@@ -291,7 +294,9 @@ def create_dataset(config: Config):
 
     # add the projection information to the dataset
     if projections:
-        ds["__common__"] = xr.DataArray(0, attrs=projection.to_cf()).astype("int16")
+        ds[projections.keys()] = xr.DataArray(0, attrs=projection.to_cf()).astype(
+            "int16"
+        )
         # for var in ["VARIABLES_WITH_PROKJECTION"]:
         #     ds[var].attrs["grid_mapping"] = "__common__"
 

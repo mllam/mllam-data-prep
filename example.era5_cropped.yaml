@@ -28,7 +28,7 @@ output:
         start: 1990-09-07T00:00
         end: 1990-09-09T00:00
   domain_cropping:
-    margin_width_degrees: 0.2
+    margin_width_degrees: 10
     interior_dataset_config_path: example.danra.yaml
 
 inputs:

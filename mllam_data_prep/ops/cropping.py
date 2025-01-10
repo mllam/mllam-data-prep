@@ -43,6 +43,8 @@ def create_convex_hull_mask(ds: xr.Dataset, ds_reference: xr.Dataset) -> xr.Data
     -------
     xarray.DataArray
         A boolean mask indicating which points are interior to the convex hull.
+    xarray.DataSet
+        A dataset containing lat lon coordinates for points making up the convex hull.
     """
     da_lat, da_lon = _get_latlon_coords(ds)
     da_lat_ref, da_lon_ref = _get_latlon_coords(ds_reference)
@@ -63,7 +65,16 @@ def create_convex_hull_mask(ds: xr.Dataset, ds_reference: xr.Dataset) -> xr.Data
         "long_name"
     ] = "contained in convex hull of source dataset (da_ref)"
 
-    return da_interior_mask
+    # Get points at edge of convex hull
+    chull_lam_lon, chull_lam_lat = list(chull_lam.to_lonlat())[0]
+    chull_lat_lons = xr.Dataset(
+        coords={
+            "lon": (["grid_index_ref"], chull_lam_lon),
+            "lat": (["grid_index_ref"], chull_lam_lat),
+        }
+    )
+
+    return da_interior_mask, chull_lat_lons
 
 
 def _latlon_to_unit_sphere_xyz(
@@ -90,6 +101,69 @@ def _latlon_to_unit_sphere_xyz(
         pts_xyz, coords=da_lat.coords, dims=list(da_lat.dims) + ["xyz"]
     )
     return da_xyz
+
+
+def shortest_distance_to_arc(point_cartesian, arc_start_cartesian, arc_end_cartesian):
+    """
+    Compute shortest haversine distance from a set of points to an arc on the
+    surface of the sphere.
+
+    Parameters
+    ----------
+    point_cartesian : np.ndarray, shape (num_points, 3)
+        Points to measure distance from
+    arc_start_cartesian : np.ndarray, shape (3,)
+        Start point of arc
+    arc_end_cartesian : np.ndarray, shape (3,)
+        End point of arc
+
+    Returns
+    -------
+    np.ndarray, shape (num_points,)
+        The distances in radians
+    """
+    # Calculate normal vector to the plane of the great circle
+    normal_vector = np.cross(arc_start_cartesian, arc_end_cartesian)
+    normal_vector = normal_vector / np.linalg.norm(normal_vector)  # Normalize
+
+    # Project point onto the plane
+    point_projection = (
+        point_cartesian
+        - np.dot(point_cartesian, normal_vector)[:, np.newaxis] * normal_vector
+    )
+
+    # Normalize to get the projected point on the sphere's surface
+    projected_point = (
+        point_projection / np.linalg.norm(point_projection, axis=1)[:, np.newaxis]
+    )
+
+    # Calculate the angle between the original point and the projected point
+    angle_point_to_projection = np.arccos(
+        np.clip(np.sum(point_cartesian * projected_point, axis=1), -1, 1)
+    )
+
+    # Check if the projected point is between the start and end points of the arc
+    is_between_arc = (
+        np.dot(np.cross(arc_start_cartesian, projected_point), normal_vector) >= 0
+    ) & (np.dot(np.cross(projected_point, arc_end_cartesian), normal_vector) >= 0)
+
+    # Calculate distances from the point to the start and end points of the arc
+    distance_to_start = np.arccos(
+        np.clip(np.dot(point_cartesian, arc_start_cartesian), -1, 1)
+    )
+    distance_to_end = np.arccos(
+        np.clip(np.dot(point_cartesian, arc_end_cartesian), -1, 1)
+    )
+
+    # Choose the appropriate distance
+    distances = np.where(
+        is_between_arc,
+        angle_point_to_projection,
+        np.minimum(distance_to_start, distance_to_end),
+    )
+
+    # Distance returned in radians
+    return distances
 
 
 def distance_to_convex_hull_boundary(
@@ -122,29 +196,32 @@ def distance_to_convex_hull_boundary(
     )
 
     # create a mask from the convex hull of ds_reference for the grid points in ds
-    da_ch_mask = create_convex_hull_mask(
+    da_ch_mask, chull_lat_lons = create_convex_hull_mask(
         ds=ds, ds_reference=ds_reference_separate_gridindex
     )
 
     # only consider points that are external to the convex hull
     ds_exterior = ds.where(~da_ch_mask, drop=True)
+    ds_exterior_lon, ds_exterior_lat = _get_latlon_coords(ds_exterior)
 
-    da_xyz = _latlon_to_unit_sphere_xyz(*_get_latlon_coords(ds_exterior))
-    da_xyz_ref = _latlon_to_unit_sphere_xyz(
-        *_get_latlon_coords(ds_reference_separate_gridindex)
-    )
+    da_xyz = _latlon_to_unit_sphere_xyz(ds_exterior_lon, ds_exterior_lat)
 
-    def calc_dist(da_pt_xyz):
-        dotproduct = np.dot(da_xyz_ref, da_pt_xyz.T)
-        val = np.min(np.arccos(dotproduct))
-        return val
+    da_xyz_chull = _latlon_to_unit_sphere_xyz(*_get_latlon_coords(chull_lat_lons))
+    # Collect arcs making up chull
+    chull_arcs = list(zip(da_xyz_chull[:-1], da_xyz_chull[1:])) + [
+        (da_xyz_chull[-1], da_xyz_chull[0])
+    ]  # Add arc from last to first point
 
-    da_mindist_to_ref = xr.apply_ufunc(
-        calc_dist,
-        da_xyz,
-        input_core_dims=[["xyz"]],
-        output_core_dims=[[]],
-        vectorize=True,
+    mindist_to_ref = np.stack(
+        [
+            shortest_distance_to_arc(da_xyz, arc_start, arc_end)
+            for arc_start, arc_end in chull_arcs
+        ],
+        axis=0,
+    ).min(axis=0)
+
+    da_mindist_to_ref = xr.DataArray(
+        mindist_to_ref, coords=ds_exterior_lat.coords, dims=ds_exterior_lat.dims
     )
     da_mindist_to_ref.attrs[
         "long_name"

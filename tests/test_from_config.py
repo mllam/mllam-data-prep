@@ -346,6 +346,28 @@ def test_projection_from_config(projection: Dict):
         ), "CRS mismatch"
 
 
+@pytest.mark.parametrize(
+    "projection",
+    [
+        {"proj2": {"dims": "[x y]", "crs_wkt": "EPSG:4326"}},
+    ],
+)
+def test_requirement_of_single_projection(projection: Dict):
+    """
+    Test that assertion is raised when projections
+    are missing from input datasets.
+    """
+    # Adding projection config to the example config
+    config = yaml.safe_load(testconfig.VALID_EXAMPLE_CONFIG_YAML)
+    config["inputs"]["danra_surface"]["projections"] = projection
+    config_yaml = yaml.dump(config)
+
+    config = mdp.Config.from_yaml(config_yaml)
+
+    with pytest.raises(NotImplementedError):
+        mdp.create_dataset(config=config)
+
+
 def test_danra_example():
     fp_config = Path(__file__).parent.parent / "example.danra.yaml"
     with tempfile.TemporaryDirectory(suffix=".zarr") as tmpdir:

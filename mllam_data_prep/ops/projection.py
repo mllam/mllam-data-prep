@@ -191,14 +191,14 @@ def validate_projection_consistency(
     >>> validate_projection_consistency([proj2, proj4])
     Traceback (most recent call last):
         ...
-    ValueError: Multiple projections found in the dataset.Currently only one projection is supported.
+    NotImplementedError: Multiple projections found in the dataset. Currently only one projection is supported.
     """
     proj_obs = [pyproj.CRS.from_cf(proj) for proj in projections]
 
     # Check that all projections are the same
     if len(set(proj_obs)) > 1:
-        raise ValueError(
-            "Multiple projections found in the dataset."
+        raise NotImplementedError(
+            "Multiple projections found in the dataset. "
             "Currently only one projection is supported."
         )
 
@@ -256,7 +256,7 @@ def get_projection_crs(ds: xr.Dataset) -> Dict[str, Any]:
     vars_wo_proj = set(ds.data_vars) - set(vars_w_proj.keys()) - proj_vars
 
     if len(proj_vars) > 1:
-        raise ValueError(
+        raise NotImplementedError(
             f"Multiple referenced projections found in the dataset {ds.encoding.get('source',None)}: {proj_vars}. "
             "Currently only one projection is supported."
         )

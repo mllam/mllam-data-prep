@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 import xarray as xr
 from loguru import logger
-from numcodecs import Blosc
+from zarr.codecs import BloscCodec, BloscShuffle
 
 from . import __version__
 from .config import Config, InvalidConfigException
@@ -271,8 +271,8 @@ def create_dataset_zarr(fp_config, fp_zarr: str = None):
 
     # use zstd compression since it has a good balance of speed and compression ratio
     # https://engineering.fb.com/2016/08/31/core-infra/smaller-and-faster-data-compression-with-zstandard/
-    compressor = Blosc(cname="zstd", clevel=1, shuffle=Blosc.BITSHUFFLE)
-    encoding = {v: {"compressor": compressor} for v in ds.data_vars}
+    compressor = BloscCodec(cname="zstd", clevel=3, shuffle=BloscShuffle.bitshuffle)
+    encoding = {v: {"compressors": compressor} for v in ds.data_vars}
 
     ds.to_zarr(fp_zarr, consolidated=True, mode="w", encoding=encoding)
     logger.info(f"Wrote training-ready dataset to {fp_zarr}")

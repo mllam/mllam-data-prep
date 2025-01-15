@@ -9,6 +9,50 @@ class InvalidConfigException(Exception):
     pass
 
 
+def validate_config(config_inputs):
+    """
+    Validate that, in the config:
+    - either `variables` or `derived_variables` are present in the config
+    - if both `variables` and `derived_variables` are present, that they don't
+      add the same variables to the dataset
+
+    Parameters
+    ----------
+    config_inputs: Dict[str, InputDataset]
+
+    Returns
+    -------
+    """
+
+    for input_dataset_name, input_dataset in config_inputs.items():
+        if not input_dataset.variables and not input_dataset.derived_variables:
+            raise InvalidConfigException(
+                f"Input dataset '{input_dataset_name}' is missing the keys `variables` and/or"
+                " `derived_variables`. Make sure that you update the config so that the input"
+                f" dataset '{input_dataset_name}' contains at least either a `variables` or"
+                " `derived_variables` section."
+            )
+        elif input_dataset.variables and input_dataset.derived_variables:
+            # Check so that there are no overlapping variables
+            if isinstance(input_dataset.variables, list):
+                variable_vars = input_dataset.variables
+            elif isinstance(input_dataset.variables, dict):
+                variable_vars = input_dataset.variables.keys()
+            else:
+                raise TypeError(
+                    f"Expected an instance of list or dict, but got {type(input_dataset.variables)}."
+                )
+            derived_variable_vars = input_dataset.derived_variables.keys()
+            common_vars = list(set(variable_vars) & set(derived_variable_vars))
+            if len(common_vars) > 0:
+                raise InvalidConfigException(
+                    "Both `variables` and `derived_variables` include the following variables name(s):"
+                    f" '{', '.join(common_vars)}'. This is not allowed. Make sure that there"
+                    " are no overlapping variable names between `variables` and `derived_variables`,"
+                    f" either by renaming or removing '{', '.join(common_vars)}' from one of them."
+                )
+
+
 @dataclass
 class Range:
     """
@@ -325,58 +369,11 @@ class Config(dataclass_wizard.JSONWizard, dataclass_wizard.YAMLWizard):
     dataset_version: str
     extra: Dict[str, Any] = None
 
+    def __post_init__(self):
+        validate_config(self.inputs)
+
     class _(JSONWizard.Meta):
         raise_on_unknown_json_key = True
-
-    @staticmethod
-    def load_config(*args, **kwargs):
-        """
-        Wrapper function for `from_yaml_file` to load config file and validate that:
-        - either `variables` or `derived_variables` are present in the config
-        - if both `variables` and `derived_variables` are present, that they don't
-          add the same variables to the dataset
-
-        Parameters
-        ----------
-        *args: Positional arguments for `from_yaml_file`
-        **kwargs: Keyword arguments for `from_yaml_file`
-
-        Returns
-        -------
-        config: Config
-        """
-
-        # Load the config
-        config = Config.from_yaml_file(*args, **kwargs)
-
-        for input_dataset_name, input_dataset in config.inputs.items():
-            if not input_dataset.variables and not input_dataset.derived_variables:
-                raise InvalidConfigException(
-                    f"Input dataset '{input_dataset_name}' is missing the keys `variables` and/or"
-                    " `derived_variables`. Make sure that you update the config so that the input"
-                    f" dataset '{input_dataset_name}' contains at least either a `variables` or"
-                    " `derived_variables` section."
-                )
-            elif input_dataset.variables and input_dataset.derived_variables:
-                # Check so that there are no overlapping variables
-                if isinstance(input_dataset.variables, list):
-                    variable_vars = input_dataset.variables
-                elif isinstance(input_dataset.variables, dict):
-                    variable_vars = input_dataset.variables.keys()
-                else:
-                    raise TypeError(
-                        f"Expected an instance of list or dict, but got {type(input_dataset.variables)}."
-                    )
-                derived_variable_vars = input_dataset.derived_variables.keys()
-                common_vars = list(set(variable_vars) & set(derived_variable_vars))
-                if len(common_vars) > 0:
-                    raise InvalidConfigException(
-                        "Both `variables` and `derived_variables` include the following variables name(s):"
-                        f" '{', '.join(common_vars)}'. This is not allowed. Make sure that there"
-                        " are no overlapping variable names between `variables` and `derived_variables`,"
-                        f" either by renaming or removing '{', '.join(common_vars)}' from one of them."
-                    )
-        return config
 
 
 if __name__ == "__main__":
@@ -388,7 +385,7 @@ if __name__ == "__main__":
     )
     args = argparser.parse_args()
 
-    config = Config.load_config(args.f)
+    config = Config.from_yaml_file(args.f)
     import rich
 
     rich.print(config)

@@ -18,7 +18,7 @@ from ..chunking import chunk_dataset
 REQUIRED_FIELD_ATTRIBUTES = ["units", "long_name"]
 
 
-def derive_variables(ds, ds_input, derived_variables, chunking):
+def derive_variable(ds, ds_input, derived_variables, chunking):
     """
     Load the dataset, and derive the specified variables
 

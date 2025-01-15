@@ -8,8 +8,6 @@ import numpy as np
 import xarray as xr
 from loguru import logger
 
-from .main import cyclic_encoding
-
 
 def calculate_hour_of_day(time, component):
     """
@@ -58,7 +56,7 @@ def calculate_hour_of_day(time, component):
     return hour_of_day_encoded
 
 
-def calculate_day_of_year(time):
+def calculate_day_of_year(time, component):
     """
     Function for calculating day of year features with a cyclic encoding
 
@@ -66,13 +64,14 @@ def calculate_day_of_year(time):
     ----------
     time : Union[xr.DataArray, datetime.datetime]
         Time
+    component: str
+        String indicating if the sine or cosine component of the encoding
+        should be returned
 
     Returns
     -------
-    day_of_year_cos: Union[xr.DataArray, float]
-        cosine of the day of year
-    day_of_year_sin: Union[xr.DataArray, float]
-        sine of the day of year
+    day_of_year_encoded: Union[xr.DataArray, float]
+        sine or cosine of the day of year
     """
     logger.info("Calculating day of year")
 
@@ -88,22 +87,17 @@ def calculate_day_of_year(time):
         )
 
     # Cyclic encoding of day of year - use 366 to include leap years!
-    day_of_year_cos, day_of_year_sin = cyclic_encoding(day_of_year, 366)
+    if component == "sin":
+        day_of_year_encoded = np.sin((day_of_year / 366) * 2 * np.pi)
+    elif component == "cos":
+        day_of_year_encoded = np.cos((day_of_year / 366) * 2 * np.pi)
 
-    if isinstance(day_of_year_cos, xr.DataArray):
+    if isinstance(day_of_year_encoded, xr.DataArray):
         # Add attributes
-        day_of_year_cos.name = "day_of_year_cos"
-        day_of_year_cos.attrs[
+        day_of_year_encoded.name = "day_of_year_" + component
+        day_of_year_encoded.attrs[
             "long_name"
-        ] = "Cosine component of cyclically encoded day of year"
-        day_of_year_cos.attrs["units"] = "1"
+        ] = f"{component.capitalize()} component of cyclically encoded day of year"
+        day_of_year_encoded.attrs["units"] = "1"
 
-    if isinstance(day_of_year_sin, xr.DataArray):
-        # Add attributes
-        day_of_year_sin.name = "day_of_year_sin"
-        day_of_year_sin.attrs[
-            "long_name"
-        ] = "Sine component of cyclically encoded day of year"
-        day_of_year_sin.attrs["units"] = "1"
-
-    return day_of_year_cos, day_of_year_sin
+    return day_of_year_encoded

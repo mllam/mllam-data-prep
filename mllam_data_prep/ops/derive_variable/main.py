@@ -9,7 +9,6 @@ and zonal wind components).
 import importlib
 import sys
 
-import numpy as np
 import xarray as xr
 from loguru import logger
 
@@ -261,31 +260,6 @@ def _align_derived_variable(field, ds, target_dims):
     field = field.broadcast_like(xr.Dataset(coords=broadcast_shape))
 
     return field
-
-
-def cyclic_encoding(data, data_max):
-    """
-    Cyclic encoding of data
-
-    Parameters
-    ----------
-    data : Union[xr.DataArray, float, int]
-        Data that should be cyclically encoded
-    data_max: Union[int, float]
-        Maximum possible value of input data. Should be greater than 0.
-
-    Returns
-    -------
-    data_cos: Union[xr.DataArray, float, int]
-        Cosine part of cyclically encoded input data
-    data_sin: Union[xr.DataArray, float, int]
-        Sine part of cyclically encoded input data
-    """
-
-    data_sin = np.sin((data / data_max) * 2 * np.pi)
-    data_cos = np.cos((data / data_max) * 2 * np.pi)
-
-    return data_cos, data_sin
 
 
 def get_latlon_coords_for_input(ds):

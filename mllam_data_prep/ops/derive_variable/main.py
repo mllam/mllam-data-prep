@@ -42,7 +42,8 @@ def derive_variable(ds, derived_variable, chunking):
 
     target_dims = list(ds.sizes.keys())
 
-    required_kwargs = derived_variable.kwargs
+    ds_kwargs = derived_variable.kwargs
+    extra_kwargs = derived_variable.extra_kwargs
     function_namespace = derived_variable.function
     expected_field_attributes = derived_variable.attrs
 
@@ -52,12 +53,12 @@ def derive_variable(ds, derived_variable, chunking):
         " 'lat' and 'lon'."
     )
     latlon_coords_to_include = {}
-    for key in list(required_kwargs.keys()):
+    for key in list(ds_kwargs.keys()):
         if key in ["lat", "lon"]:
-            latlon_coords_to_include[key] = required_kwargs.pop(key)
+            latlon_coords_to_include[key] = ds_kwargs.pop(key)
 
     # Get subset of input dataset for calculating derived variables
-    ds_subset = ds[required_kwargs.keys()]
+    ds_subset = ds[ds_kwargs.keys()]
 
     # Chunking is needed for coordinates used to derive a variable since they are
     # not lazily loaded, as otherwise one might run into memory issues if using a
@@ -69,7 +70,7 @@ def derive_variable(ds, derived_variable, chunking):
         dim: chunking.get(dim, int(ds_subset[dim].count())) for dim in ds_subset.dims
     }
     required_coordinates = [
-        req_var for req_var in required_kwargs.keys() if req_var in ds_subset.coords
+        ds_var for ds_var in ds_kwargs.keys() if ds_var in ds_subset.coords
     ]
     ds_subset = ds_subset.drop_indexes(required_coordinates, errors="ignore")
     for req_coord in required_coordinates:
@@ -81,12 +82,19 @@ def derive_variable(ds, derived_variable, chunking):
 
     # Add function arguments to kwargs
     kwargs = {}
+    # - Add lat, and lon, if used as arguments
     if len(latlon_coords_to_include):
         latlon = get_latlon_coords_for_input(ds)
         for key, val in latlon_coords_to_include.items():
             kwargs[val] = latlon[key]
-    kwargs.update({val: ds_subset[key] for key, val in required_kwargs.items()})
+    # Add variables extracted from the input dataset
+    kwargs.update({val: ds_subset[key] for key, val in ds_kwargs.items()})
+    # Add extra arguments
+    kwargs.update(extra_kwargs)
+
+    # Get the function
     func = _get_derived_variable_function(function_namespace)
+
     # Calculate the derived variable
     derived_field = func(**kwargs)
 

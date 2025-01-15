@@ -69,9 +69,17 @@ inputs:
           lat: lat
           lon: lon
         function: mllam_data_prep.ops.derive_variable.physical_field.calculate_toa_radiation
-      hour_of_day:
+      hour_of_day_sin:
         kwargs:
           time: time
+        extra_kwargs:
+          component: sin
+        function: mllam_data_prep.ops.derive_variable.time_components.calculate_hour_of_day
+      hour_of_day_cos:
+        kwargs:
+          time: time
+        extra_kwargs:
+          component: cos
         function: mllam_data_prep.ops.derive_variable.time_components.calculate_hour_of_day
     dim_mapping:
       time:

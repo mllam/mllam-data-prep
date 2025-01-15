@@ -4,27 +4,29 @@ and hour of day.
 """
 import datetime
 
+import numpy as np
 import xarray as xr
 from loguru import logger
 
 from .main import cyclic_encoding
 
 
-def calculate_hour_of_day(time):
+def calculate_hour_of_day(time, component):
     """
     Function for calculating hour of day features with a cyclic encoding
 
     Parameters
     ----------
-    time : Union[xr.DataArray, datetime.datetime]
+    time: Union[xr.DataArray, datetime.datetime]
         Time
+    component: str
+        String indicating if the sine or cosine component of the encoding
+        should be returned
 
     Returns
     -------
-    hour_of_day_cos: Union[xr.DataArray, float]
-        cosine of the hour of day
-    hour_of_day_sin: Union[xr.DataArray, float]
-        sine of the hour of day
+    hour_of_day_encoded: Union[xr.DataArray, float]
+        sine or cosine of the hour of day
     """
     logger.info("Calculating hour of day")
 
@@ -40,25 +42,20 @@ def calculate_hour_of_day(time):
         )
 
     # Cyclic encoding of hour of day
-    hour_of_day_cos, hour_of_day_sin = cyclic_encoding(hour_of_day, 24)
+    if component == "sin":
+        hour_of_day_encoded = np.sin((hour_of_day / 24) * 2 * np.pi)
+    elif component == "cos":
+        hour_of_day_encoded = np.cos((hour_of_day / 24) * 2 * np.pi)
 
-    if isinstance(hour_of_day_cos, xr.DataArray):
+    if isinstance(hour_of_day_encoded, xr.DataArray):
         # Add attributes
-        hour_of_day_cos.name = "hour_of_day_cos"
-        hour_of_day_cos.attrs[
+        hour_of_day_encoded.name = "hour_of_day_" + component
+        hour_of_day_encoded.attrs[
             "long_name"
-        ] = "Cosine component of cyclically encoded hour of day"
-        hour_of_day_cos.attrs["units"] = "1"
+        ] = f"{component.capitalize()} component of cyclically encoded hour of day"
+        hour_of_day_encoded.attrs["units"] = "1"
 
-    if isinstance(hour_of_day_sin, xr.DataArray):
-        # Add attributes
-        hour_of_day_sin.name = "hour_of_day_sin"
-        hour_of_day_sin.attrs[
-            "long_name"
-        ] = "Sine component of cyclically encoded hour of day"
-        hour_of_day_sin.attrs["units"] = "1"
-
-    return hour_of_day_cos, hour_of_day_sin
+    return hour_of_day_encoded
 
 
 def calculate_day_of_year(time):

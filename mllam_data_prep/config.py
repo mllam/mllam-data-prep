@@ -99,22 +99,28 @@ class ValueSelection:
 @dataclass
 class DerivedVariable:
     """
-    Defines a derived variables, where the kwargs (variables required
-    for the calculation) and the function (for calculating the variable)
-    are specified. Optionally, in case a function does not return an
-    `xr.DataArray` with the required attributes (`units` and `long_name`) set,
-    these should be specified in `attrs`, e.g.
-    {"attrs": "units": "W*m**-2, "long_name": "top-of-the-atmosphere radiation"}.
+    Defines a derived variables, where the kwargs (variables required for the
+    calculation, to be extracted from the input dataset) and the function (for
+    calculating the variable) are specified. Also, if the function has other arguments
+    which should not be extracted from the dataset (e.g. a string to indicate if the
+    sine or cosine component should be extracted) these can be specified in the extra_kwargs.
+    Optionally, in case a function does not return an `xr.DataArray` with the required
+    attributes (`units` and `long_name`) set, these should be specified in `attrs`, e.g.:
+        {"attrs": "units": "W*m**-2, "long_name": "top-of-the-atmosphere radiation"}.
     Additional attributes can also be set if desired.
 
     Attributes:
-        kwargs: Variables required for calculating the derived variable.
+        kwargs: Variables required for calculating the derived variable, to be extracted
+            from the input dataset.
         function: Function used to calculate the derived variable.
+        extra_kwargs: Extra arguments for `function` that should not be extracted from
+            the input dataset, such as a string.
         attrs: Attributes (e.g. `units` and `long_name`) to set for the derived variable.
     """
 
     kwargs: Dict[str, str]
     function: str
+    extra_kwargs: Optional[Dict[str, str]] = field(default_factory=dict)
     attrs: Optional[Dict[str, str]] = field(default_factory=dict)
 
 

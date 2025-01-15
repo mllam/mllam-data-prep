@@ -16,7 +16,7 @@ from .ops.loading import load_input_dataset
 from .ops.mapping import map_dims_and_variables
 from .ops.selection import select_by_kwargs
 from .ops.statistics import calc_stats
-from .ops.subsetting import subset_dataset
+from .ops.subsetting import extract_variable
 
 # the `extra` field in the config that was added between v0.2.0 and v0.5.0 is
 # optional, so we can support both v0.2.0 and v0.5.0
@@ -132,7 +132,7 @@ def create_dataset(config: Config):
 
     for dataset_name, input_config in config.inputs.items():
         path = input_config.path
-        variables = input_config.variables
+        selected_variables = input_config.variables
         derived_variables = input_config.derived_variables
         target_output_var = input_config.target_output_variable
         expected_input_attributes = input_config.attributes
@@ -152,13 +152,22 @@ def create_dataset(config: Config):
         for dim in ds_input.dims:
             ds = ds.assign_coords({dim: ds_input.coords[dim]})
 
-        if variables:
-            logger.info(f"Subsetting dataset {dataset_name}")
-            ds = subset_dataset(
-                ds_subset=ds,
-                ds_input=ds_input,
-                variables=variables,
-            )
+        if selected_variables:
+            logger.info(f"Extracting selected variables from dataset {dataset_name}")
+            if isinstance(selected_variables, dict):
+                for var_name, coords_to_sample in selected_variables.items():
+                    ds[var_name] = extract_variable(
+                        ds=ds_input,
+                        var_name=var_name,
+                        coords_to_sample=coords_to_sample,
+                    )
+            elif isinstance(selected_variables, list):
+                for var_name in selected_variables:
+                    ds[var_name] = extract_variable(ds=ds_input, var_name=var_name)
+            else:
+                raise ValueError(
+                    "The `variables` argument should be a list or a dictionary"
+                )
 
         if derived_variables:
             logger.info(f"Deriving variables from {dataset_name}")

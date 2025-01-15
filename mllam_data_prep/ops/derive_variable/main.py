@@ -62,6 +62,9 @@ def derive_variable(ds, ds_input, derived_variables, chunking):
         # Get subset of input dataset for calculating derived variables
         ds_subset = ds_input[required_kwargs.keys()]
 
+        # Chunking is needed for coordinates used to derive a variable since they are
+        # not lazily loaded, as otherwise one might run into memory issues if using a
+        # large dataset as input.
         # Any coordinates needed for the derivation, for which chunking should be performed,
         # should be converted to variables since it is not possible for *indexed* coordinates
         # to be chunked dask arrays

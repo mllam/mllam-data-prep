@@ -97,16 +97,20 @@ def derive_variable(ds, derived_variable, chunking):
     # Calculate the derived variable
     derived_field = func(**kwargs)
 
-    # Check that the derived field has the necessary attributes (REQUIRED_FIELD_ATTRIBUTES)
-    # set, return any dropped/reset coordinates, align it to the output dataset dimensions
-    # (if necessary) and add it to the dataset
     if isinstance(derived_field, xr.DataArray):
-        derived_field = _check_for_required_attributes(
+        # Check that the derived field has the necessary attributes
+        # (REQUIRED_FIELD_ATTRIBUTES) set, and set them if not
+        derived_field_attrs = _check_and_get_required_attributes(
             derived_field, expected_field_attributes
         )
+        derived_field.attrs.update(derived_field_attrs)
+
+        # Return any dropped/reset coordinates
         derived_field = _return_dropped_coordinates(
             derived_field, ds_subset, required_coordinates, chunks
         )
+
+        # Align the derived field to the output dataset dimensions (if necessary)
         derived_field = _align_derived_variable(derived_field, ds, target_dims)
     else:
         raise TypeError(
@@ -147,9 +151,12 @@ def _get_derived_variable_function(function_namespace):
     return function
 
 
-def _check_for_required_attributes(field, expected_attributes):
+def _check_and_get_required_attributes(field, expected_attributes):
     """
-    Check the attributes of the derived variable.
+    Check if the required attributes of the derived variable are set.
+    If not set, get them from the config.
+    If set and defined in the config, get the attributes from the config
+    and use them for overwriting the attributes defined in the function.
 
     Parameters
     ----------
@@ -164,10 +171,12 @@ def _check_for_required_attributes(field, expected_attributes):
     field: xr.DataArray
         The derived field
     """
+
+    attrs = {}
     for attribute in REQUIRED_FIELD_ATTRIBUTES:
         if attribute not in field.attrs or field.attrs[attribute] is None:
             if attribute in expected_attributes.keys():
-                field.attrs[attribute] = expected_attributes[attribute]
+                attrs[attribute] = expected_attributes[attribute]
             else:
                 # The expected attributes are empty and the attributes have not been
                 # set during the calculation of the derived variable
@@ -191,12 +200,12 @@ def _check_for_required_attributes(field, expected_attributes):
                 f" '{expected_attributes[attribute]}' according"
                 " to the specification in the config file."
             )
-            field.attrs[attribute] = expected_attributes[attribute]
+            attrs[attribute] = expected_attributes[attribute]
         else:
             # Attributes are set in the funciton and nothing has been defined in the config file
-            pass
+            attrs[attribute] = field.attrs[attribute]
 
-    return field
+    return attrs
 
 
 def _return_dropped_coordinates(derived_field, ds, required_coordinates, chunks):

@@ -171,12 +171,12 @@ def create_dataset(config: Config):
 
         if derived_variables:
             logger.info(f"Deriving variables from {dataset_name}")
-            ds = derive_variable(
-                ds=ds,
-                ds_input=ds_input,
-                derived_variables=derived_variables,
-                chunking=chunking_config,
-            )
+            for var_name, derived_variable in derived_variables.items():
+                ds[var_name] = derive_variable(
+                    ds=ds_input,
+                    derived_variable=derived_variable,
+                    chunking=chunking_config,
+                )
 
         _check_dataset_attributes(
             ds=ds,

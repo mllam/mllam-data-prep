@@ -18,9 +18,11 @@ from .ops.selection import select_by_kwargs
 from .ops.statistics import calc_stats
 from .ops.subsetting import extract_variable
 
-# the `extra` field in the config that was added between v0.2.0 and v0.5.0 is
-# optional, so we can support both v0.2.0 and v0.5.0
-SUPPORTED_CONFIG_VERSIONS = ["v0.2.0", "v0.5.0"]
+# The config versions defined in SUPPORTED_CONFIG_VERSIONS are the ones currently supported.
+# The `extra` field in the config that was added between v0.2.0 and v0.5.0 is optional, and
+# the `derived_variables` field in the config added in v0.6.0 is also optional, so we can
+# support v0.2.0, v0.5.0, and v0.6.0
+SUPPORTED_CONFIG_VERSIONS = ["v0.2.0", "v0.5.0", "v0.6.0"]
 
 
 def _check_dataset_attributes(ds, expected_attributes, dataset_name):

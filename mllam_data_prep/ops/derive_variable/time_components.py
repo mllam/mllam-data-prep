@@ -44,6 +44,11 @@ def calculate_hour_of_day(time, component):
         hour_of_day_encoded = np.sin((hour_of_day / 24) * 2 * np.pi)
     elif component == "cos":
         hour_of_day_encoded = np.cos((hour_of_day / 24) * 2 * np.pi)
+    else:
+        raise ValueError(
+            f"Invalid value of `component`: '{component}'. Expected one of: 'cos' or 'sin'."
+            " Please update the config accordingly."
+        )
 
     if isinstance(hour_of_day_encoded, xr.DataArray):
         # Add attributes
@@ -91,6 +96,11 @@ def calculate_day_of_year(time, component):
         day_of_year_encoded = np.sin((day_of_year / 366) * 2 * np.pi)
     elif component == "cos":
         day_of_year_encoded = np.cos((day_of_year / 366) * 2 * np.pi)
+    else:
+        raise ValueError(
+            f"Invalid value of `component`: '{component}'. Expected one of: 'cos' or 'sin'."
+            " Please update the config accordingly."
+        )
 
     if isinstance(day_of_year_encoded, xr.DataArray):
         # Add attributes

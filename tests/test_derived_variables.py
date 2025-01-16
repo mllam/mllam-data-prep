@@ -1,6 +1,4 @@
 import datetime
-import random
-from unittest.mock import patch
 
 import isodate
 import numpy as np
@@ -49,24 +47,6 @@ TIME = [
 ]
 
 
-def mock_cyclic_encoding(data, data_max):
-    """Mock the `cyclic_encoding` function from mllam_data_prep.ops.derived_variables."""
-    if isinstance(data, xr.DataArray):
-        data_cos = xr.DataArray(
-            random.uniform(-1, 1),
-            coords=data.coords,
-            dims=data.dims,
-        )
-        data_sin = xr.DataArray(
-            random.uniform(-1, 1),
-            coords=data.coords,
-            dims=data.dims,
-        )
-        return data_cos, data_sin
-    elif isinstance(data, (float, int)):
-        return random.uniform(-1, 1), random.uniform(-1, 1)
-
-
 @pytest.mark.parametrize("lat", LATITUDE)
 @pytest.mark.parametrize("lon", LONGITUDE)
 @pytest.mark.parametrize("time", TIME)
@@ -74,48 +54,56 @@ def test_toa_radiation(lat, lon, time):
     """
     Test the `calculate_toa_radiation` function from mllam_data_prep.derived_variables
     """
-    with patch(
-        "mllam_data_prep.ops.derived_variables.cyclic_encoding",
-        side_effect=mock_cyclic_encoding,
-    ):
-        if isinstance(time, (xr.DataArray, datetime.datetime)):
+    if isinstance(time, (xr.DataArray, datetime.datetime)):
+        mdp.ops.derive_variable.physical_field.calculate_toa_radiation(lat, lon, time)
+    else:
+        with pytest.raises(TypeError):
             mdp.ops.derive_variable.physical_field.calculate_toa_radiation(
                 lat, lon, time
             )
-        else:
-            with pytest.raises(TypeError):
-                mdp.ops.derive_variable.physical_field.calculate_toa_radiation(
-                    lat, lon, time
-                )
 
 
 @pytest.mark.parametrize("time", TIME)
-def test_hour_of_day(time):
+@pytest.mark.parametrize(
+    "component",
+    [
+        "cos",
+        "sin",
+    ],
+)
+def test_hour_of_day(time, component):
     """
     Test the `calculate_hour_of_day` function from mllam_data_prep.derived_variables
     """
-    with patch(
-        "mllam_data_prep.ops.derived_variables.cyclic_encoding",
-        side_effect=mock_cyclic_encoding,
-    ):
-        if isinstance(time, (xr.DataArray, datetime.datetime)):
-            mdp.ops.derive_variable.time_components.calculate_hour_of_day(time)
-        else:
-            with pytest.raises(TypeError):
-                mdp.ops.derive_variable.time_components.calculate_hour_of_day(time)
+    if isinstance(time, (xr.DataArray, datetime.datetime)):
+        mdp.ops.derive_variable.time_components.calculate_hour_of_day(
+            time, component=component
+        )
+    else:
+        with pytest.raises(TypeError):
+            mdp.ops.derive_variable.time_components.calculate_hour_of_day(
+                time, component=component
+            )
 
 
 @pytest.mark.parametrize("time", TIME)
-def test_day_of_year(time):
+@pytest.mark.parametrize(
+    "component",
+    [
+        "cos",
+        "sin",
+    ],
+)
+def test_day_of_year(time, component):
     """
     Test the `calculate_day_of_year` function from mllam_data_prep.derived_variables
     """
-    with patch(
-        "mllam_data_prep.ops.derived_variables.cyclic_encoding",
-        side_effect=mock_cyclic_encoding,
-    ):
-        if isinstance(time, (xr.DataArray, datetime.datetime)):
-            mdp.ops.derive_variable.time_components.calculate_day_of_year(time)
-        else:
-            with pytest.raises(TypeError):
-                mdp.ops.derive_variable.time_components.calculate_day_of_year(time)
+    if isinstance(time, (xr.DataArray, datetime.datetime)):
+        mdp.ops.derive_variable.time_components.calculate_day_of_year(
+            time, component=component
+        )
+    else:
+        with pytest.raises(TypeError):
+            mdp.ops.derive_variable.time_components.calculate_day_of_year(
+                time, component=component
+            )

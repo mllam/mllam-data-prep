@@ -208,13 +208,13 @@ def _check_and_get_required_attributes(field, expected_attributes):
     return attrs
 
 
-def _return_dropped_coordinates(derived_field, ds, required_coordinates, chunks):
+def _return_dropped_coordinates(field, ds, required_coordinates, chunks):
     """
     Return the coordinates that have been dropped/reset.
 
     Parameters
     ----------
-    derived_field: xr.Dataset
+    field: xr.DataArray
         Derived variable
     ds: xr.Dataset
         Dataset with required coordinatwes
@@ -226,14 +226,14 @@ def _return_dropped_coordinates(derived_field, ds, required_coordinates, chunks)
 
     Returns
     -------
-    derived_field: xr.Dataset
+    field: xr.DataArray
         Derived variable, now also with dropped coordinates returned
     """
     for req_coord in required_coordinates:
         if req_coord in chunks:
-            derived_field.coords[req_coord] = ds[req_coord]
+            field.coords[req_coord] = ds[req_coord]
 
-    return derived_field
+    return field
 
 
 def _align_derived_variable(field, ds, target_dims):

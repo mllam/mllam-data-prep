@@ -114,8 +114,7 @@ def derive_variable(ds, derived_variable, chunking):
         derived_field = _align_derived_variable(derived_field, ds, target_dims)
     else:
         raise TypeError(
-            "Expected an instance of xr.DataArray or tuple(xr.DataArray),"
-            f" but got {type(derived_field)}."
+            f"Expected an instance of xr.DataArray, but got {type(derived_field)}."
         )
 
     return derived_field

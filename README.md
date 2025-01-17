@@ -112,7 +112,7 @@ ds = mdp.create_dataset(config=config)
 A full example configuration file is given in [example.danra.yaml](example.danra.yaml), and reproduced here for completeness:
 
 ```yaml
-schema_version: v0.5.0
+schema_version: v0.6.0
 dataset_version: v0.1.0
 
 output:
@@ -182,11 +182,19 @@ inputs:
           time: time
           lat: lat
           lon: lon
-        function: mllam_data_prep.ops.derived_variables.calculate_toa_radiation
-      hour_of_day:
+        function: mllam_data_prep.ops.derive_variable.physical_field.calculate_toa_radiation
+      hour_of_day_sin:
         kwargs:
           time: time
-        function: mllam_data_prep.ops.derived_variables.calculate_hour_of_day
+        extra_kwargs:
+          component: sin
+        function: mllam_data_prep.ops.derive_variable.time_components.calculate_hour_of_day
+      hour_of_day_cos:
+        kwargs:
+          time: time
+        extra_kwargs:
+          component: cos
+        function: mllam_data_prep.ops.derive_variable.time_components.calculate_hour_of_day
     dim_mapping:
       time:
         method: rename
@@ -313,11 +321,19 @@ inputs:
           time: time
           lat: lat
           lon: lon
-        function: mllam_data_prep.derived_variables.calculate_toa_radiation
-      hour_of_day:
+        function: mllam_data_prep.derive_variable.physical_field.calculate_toa_radiation
+      hour_of_day_sin:
         kwargs:
           time: time
-        function: mllam_data_prep.derived_variables.calculate_hour_of_day
+        extra_kwargs:
+          component: sin
+        function: mllam_data_prep.ops.derive_variable.time_components.calculate_hour_of_day
+      hour_of_day_cos:
+        kwargs:
+          time: time
+        extra_kwargs:
+          component: cos
+        function: mllam_data_prep.ops.derive_variable.time_components.calculate_hour_of_day
     dim_mapping:
       time:
         method: rename
@@ -343,14 +359,15 @@ The `inputs` section defines the source datasets to extract data from. Each sour
   - `rename`: simply rename the dimension to the new name
   - `stack`: stack the listed dimension to create the dimension in the output
   - `stack_variables_by_var_name`: stack the dimension into the new dimension, and also stack the variable name into the new variable name. This is useful when you have multiple variables with the same dimensions that you want to stack into a single variable.
-- `derived_variables`: defines the variables to be derived from the variables available in the source dataset. This should be a dictionary where each key is the variable to be derived and the value defines a dictionary with the following additional information. See the 'Derived Variables' section for more details.
-  - `function`: the function to be used to derive a variable. This should be a string and may either be the full namespace of the function (e.g. `mllam_data_prep.ops.derived_variables.calculate_toa_radiation`) or in case the function is included in the `mllam_data_prep.ops.derived_variables` module it is enough with the function name only.
-  - `kwargs`: arguments for the function used to derive a variable. This is a dictionary where each key is the name of the variables to select from the source dataset and each value is the named argument to `function`.
+- `derived_variables`: defines the variables to be derived from the variables available in the source dataset. This should be a dictionary where each key is the name of the variable to be derived and the value defines a dictionary with the following additional information. See also the 'Derived Variables' section for more details.
+  - `function`: the function used to derive a variable. This should be a string the full namespace of the function, e.g. `mllam_data_prep.ops.derived_variables.physical_field.calculate_toa_radiation`.
+  - `kwargs`: `function` arguments that should be extracted from the source dataset. This is a dictionary where each key is the name of the variables to select from the source dataset and each value is the named argument to `function`.
+  - `extra_kwargs`: `function` arguments that should not be extracted from the source dataset, such as the extra argument `component` to `mllam_data_prep.ops.derived_variables.time_components.calculate_hour_of_day` which is a string (either "sin" or "cos") the decides if the returned field is the sine or cosine component of the cyclically encoded hour of day variable.
 
 #### Derived Variables
 Variables that are not part of the source dataset but can be derived from variables in the source dataset can also be included. They should be defined in their own section, called `derived_variables` as illustrated in the example config above and in the `example.danra.yaml` config file.
 
-To derive the variables, the function to be used to derive the variable (`function`) and the arguments to this function (`kwargs`) need to be specified, as explained above. In addition, an optional section called `attrs` can be added. In this section, the user can add attributes to the derived variable, as illustrated below.
+To derive the variables, the function used to derive the variable (`function`) and the arguments to this function (`kwargs` and `extra_kwargs`) need to be specified, as explained above. In addition, an optional section called `attrs` can be added. In this section, the user can add attributes to the derived variable, as illustrated below.
 ```yaml
     derived_variables:
       toa_radiation:
@@ -358,24 +375,24 @@ To derive the variables, the function to be used to derive the variable (`functi
           time: time
           lat: lat
           lon: lon
-        function: mllam_data_prep.derived_variables.calculate_toa_radiation
+        function: mllam_data_prep.derive_variable.physical_field.calculate_toa_radiation
         attrs:
           units: W*m**-2
           long_name: top-of-atmosphere incoming radiation
 ```
 
-Note that the attributes `units` and `long_name` are required. This means that if the function used to derive a variable does not set these attributes they are **required** to be set in the config file. If using a function defined in `mllam_data_prep.ops.derived_variables` the `attrs` section is optional as the attributes should already be defined. In this case, adding the `units` and `long_name` attributes to the `attrs` section of the derived variable in config file will overwrite the already-defined attributes from the function.
+Note that the attributes `units` and `long_name` are required. This means that if the function used to derive a variable does not set these attributes they are **required** to be set in the config file. If using a function defined in `mllam_data_prep.ops.derive_variable` the `attrs` section is optional as the attributes should already be defined. In this case, adding the `units` and `long_name` attributes to the `attrs` section of the derived variable in config file will **overwrite** the already-defined attributes in the function.
 
 Currently, the following derived variables are included as part of `mllam-data-prep`:
 - `toa_radiation`:
   - Top-of-atmosphere incoming radiation
-  - function: `mllam_data_prep.ops.derived_variables.calculate_toa_radiation`
-- `hour_of_day`:
-  - Hour of day (cyclically encoded)
-  - function: `mllam_data_prep.ops.derived_variables.calculate_hour_of_day`
-- `day_of_year`:
-  - Day of year (cyclically encoded)
-  - function: `mllam_data_prep.ops.derived_variables.calculate_day_of_year`
+  - function: `mllam_data_prep.ops.derive_variable.physical_field.calculate_toa_radiation`
+- `hour_of_day_[sin/cos]`:
+  - Sine of cosine part of cyclically encoded hour of day
+  - function: `mllam_data_prep.ops.derive_variable.time_compoents.calculate_hour_of_day`
+- `day_of_year_[sin/cos]`:
+  - Sine of cosine part of cyclically encoded day of year
+  - function: `mllam_data_prep.ops.derive_variable.time_compoents.calculate_day_of_year`
 
 
 ### Config schema versioning

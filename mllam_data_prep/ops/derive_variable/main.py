@@ -6,6 +6,7 @@ be derived from analytical expressions and are functions of coordinate values
 but also of other physical fields (wind-speed is a function of both meridional
 and zonal wind components).
 """
+
 import importlib
 import sys
 
@@ -201,7 +202,7 @@ def _check_and_get_required_attributes(field, expected_attributes):
             )
             attrs[attribute] = expected_attributes[attribute]
         else:
-            # Attributes are set in the funciton and nothing has been defined in the config file
+            # Attributes are set in the function and nothing has been defined in the config file
             attrs[attribute] = field.attrs[attribute]
 
     return attrs

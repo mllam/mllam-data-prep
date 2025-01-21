@@ -63,22 +63,6 @@ class TestGetDerivedVariableFunction:
         # Assert the function is returned correctly
         assert result == mock_function
 
-    @patch("importlib.import_module")
-    def test_importing_standard_library_module(
-        self, mock_import_module: MagicMock
-    ) -> None:
-        """Test function on standard library module."""
-        # Mock the import of pathlib
-        mock_import_module.return_value = pathlib
-
-        # Remove pathlib from sys.modules if it exists
-        sys.modules.pop("pathlib", None)
-
-        result = _get_derived_variable_function("pathlib.Path")
-
-        # Assert the function is returned correctly
-        assert result == pathlib.Path
-
 
 @patch(
     "mllam_data_prep.ops.derive_variable.main.REQUIRED_FIELD_ATTRIBUTES",

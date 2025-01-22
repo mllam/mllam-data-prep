@@ -22,8 +22,9 @@ from mllam_data_prep.ops.derive_variable.time_components import (
 def test_hour_of_day(
     time: np.datetime64 | datetime.datetime | xr.DataArray, component: str
 ):
-    """
-    Test the `calculate_hour_of_day` function from mllam_data_prep.derived_variables
+    """Test the `calculate_hour_of_day` function.
+
+    Function from mllam_data_prep.ops.derive_variable.time_components.
     """
     if isinstance(time, (xr.DataArray, datetime.datetime)):
         calculate_hour_of_day(time, component=component)
@@ -43,8 +44,9 @@ def test_hour_of_day(
 def test_day_of_year(
     time: np.datetime64 | datetime.datetime | xr.DataArray, component: str
 ):
-    """
-    Test the `calculate_day_of_year` function from mllam_data_prep.derived_variables
+    """Test the `calculate_day_of_year` function.
+
+    Function from mllam_data_prep.ops.derive_variable.time_components.
     """
 
     if isinstance(time, (xr.DataArray, datetime.datetime)):

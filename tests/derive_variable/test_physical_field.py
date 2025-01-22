@@ -65,8 +65,9 @@ def test_toa_radiation(
     lon: float | xr.DataArray,
     time: np.datetime64 | datetime.datetime | xr.DataArray,
 ):
-    """
-    Test the `calculate_toa_radiation` function from mllam_data_prep.derived_variables
+    """Test the `calculate_toa_radiation` function.
+
+    Function from mllam_data_prep.ops.derive_variable.physical_field.
     """
     if isinstance(time, (xr.DataArray, datetime.datetime)):
         calculate_toa_radiation(lat, lon, time)

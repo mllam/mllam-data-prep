@@ -5,8 +5,9 @@ from pathlib import Path
 
 import numpy as np
 import xarray as xr
+import zarr
 from loguru import logger
-from numcodecs import Blosc
+from packaging.version import Version
 
 from . import __version__
 from .config import Config, InvalidConfigException
@@ -14,6 +15,11 @@ from .ops.loading import load_and_subset_dataset
 from .ops.mapping import map_dims_and_variables
 from .ops.selection import select_by_kwargs
 from .ops.statistics import calc_stats
+
+if Version(zarr.__version__) >= Version("3"):
+    from zarr.codecs import BloscCodec, BloscShuffle
+else:
+    from numcodecs import Blosc
 
 # the `extra` field in the config that was added between v0.2.0 and v0.5.0 is
 # optional, so we can support both v0.2.0 and v0.5.0
@@ -271,8 +277,12 @@ def create_dataset_zarr(fp_config, fp_zarr: str = None):
 
     # use zstd compression since it has a good balance of speed and compression ratio
     # https://engineering.fb.com/2016/08/31/core-infra/smaller-and-faster-data-compression-with-zstandard/
-    compressor = Blosc(cname="zstd", clevel=1, shuffle=Blosc.BITSHUFFLE)
-    encoding = {v: {"compressor": compressor} for v in ds.data_vars}
+    if Version(zarr.__version__) >= Version("3"):
+        compressor = BloscCodec(cname="zstd", clevel=3, shuffle=BloscShuffle.bitshuffle)
+        encoding = {v: {"compressors": compressor} for v in ds.data_vars}
+    else:
+        compressor = Blosc(cname="zstd", clevel=1, shuffle=Blosc.BITSHUFFLE)
+        encoding = {v: {"compressor": compressor} for v in ds.data_vars}
 
     ds.to_zarr(fp_zarr, consolidated=True, mode="w", encoding=encoding)
     logger.info(f"Wrote training-ready dataset to {fp_zarr}")

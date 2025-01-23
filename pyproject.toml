@@ -8,6 +8,7 @@ authors = [
     {name = "Emy Alerskans", email = "ea@dmi.dk"},
     {name = "Eleni Briola", email = "elb@dmi.dk"},
     {name = "Joel Oskarsson", email = "joel.oskarsson@liu.se"},
+    {name = "Kashif Rasul", email = "kashif.rasul@gmail.com"},
 ]
 dependencies = [
     "xarray>=2024.2.0",
@@ -22,6 +23,7 @@ dependencies = [
     "rich>=13.7.1",
     "dask>=2024.2.1",
     "psutil>=5.7.2",
+    "packaging>=23.1",
 ]
 requires-python = ">=3.9"
 readme = "README.md"

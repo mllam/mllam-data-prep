@@ -1,6 +1,5 @@
 """Unit tests for the main module of the derive_variable operations."""
 
-import pathlib
 import sys
 from types import ModuleType
 from typing import Generator
@@ -8,6 +7,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 import xarray as xr
+
 from mllam_data_prep.ops.derive_variable.main import (
     _check_and_get_required_attributes,
     _get_derived_variable_function,

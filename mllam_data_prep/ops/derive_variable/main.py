@@ -42,10 +42,21 @@ def derive_variable(ds, derived_variable, chunking):
 
     target_dims = list(ds.sizes.keys())
 
-    ds_kwargs = derived_variable.kwargs
-    extra_kwargs = derived_variable.extra_kwargs
     function_namespace = derived_variable.function
     expected_field_attributes = derived_variable.attrs
+
+    # Arguments to the function to be selected/extracted from the input dataset
+    ds_kwargs = {
+        key: val.rpartition(".")[2]
+        for key, val in derived_variable.kwargs.items()
+        if "ds_input" in val
+    }
+    # Other arguments that should not be selected/extracted form the input dataset
+    other_kwargs = {
+        key: val
+        for key, val in derived_variable.kwargs.items()
+        if "ds_input" not in val
+    }
 
     # Separate the lat,lon from the required variables as these will be derived separately
     logger.warning(
@@ -53,8 +64,8 @@ def derive_variable(ds, derived_variable, chunking):
         " 'lat' and 'lon'."
     )
     latlon_coords_to_include = {}
-    for key in list(ds_kwargs.keys()):
-        if key in ["lat", "lon"]:
+    for key, val in list(ds_kwargs.items()):
+        if val in ["lat", "lon"]:
             latlon_coords_to_include[key] = ds_kwargs.pop(key)
 
     # Get subset of input dataset for calculating derived variables
@@ -82,15 +93,15 @@ def derive_variable(ds, derived_variable, chunking):
 
     # Add function arguments to kwargs
     kwargs = {}
-    # - Add lat, and lon, if used as arguments
+    # - lat, and lon, if used as arguments
     if len(latlon_coords_to_include):
         latlon = get_latlon_coords_for_input(ds)
         for key, val in latlon_coords_to_include.items():
-            kwargs[val] = latlon[key]
-    # Add variables extracted from the input dataset
-    kwargs.update({val: ds_subset[key] for key, val in ds_kwargs.items()})
-    # Add extra arguments
-    kwargs.update(extra_kwargs)
+            kwargs[key] = latlon[key]
+    # - variables selected/extracted from the input dataset
+    kwargs.update({key: ds_subset[val] for key, val in ds_kwargs.items()})
+    # - other arguments
+    kwargs.update(other_kwargs)
 
     # Get the function
     func = _get_derived_variable_function(function_namespace)

@@ -1,8 +1,8 @@
 def extract_variable(ds, var_name, coords_to_sample=dict()):
     """
-    Extract specified variable from the provided the input dataset. If
-    coordinates for subsetting are defines, then subset the variable along
-    them and check coordinate units
+    Extract specified variable from the provided input dataset. If
+    coordinates for subsetting are defined, then subset the variable along
+    them and check coordinate units.
 
     Parameters
     ----------

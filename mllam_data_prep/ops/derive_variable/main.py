@@ -20,7 +20,7 @@ REQUIRED_FIELD_ATTRIBUTES = ["units", "long_name"]
 
 def derive_variable(ds, derived_variable, chunking):
     """
-    Load the dataset, and derive the specified variables
+    Derive a variable using the `function` and `kwargs` of `derived_variable`.
 
     Parameters
     ---------
@@ -118,9 +118,9 @@ def derive_variable(ds, derived_variable, chunking):
         derived_field.attrs.update(derived_field_attrs)
 
         # Return any dropped/reset coordinates
-        derived_field = _return_dropped_coordinates(
-            derived_field, ds_subset, required_coordinates, chunks
-        )
+        for req_coord in required_coordinates:
+            if req_coord in chunks:
+                derived_field.coords[req_coord] = ds_subset[req_coord]
 
         # Align the derived field to the output dataset dimensions (if necessary)
         derived_field = _align_derived_variable(derived_field, ds, target_dims)
@@ -217,34 +217,6 @@ def _check_and_get_required_attributes(field, expected_attributes):
             attrs[attribute] = field.attrs[attribute]
 
     return attrs
-
-
-def _return_dropped_coordinates(field, ds, required_coordinates, chunks):
-    """
-    Return the coordinates that have been dropped/reset.
-
-    Parameters
-    ----------
-    field: xr.DataArray
-        Derived variable
-    ds: xr.Dataset
-        Dataset with required coordinatwes
-    required_coordinates: List[str]
-        List of coordinates required for the derived variable
-    chunks: Dict[str, int]
-        Dictionary with keys as dimensions to be chunked and
-        chunk sizes as the values
-
-    Returns
-    -------
-    field: xr.DataArray
-        Derived variable, now also with dropped coordinates returned
-    """
-    for req_coord in required_coordinates:
-        if req_coord in chunks:
-            field.coords[req_coord] = ds[req_coord]
-
-    return field
 
 
 def _align_derived_variable(field, ds, target_dims):

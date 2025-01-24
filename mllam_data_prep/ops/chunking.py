@@ -7,7 +7,7 @@ CHUNK_MAX_SIZE_WARNING = 1 * 1024**3  # 1GB
 
 def check_chunk_size(ds, chunks):
     """
-    Check the chunk size and warn if it exceed CHUNK_MAX_SIZE_WARNING.
+    Check the chunk size and warn if it exceeds CHUNK_MAX_SIZE_WARNING.
 
     Parameters
     ----------
@@ -45,7 +45,7 @@ def check_chunk_size(ds, chunks):
 
 def chunk_dataset(ds, chunks):
     """
-    Check the chunk size and chunk dataset.
+    Check the chunk size and chunk the dataset.
 
     Parameters
     ----------

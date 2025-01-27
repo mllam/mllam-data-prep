@@ -9,6 +9,7 @@ authors = [
     {name = "Eleni Briola", email = "elb@dmi.dk"},
     {name = "Joel Oskarsson", email = "joel.oskarsson@liu.se"},
     {name = "Kashif Rasul", email = "kashif.rasul@gmail.com"},
+    {name = "Martin Frølund", email = "maf@dmi.dk"},
 ]
 dependencies = [
     "xarray>=2024.2.0",

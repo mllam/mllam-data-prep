@@ -265,6 +265,34 @@ def distance_to_convex_hull_boundary(
     return da_mindist_to_ref
 
 
+def _mask_with_common_dim(da_mask, ds):
+    """
+    Apply mask to all variables in `ds` that share dimension(s) with `da_mask`.
+
+    Parameters
+    ----------
+    da_mask : xarray.DataArray
+        The mask.
+    ds : xarray.Dataset
+        The dataset to mask.
+
+    Returns
+    -------
+    xarray.Dataset
+        The masked dataset including the variables that don't share
+        dimension(s) with the mask (these are simply copied over).
+    """
+    mask_dims = da_mask.dims
+    vars_with_dims = [
+        v for v in ds.data_vars if all(d in ds[v].dims for d in mask_dims)
+    ]
+    vars_without_dims = [v for v in ds.data_vars if v not in vars_with_dims]
+
+    ds_masked = ds.drop_vars(vars_without_dims).where(da_mask, drop=True)
+    ds_masked = xr.merge([ds_masked, ds[vars_without_dims]])
+    return ds_masked
+
+
 def crop_with_convex_hull(
     ds: xr.Dataset,
     ds_reference: xr.Dataset,
@@ -328,7 +356,13 @@ def crop_with_convex_hull(
                 [da_interior_points, da_boundary_mask], dim="grid_index"
             )
 
-    ds_cropped = ds.where(da_mask, drop=True)
+    # it is unclear if there is a bug in xr.Dataset.where(), but its default
+    # behaviour seems to be broadcast (i.e. add) the dimensions of the mask to
+    # any data variables that don't have those dimensions already. We only want
+    # to mask the variables that share dimension(s) with the mask (i.e. have
+    # the `grid_index` dimension), so we drop the other variables before
+    # applying the mask.
+    ds_cropped = _mask_with_common_dim(da_mask=da_mask, ds=ds)
 
     if return_mask:
         return ds_cropped, da_mask

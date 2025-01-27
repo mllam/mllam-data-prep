@@ -255,5 +255,9 @@ def _align_derived_variable(field, ds, target_dims):
 
 
 def get_latlon_coords_for_input(ds):
-    """Dummy function for getting lat and lon."""
+    """
+    Placeholder function for getting latitude and longitude values.
+    This will eventually be replaced by routines handling proper projection support
+    (see https://github.com/mllam/mllam-data-prep/pull/38).
+    """
     return ds[["lat", "lon"]].chunk(-1, -1)

@@ -39,7 +39,13 @@ def test_create_convex_hull_mask():
     ds_lam = mdp.create_dataset(config=config_lam)
     ds_global = mdp.create_dataset(config=config_global)
 
-    da_ch_mask = cropping.create_convex_hull_mask(ds=ds_global, ds_reference=ds_lam)
+    da_ch_mask, ds_ch_latlons = cropping.create_convex_hull_mask(
+        ds=ds_global, ds_reference=ds_lam
+    )
+
+    # just check that some of the points make up the convex hull for now
+    # (this doesn't check that the convex hull is correct of course...)
+    assert 0 < ds_ch_latlons.grid_index_ref.size < ds_lam.grid_index.size
 
     # Given that the outer domain is 4x larger than the inner domain and the
     # inner domain sits completely within the outer domain, then approximately

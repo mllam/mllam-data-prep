@@ -44,9 +44,11 @@ def create_convex_hull_mask(ds: xr.Dataset, ds_reference: xr.Dataset) -> xr.Data
     Returns
     -------
     xarray.DataArray
-        A boolean mask indicating which points are interior to the convex hull.
-    xarray.DataSet
-        A dataset containing lat lon coordinates for points making up the convex hull.
+        A boolean mask indicating which points in `ds_reference` are interior
+        to the convex hull.
+    xarray.Dataset
+        A dataset containing lat lon coordinates for points in `ds` making up
+        the convex hull.
     """
     da_lat, da_lon = _get_latlon_coords(ds)
     da_lat_ref, da_lon_ref = _get_latlon_coords(ds_reference)
@@ -105,10 +107,16 @@ def _latlon_to_unit_sphere_xyz(
     return da_xyz
 
 
-def shortest_distance_to_arc(point_cartesian, arc_start_cartesian, arc_end_cartesian):
+def shortest_distance_to_arc(
+    point_cartesian: np.ndarray,
+    arc_start_cartesian: np.ndarray,
+    arc_end_cartesian: np.ndarray,
+) -> np.ndarray:
     """
     Compute shortest haversine distance from a set of points to an arc on the
-    surface of the sphere.
+    surface of the sphere. All points are assumed to be on the surface of a
+    sphere of the same radius (e.g. the unit sphere) given in Cartesian (x, y,
+    z) coordinates.
 
     Parameters
     ----------
@@ -178,6 +186,16 @@ def distance_to_convex_hull_boundary(
     For all points in `ds` that are external to the convex hull of the points in
     `ds_reference`, calculate the minimum distance to the convex hull boundary.
 
+    The method goes through the following steps:
+    1. Create a mask for the points in `ds` from the convex hull of the points
+       in `ds_reference`.
+    2. Find the points in `ds` that are external to the convex hull.
+    3. For each point in `ds` external to the convex hull, calculate the
+       minimum distance to the convex hull boundary. The distance is calculated
+       as the shortest distance to any of the arcs making up the convex hull
+       boundary.
+
+
     Parameters
     ----------
     ds : xarray.Dataset
@@ -206,7 +224,7 @@ def distance_to_convex_hull_boundary(
     )
 
     # create a mask from the convex hull of ds_reference for the grid points in ds
-    da_ch_mask, chull_lat_lons = create_convex_hull_mask(
+    da_ch_mask, ds_chull_lat_lons = create_convex_hull_mask(
         ds=ds, ds_reference=ds_reference_separate_gridindex
     )
 
@@ -216,12 +234,15 @@ def distance_to_convex_hull_boundary(
 
     da_xyz = _latlon_to_unit_sphere_xyz(ds_exterior_lon, ds_exterior_lat)
 
-    da_xyz_chull = _latlon_to_unit_sphere_xyz(*_get_latlon_coords(chull_lat_lons))
+    da_xyz_chull = _latlon_to_unit_sphere_xyz(*_get_latlon_coords(ds_chull_lat_lons))
+
     # Collect arcs making up chull
     chull_arcs = list(zip(da_xyz_chull[:-1], da_xyz_chull[1:])) + [
         (da_xyz_chull[-1], da_xyz_chull[0])
     ]  # Add arc from last to first point
 
+    # Calculate minimum distance to each arc and take the minimum
+    # distance over all arcs
     mindist_to_ref = np.stack(
         [
             shortest_distance_to_arc(da_xyz, arc_start, arc_end)

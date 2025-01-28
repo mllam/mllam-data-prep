@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- add ability to derive variables from input datasets [\#34](https://github.com/mllam/mllam-data-prep/pull/34), @ealerskans, @mafdmi
 - add github PR template to guide development process on github [\#44](https://github.com/mllam/mllam-data-prep/pull/44), @leifdenby
 - add support for zarr 3.0.0 and above [\#51](https://github.com/mllam/mllam-data-prep/pull/51), @kashif
 - warn if the user tries to load a non-YAML file [\#50](https://github.com/mllam/mllam-data-prep/pull/50), @j6k4m8

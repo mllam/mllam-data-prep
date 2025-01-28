@@ -10,6 +10,7 @@ authors = [
     {name = "Joel Oskarsson", email = "joel.oskarsson@liu.se"},
     {name = "Kashif Rasul", email = "kashif.rasul@gmail.com"},
     {name = "Jordan Matelsky", email = "opensource@matelsky.com"},
+    {name = "Martin Frølund", email = "maf@dmi.dk"},
 ]
 dependencies = [
     "xarray>=2024.2.0",

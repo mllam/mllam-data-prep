@@ -45,31 +45,21 @@ def derive_variable(ds, derived_variable, chunking):
     function_namespace = derived_variable.function
     expected_field_attributes = derived_variable.attrs
 
-    # Arguments to the function to be selected/extracted from the input dataset
-    ds_kwargs = {
-        key: val.rpartition(".")[2]
-        for key, val in derived_variable.kwargs.items()
-        if "ds_input" in val
-    }
-    # Other arguments that should not be selected/extracted form the input dataset
-    other_kwargs = {
-        key: val
-        for key, val in derived_variable.kwargs.items()
-        if "ds_input" not in val
-    }
+    # split the function kwargs defined in the config into two groups:
+    # 1. variables that should be extracted from the input dataset (and renamed)
+    # 2. other kwargs that should be passed in as is
+    required_input_dataset_vars = {}
+    other_kwargs = {}
+    for key, val in derived_variable.kwargs.items():
+        if val.startswith("ds_input."):
+            var_name = val.rpartition(".")[2]
+            required_input_dataset_vars[key] = var_name
+        else:
+            other_kwargs[key] = val
 
-    # Separate the lat,lon from the required variables as these will be derived separately
-    logger.warning(
-        "Assuming that the lat/lon coordinates are given as variables called"
-        " 'lat' and 'lon'."
-    )
-    latlon_coords_to_include = {}
-    for key, val in list(ds_kwargs.items()):
-        if val in ["lat", "lon"]:
-            latlon_coords_to_include[key] = ds_kwargs.pop(key)
-
-    # Get subset of input dataset for calculating derived variables
-    ds_subset = ds[ds_kwargs.keys()]
+    # select from the input dataset the subset of variables which have been
+    # selected to be used as input arguments for the derived variable
+    ds_subset = ds[list(required_input_dataset_vars.values())]
 
     # Chunking is needed for coordinates used to derive a variable since they are
     # not lazily loaded, as otherwise one might run into memory issues if using a
@@ -81,7 +71,9 @@ def derive_variable(ds, derived_variable, chunking):
         dim: chunking.get(dim, int(ds_subset[dim].count())) for dim in ds_subset.dims
     }
     required_coordinates = [
-        ds_var for ds_var in ds_kwargs.keys() if ds_var in ds_subset.coords
+        coord
+        for coord in required_input_dataset_vars.values()
+        if coord in ds_subset.coords
     ]
     ds_subset = ds_subset.drop_indexes(required_coordinates, errors="ignore")
     for req_coord in required_coordinates:
@@ -93,14 +85,8 @@ def derive_variable(ds, derived_variable, chunking):
 
     # Add function arguments to kwargs
     kwargs = {}
-    # - lat, and lon, if used as arguments
-    if len(latlon_coords_to_include):
-        latlon = get_latlon_coords_for_input(ds)
-        for key, val in latlon_coords_to_include.items():
-            kwargs[key] = latlon[key]
-    # - variables selected/extracted from the input dataset
-    kwargs.update({key: ds_subset[val] for key, val in ds_kwargs.items()})
-    # - other arguments
+    for arg, val in required_input_dataset_vars.items():
+        kwargs[arg] = ds_subset[val]
     kwargs.update(other_kwargs)
 
     # Get the function
@@ -252,12 +238,3 @@ def _align_derived_variable(field, ds, target_dims):
     field = field.broadcast_like(xr.Dataset(coords=broadcast_shape))
 
     return field
-
-
-def get_latlon_coords_for_input(ds):
-    """
-    Placeholder function for getting latitude and longitude values.
-    This will eventually be replaced by routines handling proper projection support
-    (see https://github.com/mllam/mllam-data-prep/pull/38).
-    """
-    return ds[["lat", "lon"]].chunk(-1, -1)

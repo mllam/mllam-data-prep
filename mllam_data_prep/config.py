@@ -108,6 +108,7 @@ class DimMapping:
     dims: Optional[List[str]] = None
     dim: Optional[str] = None
     name_format: str = field(default=None)
+    coord_ranges: Dict[str, Range] = None
 
 
 @dataclass

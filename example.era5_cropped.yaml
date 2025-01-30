@@ -33,7 +33,7 @@ output:
 
 inputs:
   era_height_levels:
-    path: 'gs://weatherbench2/datasets/era5/1959-2023_01_10-6h-64x32_equiangular_conservative.zarr'
+    path: 'simplecache::gs://weatherbench2/datasets/era5/1959-2023_01_10-6h-64x32_equiangular_conservative.zarr'
     dims: [time, longitude, latitude, level]
     variables:
       u_component_of_wind:
@@ -54,10 +54,28 @@ inputs:
     target_output_variable: forcing
 
   era5_surface:
-    path: 'gs://weatherbench2/datasets/era5/1959-2023_01_10-6h-64x32_equiangular_conservative.zarr'
+    path: 'simplecache::gs://weatherbench2/datasets/era5/1959-2023_01_10-6h-64x32_equiangular_conservative.zarr'
     dims: [time, longitude, latitude, level]
     variables:
       - mean_sea_level_pressure
+    derived_variables:
+      # derive variables to be used as forcings
+      toa_radiation:
+        kwargs:
+          time: ds_input.time
+          lat: ds_input.latitude
+          lon: ds_input.longitude
+        function: mllam_data_prep.ops.derive_variable.physical_field.calculate_toa_radiation
+      hour_of_day_sin:
+        kwargs:
+          time: ds_input.time
+          component: sin
+        function: mllam_data_prep.ops.derive_variable.time_components.calculate_hour_of_day
+      hour_of_day_cos:
+        kwargs:
+          time: ds_input.time
+          component: cos
+        function: mllam_data_prep.ops.derive_variable.time_components.calculate_hour_of_day
     dim_mapping:
       time:
         method: rename
@@ -71,7 +89,7 @@ inputs:
     target_output_variable: forcing
 
   era5_static:
-    path: 'gs://weatherbench2/datasets/era5/1959-2023_01_10-6h-64x32_equiangular_conservative.zarr'
+    path: 'simplecache::gs://weatherbench2/datasets/era5/1959-2023_01_10-6h-64x32_equiangular_conservative.zarr'
     dims: [time, longitude, latitude, level]
     variables:
       - land_sea_mask

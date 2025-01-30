@@ -363,3 +363,11 @@ def test_config_revision_examples(fp_example):
     shutil.copy(fp_example, fp_config_copy)
 
     mdp.create_dataset_zarr(fp_config=fp_config_copy)
+
+
+def test_sliced_dataset():
+    fp = "sliced_example.danra.yaml"
+    config = mdp.Config.from_yaml(open(fp))
+    ds = mdp.create_dataset(config)
+    # We pick a 10x10km slice of the data which should result in 16 grid points.
+    assert ds.state.shape == (2, 49, 16)

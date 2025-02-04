@@ -154,11 +154,9 @@ def create_dataset(config: Config):
         except Exception as ex:
             raise Exception(f"Error loading dataset {dataset_name} from {path}") from ex
 
-        # Initialize the output dataset and add dimensions
+        # Initialize the output dataset
         ds = xr.Dataset()
         ds.attrs.update(ds_input.attrs)
-        for dim in ds_input.dims:
-            ds = ds.assign_coords({dim: ds_input.coords[dim]})
 
         if selected_variables:
             logger.info(f"Extracting selected variables from dataset {dataset_name}")
@@ -184,6 +182,7 @@ def create_dataset(config: Config):
                     ds=ds_input,
                     derived_variable=derived_variable,
                     chunking=chunking_config,
+                    target_dims=expected_input_var_dims,
                 )
 
         _check_dataset_attributes(

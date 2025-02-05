@@ -74,7 +74,6 @@ def select_by_kwargs(ds, **coord_ranges):
             ds = ds.sel({coord: slice(sel_start, sel_end)})
 
             # check that the start and end are in the data
-            # Maybe this should be factored out as a unit test?
             coord_minmax = ds[coord].min().values, ds[coord].max().values
             if sel_start is not None and sel_start not in ds[coord].values:
                 raise ValueError(

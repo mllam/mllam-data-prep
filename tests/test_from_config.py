@@ -277,6 +277,7 @@ def test_feature_collision(use_common_feature_var_name):
         mdp.create_dataset_zarr(fp_config=fp_config)
 
 
+@pytest.mark.slow
 def test_danra_example():
     fp_config = Path(__file__).parent.parent / "example.danra.yaml"
     with tempfile.TemporaryDirectory(suffix=".zarr") as tmpdir:
@@ -350,6 +351,7 @@ def find_config_revision_examples():
     return examples.values()
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("fp_example", find_config_revision_examples())
 def test_config_revision_examples(fp_example):
     """

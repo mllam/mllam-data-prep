@@ -1,5 +1,3 @@
-from mllam_data_prep.ops import selection
-
 from .stacking import stack_variables_as_coord_values, stack_variables_by_coord_values
 
 
@@ -92,9 +90,6 @@ def map_dims_and_variables(ds, dim_mapping, expected_input_var_dims):
     # handle those mappings that involve just renaming or stacking dimensions
     for arch_dim, input_dim_map in dim_mapping.items():
         method = input_dim_map.method
-
-        if input_dim_map.coord_ranges is not None:
-            ds = selection.select_input_by_kwargs(ds, **input_dim_map.coord_ranges)
 
         if method == "rename":
             source_dim = input_dim_map.dim

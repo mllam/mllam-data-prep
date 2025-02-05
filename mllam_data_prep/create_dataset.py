@@ -225,11 +225,11 @@ def create_dataset(config: Config):
 
         # only need to do selection for the coordinates that the input dataset actually has
         if output_coord_ranges is not None:
-            selection_kwargs = {}
-            for dim in output_dims:
-                if dim in output_coord_ranges:
-                    selection_kwargs[dim] = output_coord_ranges[dim]
-            da_target = select_by_kwargs(da_target, **selection_kwargs)
+            output_coord_ranges = {
+                k: w for k, w in output_coord_ranges.items() if k in output_dims
+            }
+
+            da_target = select_by_kwargs(da_target, **output_coord_ranges)
 
         dataarrays_by_target[target_output_var].append(da_target)
 
@@ -282,9 +282,9 @@ def create_dataset(config: Config):
     ds.attrs["schema_version"] = config.schema_version
     ds.attrs["dataset_version"] = config.dataset_version
     ds.attrs["created_on"] = datetime.datetime.now().replace(microsecond=0).isoformat()
-    ds.attrs[
-        "created_with"
-    ] = "mllam-data-prep (https://github.com/mllam/mllam-data-prep)"
+    ds.attrs["created_with"] = (
+        "mllam-data-prep (https://github.com/mllam/mllam-data-prep)"
+    )
     ds.attrs["mdp_version"] = f"v{__version__}"
 
     return ds

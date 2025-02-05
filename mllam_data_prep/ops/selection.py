@@ -29,9 +29,9 @@ def _normalize_slice_step(s):
         return s
 
 
-def select_by_kwargs(ds, **config_dict):
+def select_by_kwargs(ds, **coord_ranges):
     """
-    Do `xr.Dataset.sel` on `ds` using the `config_dict` to select the coordinates, for each
+    Do `xr.Dataset.sel` on `ds` using the `coord_ranges` to select the coordinates, for each
     entry in the dictionary, the key is the coordinate name and the value is the selection
     to make, either given as 1) a list of values or a 2) dictionary with keys "start" and "end".
     This functionally works like `xr.Dataset.sel` but can create slice objects for each
@@ -44,7 +44,7 @@ def select_by_kwargs(ds, **config_dict):
     ----------
     ds : xr.Dataset
         Dataset to select from
-    config_dict : dict
+    coord_ranges : dict
         Dictionary with the coordinate names as keys and the selection to make as values,
         either a list of values or a dictionary with keys "start" and "end"
         (and optionally "step" for the slice object)
@@ -55,7 +55,7 @@ def select_by_kwargs(ds, **config_dict):
         Dataset with the selection made
     """
 
-    for coord, selection in config_dict.items():
+    for coord, selection in coord_ranges.items():
         if coord not in ds.coords:
             raise ValueError(f"Coordinate {coord} not found in dataset")
         if isinstance(selection, Range):
@@ -112,9 +112,9 @@ def select_by_kwargs(ds, **config_dict):
     return ds
 
 
-def select_input_by_kwargs(ds, **config_dict):
+def select_input_by_kwargs(ds, **coord_ranges):
     """
-    Do `xr.Dataset.sel` on `ds` using the `config_dict` to select the coordinates, for each
+    Do `xr.Dataset.sel` on `ds` using the `coord_ranges` to select the coordinates, for each
     entry in the dictionary, the key is the coordinate name and the value is the selection
     to make, either given as 1) a list of values or a 2) dictionary with keys "start" and "end".
     This functionally works like `xr.Dataset.sel` but can create slice objects for each
@@ -126,7 +126,7 @@ def select_input_by_kwargs(ds, **config_dict):
     ----------
     ds : xr.Dataset
         Dataset to select from
-    config_dict : dict
+    coord_ranges : dict
         Dictionary with the coordinate names as keys and the selection to make as values,
         either a list of values or a dictionary with keys "start" and "end"
         (and optionally "step" for the slice object)
@@ -136,7 +136,7 @@ def select_input_by_kwargs(ds, **config_dict):
     xr.Dataset
         Dataset with the selection made
     """
-    for coord, selection in config_dict.items():
+    for coord, selection in coord_ranges.items():
         if coord not in ds.coords:
             raise ValueError(f"Coordinate {coord} not found in dataset")
         if isinstance(selection, Range):

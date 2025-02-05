@@ -64,7 +64,7 @@ if __name__ == "__main__":
         )
 
         logger.info(
-            f"Setting up dask.distributed.LocalCluster with {n_local_cores} cores and {memory_per_worker/1024/1024:0.0f} MB of memory per worker"
+            f"Setting up dask.distributed.LocalCluster with {n_local_cores} cores and {memory_per_worker / 1024 / 1024:0.0f} MB of memory per worker"
         )
 
         cluster = LocalCluster(

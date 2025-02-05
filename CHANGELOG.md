@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixes
 
+- correct chunk size estimate [\#59](https://github.com/mllam/mllam-data-prep/pull/59), @ealerskans
 - fix bug arising when variables provided to derived functions are renamed [\#56](https://github.com/mllam/mllam-data-prep/pull/56), @leifdenby
 
 

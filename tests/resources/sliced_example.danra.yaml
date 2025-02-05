@@ -51,12 +51,12 @@ inputs:
       grid_index:
         method: stack
         dims: [x, y]
-        coord_ranges:
-          x:
-            start: -50000
-            end: -40000
-          y:
-            start: -50000
-            end: -40000
+    coord_ranges:
+      x:
+        start: -50000
+        end: -40000
+      y:
+        start: -50000
+        end: -40000
 
     target_output_variable: state

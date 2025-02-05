@@ -9,6 +9,8 @@ import zarr
 from loguru import logger
 from packaging.version import Version
 
+from mllam_data_prep.ops import selection
+
 from . import __version__
 from .config import Config, InvalidConfigException
 from .ops.chunking import chunk_dataset
@@ -154,6 +156,11 @@ def create_dataset(config: Config):
         except Exception as ex:
             raise Exception(f"Error loading dataset {dataset_name} from {path}") from ex
 
+        if input_config.coord_ranges is not None:
+            ds_input = selection.select_input_by_kwargs(
+                ds_input, **input_config.coord_ranges
+            )
+
         # Initialize the output dataset and add dimensions
         ds = xr.Dataset()
         ds.attrs.update(ds_input.attrs)
@@ -228,7 +235,6 @@ def create_dataset(config: Config):
             output_coord_ranges = {
                 k: w for k, w in output_coord_ranges.items() if k in output_dims
             }
-
             da_target = select_by_kwargs(da_target, **output_coord_ranges)
 
         dataarrays_by_target[target_output_var].append(da_target)

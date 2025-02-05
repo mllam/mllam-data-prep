@@ -368,7 +368,7 @@ def test_config_revision_examples(fp_example):
 
 
 def test_sliced_dataset():
-    fp = "sliced_example.danra.yaml"
+    fp = "tests/resources/sliced_example.danra.yaml"
     config = mdp.Config.from_yaml(open(fp))
     ds = mdp.create_dataset(config)
     # We pick a 10x10km slice of the data which should result in 16 grid points.

@@ -367,7 +367,10 @@ def test_config_revision_examples(fp_example):
     mdp.create_dataset_zarr(fp_config=fp_config_copy)
 
 
-def test_sliced_dataset():
+def test_sliced_dataset_can_instantiate_with_right_dimensions():
+    """
+    The sliced example has a 10x10 km slice, so there should be 4x4 = 16 points herekj.
+    """
     fp = "tests/resources/sliced_example.danra.yaml"
     config = mdp.Config.from_yaml(open(fp))
     ds = mdp.create_dataset(config)

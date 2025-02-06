@@ -42,12 +42,19 @@ def call(args=None):
         type=float,
         default=0.9,
     )
-    args = parser.parse_args(args)
+    args = parser.parse_args()
 
     if args.show_progress:
         ProgressBar().register()
 
     if args.dask_distributed_local_core_fraction > 0.0:
+        # Only run this block if dask.distributed is available
+        if not DASK_DISTRIBUTED_AVAILABLE:
+            raise ModuleNotFoundError(
+                "Currently dask.distributed isn't installed and therefore can't "
+                "be used in mllam-data-prep. Please install the optional dependency "
+                'with `python -m pip install "mllam-data-prep[dask-distributed]"`'
+            )
         # get the number of system cores
         n_system_cores = os.cpu_count()
         # compute the number of cores to use
@@ -60,7 +67,7 @@ def call(args=None):
         )
 
         logger.info(
-            f"Setting up dask.distributed.LocalCluster with {n_local_cores} cores and {memory_per_worker/1024/1024:0.0f} MB of memory per worker"
+            f"Setting up dask.distributed.LocalCluster with {n_local_cores} cores and {memory_per_worker / 1024 / 1024:0.0f} MB of memory per worker"
         )
 
         cluster = LocalCluster(
@@ -69,6 +76,7 @@ def call(args=None):
             memory_limit=memory_per_worker,
         )
 
+        client = cluster.get_client()
         # print the dashboard link
         logger.info(f"Dashboard link: {cluster.dashboard_link}")
 

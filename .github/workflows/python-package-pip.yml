@@ -23,7 +23,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Install package with pip
         run: |
-          python -m pip install . "zarr${{ matrix.zarr-version }}"
+          python -m pip install ".[latlon-domain-crop]" "zarr${{ matrix.zarr-version }}"
           python -m pip install pytest
 
       - name: Run tests

@@ -5,15 +5,30 @@ from pathlib import Path
 
 import numpy as np
 import xarray as xr
+import zarr
 from loguru import logger
-from numcodecs import Blosc
+from packaging.version import Version
 
 from . import __version__
 from .config import Config, InvalidConfigException
-from .ops.loading import load_and_subset_dataset
+from .ops.chunking import chunk_dataset
+from .ops.derive_variable import derive_variable
+from .ops.loading import load_input_dataset
 from .ops.mapping import map_dims_and_variables
 from .ops.selection import select_by_kwargs
 from .ops.statistics import calc_stats
+from .ops.subsetting import extract_variable
+
+if Version(zarr.__version__) >= Version("3"):
+    from zarr.codecs import BloscCodec, BloscShuffle
+else:
+    from numcodecs import Blosc
+
+# The config versions defined in SUPPORTED_CONFIG_VERSIONS are the ones currently supported.
+# The `extra` field in the config that was added between v0.2.0 and v0.5.0 is optional, and
+# the `derived_variables` field in the config added in v0.6.0 is also optional, so we can
+# support v0.2.0, v0.5.0, and v0.6.0
+SUPPORTED_CONFIG_VERSIONS = ["v0.2.0", "v0.5.0", "v0.6.0"]
 
 
 def _check_dataset_attributes(ds, expected_attributes, dataset_name):
@@ -26,11 +41,14 @@ def _check_dataset_attributes(ds, expected_attributes, dataset_name):
 
     # check for attributes having the wrong value
     incorrect_attributes = {
-        k: v for k, v in expected_attributes.items() if ds.attrs[k] != v
+        key: val for key, val in expected_attributes.items() if ds.attrs[key] != val
     }
     if len(incorrect_attributes) > 0:
         s_list = "\n".join(
-            [f"{k}: {v} != {ds.attrs[k]}" for k, v in incorrect_attributes.items()]
+            [
+                f"{key}: {val} != {ds.attrs[key]}"
+                for key, val in incorrect_attributes.items()
+            ]
         )
         raise ValueError(
             f"Dataset {dataset_name} has the following incorrect attributes: {s_list}"
@@ -102,25 +120,72 @@ def create_dataset(config: Config):
         The dataset created from the input datasets with a variable for each output
         as defined in the config file.
     """
+    if not config.schema_version in SUPPORTED_CONFIG_VERSIONS:
+        raise ValueError(
+            f"Unsupported schema version {config.schema_version}. Only schema versions "
+            f" {', '.join(SUPPORTED_CONFIG_VERSIONS)} are supported by mllam-data-prep "
+            f"v{__version__}."
+        )
+    if config.schema_version == "v0.2.0" and config.extra is not None:
+        raise ValueError(
+            "Config schema version v0.2.0 does not support the `extra` field. Please "
+            "update the schema version used in your config to v0.5.0."
+        )
+
     output_config = config.output
     output_coord_ranges = output_config.coord_ranges
+    chunking_config = config.output.chunking
 
     dataarrays_by_target = defaultdict(list)
 
     for dataset_name, input_config in config.inputs.items():
         path = input_config.path
-        variables = input_config.variables
+        selected_variables = input_config.variables
+        derived_variables = input_config.derived_variables
         target_output_var = input_config.target_output_variable
-        expected_input_attributes = input_config.attributes or {}
+        expected_input_attributes = input_config.attributes
         expected_input_var_dims = input_config.dims
 
         output_dims = output_config.variables[target_output_var]
 
         logger.info(f"Loading dataset {dataset_name} from {path}")
         try:
-            ds = load_and_subset_dataset(fp=path, variables=variables)
+            ds_input = load_input_dataset(fp=path)
         except Exception as ex:
             raise Exception(f"Error loading dataset {dataset_name} from {path}") from ex
+
+        # Initialize the output dataset and add dimensions
+        ds = xr.Dataset()
+        ds.attrs.update(ds_input.attrs)
+        for dim in ds_input.dims:
+            ds = ds.assign_coords({dim: ds_input.coords[dim]})
+
+        if selected_variables:
+            logger.info(f"Extracting selected variables from dataset {dataset_name}")
+            if isinstance(selected_variables, dict):
+                for var_name, coords_to_sample in selected_variables.items():
+                    ds[var_name] = extract_variable(
+                        ds=ds_input,
+                        var_name=var_name,
+                        coords_to_sample=coords_to_sample,
+                    )
+            elif isinstance(selected_variables, list):
+                for var_name in selected_variables:
+                    ds[var_name] = extract_variable(ds=ds_input, var_name=var_name)
+            else:
+                raise ValueError(
+                    "The `variables` argument should be a list or a dictionary"
+                )
+
+        if derived_variables:
+            logger.info(f"Deriving variables from {dataset_name}")
+            for var_name, derived_variable in derived_variables.items():
+                ds[var_name] = derive_variable(
+                    ds=ds_input,
+                    derived_variable=derived_variable,
+                    chunking=chunking_config,
+                )
+
         _check_dataset_attributes(
             ds=ds,
             expected_attributes=expected_input_attributes,
@@ -175,10 +240,9 @@ def create_dataset(config: Config):
 
     # default to making a single chunk for each dimension if chunksize is not specified
     # in the config
-    chunking_config = config.output.chunking or {}
     logger.info(f"Chunking dataset with {chunking_config}")
-    chunks = {d: chunking_config.get(d, int(ds[d].count())) for d in ds.dims}
-    ds = ds.chunk(chunks)
+    chunks = {dim: chunking_config.get(dim, int(ds[dim].count())) for dim in ds.dims}
+    ds = chunk_dataset(ds, chunks)
 
     splitting = config.output.splitting
 
@@ -241,10 +305,6 @@ def create_dataset_zarr(fp_config, fp_zarr: str = None):
     """
     config = Config.from_yaml_file(file=fp_config)
 
-    assert (
-        config.schema_version == "v0.2.0"
-    ), f"Expected schema version v0.2.0, got {config.schema_version}"
-
     ds = create_dataset(config=config)
 
     logger.info("Writing dataset to zarr")
@@ -259,8 +319,12 @@ def create_dataset_zarr(fp_config, fp_zarr: str = None):
 
     # use zstd compression since it has a good balance of speed and compression ratio
     # https://engineering.fb.com/2016/08/31/core-infra/smaller-and-faster-data-compression-with-zstandard/
-    compressor = Blosc(cname="zstd", clevel=1, shuffle=Blosc.BITSHUFFLE)
-    encoding = {v: {"compressor": compressor} for v in ds.data_vars}
+    if Version(zarr.__version__) >= Version("3"):
+        compressor = BloscCodec(cname="zstd", clevel=3, shuffle=BloscShuffle.bitshuffle)
+        encoding = {v: {"compressors": compressor} for v in ds.data_vars}
+    else:
+        compressor = Blosc(cname="zstd", clevel=1, shuffle=Blosc.BITSHUFFLE)
+        encoding = {v: {"compressor": compressor} for v in ds.data_vars}
 
     ds.to_zarr(fp_zarr, consolidated=True, mode="w", encoding=encoding)
     logger.info(f"Wrote training-ready dataset to {fp_zarr}")

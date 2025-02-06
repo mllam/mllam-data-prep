@@ -112,7 +112,7 @@ ds = mdp.create_dataset(config=config)
 A full example configuration file is given in [example.danra.yaml](example.danra.yaml), and reproduced here for completeness:
 
 ```yaml
-schema_version: v0.2.0
+schema_version: v0.6.0
 dataset_version: v0.1.0
 
 output:
@@ -145,7 +145,7 @@ output:
 
 inputs:
   danra_height_levels:
-    path: https://mllam-test-data.s3.eu-north-1.amazonaws.com/height_levels.zarr
+    path: https://object-store.os-api.cci1.ecmwf.int/mllam-testdata/danra_cropped/v0.2.0/height_levels.zarr
     dims: [time, x, y, altitude]
     variables:
       u:
@@ -163,18 +163,36 @@ inputs:
       state_feature:
         method: stack_variables_by_var_name
         dims: [altitude]
-        name_format: f"{var_name}{altitude}m"
+        name_format: "{var_name}{altitude}m"
       grid_index:
         method: stack
         dims: [x, y]
     target_output_variable: state
 
   danra_surface:
-    path: https://mllam-test-data.s3.eu-north-1.amazonaws.com/single_levels.zarr
+    path: https://object-store.os-api.cci1.ecmwf.int/mllam-testdata/danra_cropped/v0.2.0/single_levels.zarr
     dims: [time, x, y]
     variables:
       # use surface incoming shortwave radiation as forcing
       - swavr0m
+    derived_variables:
+      # derive variables to be used as forcings
+      toa_radiation:
+        kwargs:
+          time: ds_input.time
+          lat: ds_input.lat
+          lon: ds_input.lon
+        function: mllam_data_prep.ops.derive_variable.physical_field.calculate_toa_radiation
+      hour_of_day_sin:
+        kwargs:
+          time: ds_input.time
+          component: sin
+        function: mllam_data_prep.ops.derive_variable.time_components.calculate_hour_of_day
+      hour_of_day_cos:
+        kwargs:
+          time: ds_input.time
+          component: cos
+        function: mllam_data_prep.ops.derive_variable.time_components.calculate_hour_of_day
     dim_mapping:
       time:
         method: rename
@@ -184,29 +202,42 @@ inputs:
         dims: [x, y]
       forcing_feature:
         method: stack_variables_by_var_name
-        name_format: f"{var_name}"
+        name_format: "{var_name}"
     target_output_variable: forcing
 
-  danra_lsm:
-    path: https://mllam-test-data.s3.eu-north-1.amazonaws.com/lsm.zarr
+  danra_static:
+    path: https://object-store.os-api.cci1.ecmwf.int/mllam-testdata/danra_cropped/v0.2.0/single_levels.zarr
     dims: [x, y]
     variables:
       - lsm
+      - orography
     dim_mapping:
       grid_index:
         method: stack
         dims: [x, y]
       static_feature:
         method: stack_variables_by_var_name
-        name_format: f"{var_name}"
+        name_format: "{var_name}"
     target_output_variable: static
 
+extra:
+  projection:
+    class_name: LambertConformal
+    kwargs:
+      central_longitude: 25.0
+      central_latitude: 56.7
+      standard_parallels: [56.7, 56.7]
+      globe:
+        semimajor_axis: 6367470.0
+        semiminor_axis: 6367470.0
 ```
 
 Apart from identifiers to keep track of the configuration file format version and the dataset version (for you to keep track of changes that you make to the dataset), the configuration file is divided into two main sections:
 
 - `output`: defines the variables and dimensions of the output dataset produced by `mllam-data-prep`. These are the variables and dimensions that the input datasets will be mapped to. These output variables and dimensions should match the input variables and dimensions expected by the model architecture you are training.
 - `inputs`: a list of source datasets to extract data from. These are the datasets that will be mapped to the architecture defined in the `architecture` section.
+
+If you want to add any extra information to the configuration file you can add it to the `extra` section. This section is not used or validated by `mllam-data-prep` but can be used to store any extra information you want to keep track of (for example when using `mllam-data-prep` with [neural-lam](https://github.com/mllam/neural-lam) the `extra` section is used to store the projection information).
 
 ### The `output` section
 
@@ -252,7 +283,7 @@ The `output` section defines three things:
 ```yaml
 inputs:
   danra_height_levels:
-    path: https://mllam-test-data.s3.eu-north-1.amazonaws.com/height_levels.zarr
+    path: https://object-store.os-api.cci1.ecmwf.int/mllam-testdata/danra_cropped/v0.2.0/height_levels.zarr
     dims: [time, x, y, altitude]
     variables:
       u:
@@ -270,19 +301,36 @@ inputs:
       state_feature:
         method: stack_variables_by_var_name
         dims: [altitude]
-        name_format: f"{var_name}{altitude}m"
+        name_format: "{var_name}{altitude}m"
       grid_index:
         method: stack
         dims: [x, y]
-    target_architecture_variable: state
+    target_output_variable: state
 
   danra_surface:
-    path: https://mllam-test-data.s3.eu-north-1.amazonaws.com/single_levels.zarr
+    path: https://object-store.os-api.cci1.ecmwf.int/mllam-testdata/danra_cropped/v0.2.0/single_levels.zarr
     dims: [time, x, y]
     variables:
-      # shouldn't really be using sea-surface pressure as "forcing", but don't
-      # have radiation varibles in danra yet
-      - pres_seasurface
+      # use surface incoming shortwave radiation as forcing
+      - swavr0m
+    derived_variables:
+      # derive variables to be used as forcings
+      toa_radiation:
+        kwargs:
+          time: ds_input.time
+          lat: ds_input.lat
+          lon: ds_input.lon
+        function: mllam_data_prep.ops.derive_variable.physical_field.calculate_toa_radiation
+      hour_of_day_sin:
+        kwargs:
+          time: ds_input.time
+          component: sin
+        function: mllam_data_prep.ops.derive_variable.time_components.calculate_hour_of_day
+      hour_of_day_cos:
+        kwargs:
+          time: ds_input.time
+          component: cos
+        function: mllam_data_prep.ops.derive_variable.time_components.calculate_hour_of_day
     dim_mapping:
       time:
         method: rename
@@ -292,8 +340,8 @@ inputs:
         dims: [x, y]
       forcing_feature:
         method: stack_variables_by_var_name
-        name_format: f"{var_name}"
-    target_architecture_variable: forcing
+        name_format: "{var_name}"
+    target_output_variable: forcing
 
   ...
 ```
@@ -303,8 +351,53 @@ The `inputs` section defines the source datasets to extract data from. Each sour
 - `path`: the path to the source dataset. This can be a local path or a URL to e.g. a zarr dataset or netCDF file, anything that can be read by `xarray.open_dataset(...)`.
 - `dims`: the dimensions that the source dataset is expected to have. This is used to check that the source dataset has the expected dimensions and also makes it clearer in the config file what the dimensions of the source dataset are.
 - `variables`: selects which variables to extract from the source dataset. This may either be a list of variable names, or a dictionary where each key is the variable name and the value defines a dictionary of coordinates to do selection on. When doing selection you may also optionally define the units of the variable to check that the units of the variable match the units of the variable in the model architecture.
-- `target_architecture_variable`: the variable in the model architecture that the source dataset should be mapped to.
+- `target_output_variable`: the variable in the model architecture that the source dataset should be mapped to.
 - `dim_mapping`: defines how the dimensions of the source dataset should be mapped to the dimensions of the model architecture. This is done by defining a method to apply to each dimension. The methods are:
   - `rename`: simply rename the dimension to the new name
   - `stack`: stack the listed dimension to create the dimension in the output
   - `stack_variables_by_var_name`: stack the dimension into the new dimension, and also stack the variable name into the new variable name. This is useful when you have multiple variables with the same dimensions that you want to stack into a single variable.
+- `derived_variables`: defines the variables to be derived from the variables available in the source dataset. This should be a dictionary where each key is the name of the variable to be derived and the value defines a dictionary with the following additional information. See also the 'Derived Variables' section for more details.
+  - `function`: the function used to derive a variable. This should be a string with the full namespace of the function, e.g. `mllam_data_prep.ops.derived_variables.physical_field.calculate_toa_radiation`.
+  - `kwargs`: arguments to `function`. This is a dictionary where each key is the named argument to `function` and each value is the input to the function. Here we distinguish between values to be extracted/selected from the input dataset and values supplied by the users themselves. Arguments with values to be extracted from the input dataset need to be prefixed with "ds_input." to distinguish them from other arguments. See the 'Derived Variables' section for more details.
+
+#### Derived Variables
+Variables that are not part of the source dataset but can be derived from variables in the source dataset can also be included. They should be defined in their own section, called `derived_variables` as illustrated in the example config above and in the example config file [example.danra.yaml](example.danra.yaml).
+
+To derive a variable, the function to be used (`function`) and the arguments to this function (`kwargs`) need to be specified, as explained above. Here we need to distinguish between arguments that should be data from the input dataset and arguments that should be supplied by the users themselves. The example below illustrates how to derive the cosine component of the cyclically encoded hour of day variable
+
+```yaml
+    derived_variables:
+      hour_of_day_cos:
+        kwargs:
+          time: ds_input.time
+          component: cos
+        function: mllam_data_prep.ops.derive_variable.time_components.calculate_hour_of_day
+        attrs:
+          units: 1
+          long_name: cos component of cyclically encoded hour of day
+```
+
+The function `mllam_data_prep.ops.derive_variable.time_components.calculate_hour_of_day` takes two arguments; `time` and `component`. The `time` argument should extract the `time` variable from the input dataset and has therefore been prefixed with "ds_input." to distinguish it from other arguments that should not  be extracted from the source dataset. The `component` argument, on the other hand, is a string (either "sin" or "cos") and decides if the returned derived variable is the sine or cosine component of the cyclically encoded hour of day.
+
+In addition, an optional section called `attrs` can be added. In this section, the user can add attributes to the derived variable, as illustrated in the example above. Note that the attributes `units` and `long_name` are **required**. This means that if the function used to derive a variable does not set these attributes they are **required** to be set in the config file. If using a function defined in `mllam_data_prep.ops.derive_variable` the `attrs` section is optional as the required attributes should already be defined. In this case, adding the `units` and `long_name` attributes to the `attrs` section of the derived variable in config file will **overwrite** the already-defined attributes in the function. It is also possible to set other attributes. This can be done by adding them under the `attrs` section in the same way as shown for `unit` and `long_name` in the example above.
+
+Currently, the following derived variables are included as part of `mllam-data-prep`:
+- `toa_radiation`:
+  - Top-of-atmosphere incoming radiation
+  - function: `mllam_data_prep.ops.derive_variable.physical_field.calculate_toa_radiation`
+  - arguments: `lat`, `lon`, `time`
+- `hour_of_day_[sin/cos]`:
+  - Sine or cosine part of cyclically encoded hour of day
+  - function: `mllam_data_prep.ops.derive_variable.time_components.calculate_hour_of_day`
+  - arguments: `time`, `component`
+- `day_of_year_[sin/cos]`:
+  - Sine or cosine part of cyclically encoded day of year
+  - function: `mllam_data_prep.ops.derive_variable.time_components.calculate_day_of_year`
+  - arguments: `time`, `component`
+
+
+### Config schema versioning
+
+The schema version of the configuration file is defined by the `schema_version` attribute at the top of the configuration file. This is used to keep track of changes to the configuration file format. The schema version is used to check that the configuration file is compatible with the version of `mllam-data-prep` that you are using. If the schema version of the configuration file is not compatible with the version of `mllam-data-prep` that you are using you will get an error message telling you that the schema version is not compatible.
+
+The schema version is updated whenever the configuration format changes, with the new schema version matching the minimum version of `mllam-data-prep` that is required to use the new configuration format. As `mllam-data-prep` is still in rapid development (and hasn't reached version `v1.0.0` yet) we unfortunately make no gaurantee about backward compatibility. However, the [CHANGELOG.md](CHANGELOG.md) will always contain migration instructions when the config format changes.

@@ -1,6 +1,4 @@
-# This config example builds on the DANRA test dataset v0.2.0, details of which
-# can be found in https://github.com/mllam/mllam-testdata/releases/tag/2025-02-05
-schema_version: v0.6.0
+schema_version: v0.5.0
 dataset_version: v0.1.0
 
 output:
@@ -10,8 +8,8 @@ output:
     forcing: [time, grid_index, forcing_feature]
   coord_ranges:
     time:
-      start: 2022-04-01T00:00
-      end: 2022-04-10T00:00
+      start: 1990-09-03T00:00
+      end: 1990-09-09T00:00
       step: PT3H
   chunking:
     time: 1
@@ -19,21 +17,21 @@ output:
     dim: time
     splits:
       train:
-        start: 2022-04-01T00:00
-        end: 2022-04-04T00:00
+        start: 1990-09-03T00:00
+        end: 1990-09-06T00:00
         compute_statistics:
           ops: [mean, std, diff_mean, diff_std]
           dims: [grid_index, time]
       val:
-        start: 2022-04-04T00:00
-        end: 2022-04-07T00:00
+        start: 1990-09-06T00:00
+        end: 1990-09-07T00:00
       test:
-        start: 2022-04-07T00:00
-        end: 2022-04-10T00:00
+        start: 1990-09-07T00:00
+        end: 1990-09-09T00:00
 
 inputs:
   danra_height_levels:
-    path: https://object-store.os-api.cci1.ecmwf.int/mllam-testdata/danra_cropped/v0.2.0/height_levels.zarr
+    path: https://mllam-test-data.s3.eu-north-1.amazonaws.com/height_levels.zarr
     dims: [time, x, y, altitude]
     variables:
       u:
@@ -58,29 +56,11 @@ inputs:
     target_output_variable: state
 
   danra_surface:
-    path: https://object-store.os-api.cci1.ecmwf.int/mllam-testdata/danra_cropped/v0.2.0/single_levels.zarr
+    path: https://mllam-test-data.s3.eu-north-1.amazonaws.com/single_levels.zarr
     dims: [time, x, y]
     variables:
       # use surface incoming shortwave radiation as forcing
       - swavr0m
-    derived_variables:
-      # derive variables to be used as forcings
-      toa_radiation:
-        kwargs:
-          time: ds_input.time
-          lat: ds_input.lat
-          lon: ds_input.lon
-        function: mllam_data_prep.ops.derive_variable.physical_field.calculate_toa_radiation
-      hour_of_day_sin:
-        kwargs:
-          time: ds_input.time
-          component: sin
-        function: mllam_data_prep.ops.derive_variable.time_components.calculate_hour_of_day
-      hour_of_day_cos:
-        kwargs:
-          time: ds_input.time
-          component: cos
-        function: mllam_data_prep.ops.derive_variable.time_components.calculate_hour_of_day
     dim_mapping:
       time:
         method: rename
@@ -93,12 +73,11 @@ inputs:
         name_format: "{var_name}"
     target_output_variable: forcing
 
-  danra_static:
-    path: https://object-store.os-api.cci1.ecmwf.int/mllam-testdata/danra_cropped/v0.2.0/single_levels.zarr
+  danra_lsm:
+    path: https://mllam-test-data.s3.eu-north-1.amazonaws.com/lsm.zarr
     dims: [x, y]
     variables:
       - lsm
-      - orography
     dim_mapping:
       grid_index:
         method: stack

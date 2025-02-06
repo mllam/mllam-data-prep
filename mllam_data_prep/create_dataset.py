@@ -157,9 +157,7 @@ def create_dataset(config: Config):
             raise Exception(f"Error loading dataset {dataset_name} from {path}") from ex
 
         if input_config.coord_ranges is not None:
-            ds_input = selection.select_input_by_kwargs(
-                ds_input, **input_config.coord_ranges
-            )
+            ds_input = selection.select_by_kwargs(ds_input, **input_config.coord_ranges)
 
         # Initialize the output dataset and add dimensions
         ds = xr.Dataset()

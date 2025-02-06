@@ -26,7 +26,7 @@ def test_range_slice_within_range(ds):
         "y": mdp.config.Range(start=y_start, end=y_end),
     }
 
-    ds = mdp.ops.selection.select_input_by_kwargs(ds, **coord_ranges)
+    ds = mdp.ops.selection.select_by_kwargs(ds, **coord_ranges)
     assert ds.x.min() >= x_start
     assert ds.x.max() <= x_end
     assert ds.y.min() >= y_start
@@ -48,4 +48,4 @@ def test_error_on_empty_range(ds, x_start, x_end):
     }
 
     with pytest.raises(AssertionError):
-        ds = mdp.ops.selection.select_input_by_kwargs(ds, **coord_ranges)
+        ds = mdp.ops.selection.select_by_kwargs(ds, **coord_ranges)

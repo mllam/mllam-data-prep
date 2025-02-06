@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - correct chunk size estimate [\#59](https://github.com/mllam/mllam-data-prep/pull/59), @ealerskans
 - fix bug arising when variables provided to derived functions are renamed [\#56](https://github.com/mllam/mllam-data-prep/pull/56), @leifdenby
 
+### Maintenance
+
+- update DANRA test dataset to v0.2.0 which uses a smaller cropped domain [\#62](https://github.com/mllam/mllam-data-prep/pull/62), @leifdenby
+
 
 ## [v0.5.0](https://github.com/mllam/mllam-data-prep/releases/tag/v0.5.0)
 

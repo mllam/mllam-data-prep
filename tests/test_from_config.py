@@ -1,13 +1,16 @@
 import shutil
 import tempfile
 from pathlib import Path
+from typing import Dict
 
 import isodate
+import pyproj
 import pytest
 import yaml
 
 import mllam_data_prep as mdp
 import tests.data as testdata
+import tests.test_config as testconfig
 
 
 def test_gen_data():
@@ -68,6 +71,12 @@ def test_merging_static_and_surface_analysis():
                 path=datasets["surface_analysis"],
                 dims=["analysis_time", "x", "y"],
                 variables=testdata.DEFAULT_SURFACE_ANALYSIS_VARS,
+                projections=dict(
+                    danra_projection=dict(
+                        dims=["x", "y"],
+                        crs_wkt=testdata.DANRA_CRS_WKT,
+                    )
+                ),
                 dim_mapping=dict(
                     time=dict(
                         method="rename",
@@ -88,6 +97,12 @@ def test_merging_static_and_surface_analysis():
                 path=datasets["static"],
                 dims=["x", "y"],
                 variables=testdata.DEFAULT_STATIC_VARS,
+                projections=dict(
+                    danra_projection=dict(
+                        dims=["x", "y"],
+                        crs_wkt=testdata.DANRA_CRS_WKT,
+                    )
+                ),
                 dim_mapping=dict(
                     grid_index=dict(
                         method="stack",
@@ -161,6 +176,12 @@ def test_time_selection(source_data_contains_time_range, time_stepsize):
                 path=datasets["surface_analysis"],
                 dims=["analysis_time", "x", "y"],
                 variables=testdata.DEFAULT_SURFACE_ANALYSIS_VARS,
+                projections=dict(
+                    danra_projection=dict(
+                        dims=["x", "y"],
+                        crs_wkt=testdata.DANRA_CRS_WKT,
+                    )
+                ),
                 dim_mapping=dict(
                     time=dict(
                         method="rename",
@@ -229,6 +250,12 @@ def test_feature_collision(use_common_feature_var_name):
                 path=datasets["surface_analysis"],
                 dims=["analysis_time", "x", "y"],
                 variables=testdata.DEFAULT_SURFACE_ANALYSIS_VARS,
+                projections=dict(
+                    danra_projection=dict(
+                        dims=["x", "y"],
+                        crs_wkt=testdata.DANRA_CRS_WKT,
+                    )
+                ),
                 dim_mapping={
                     "time": dict(
                         method="rename",
@@ -249,6 +276,12 @@ def test_feature_collision(use_common_feature_var_name):
                 path=datasets["static"],
                 dims=["x", "y"],
                 variables=testdata.DEFAULT_STATIC_VARS,
+                projections=dict(
+                    danra_projection=dict(
+                        dims=["x", "y"],
+                        crs_wkt=testdata.DANRA_CRS_WKT,
+                    )
+                ),
                 dim_mapping={
                     "grid_index": dict(
                         dims=["x", "y"],
@@ -275,6 +308,64 @@ def test_feature_collision(use_common_feature_var_name):
             mdp.create_dataset_zarr(fp_config=fp_config)
     else:
         mdp.create_dataset_zarr(fp_config=fp_config)
+
+
+@pytest.mark.parametrize(
+    "projection",
+    [
+        {
+            "proj1": {
+                "dims": "[x y]",
+                "crs_wkt": """PROJCRS["DMI HARMONIE DANRA lambert projection", BASEGEOGCRS["DMI HARMONIE DANRA lambert CRS", DATUM["DMI HARMONIE DANRA lambert datum", ELLIPSOID["Sphere", 6367470, 0, LENGTHUNIT["metre", 1, ID["EPSG", 9001]]]], PRIMEM["Greenwich", 0, ANGLEUNIT["degree", 0.0174532925199433, ID["EPSG", 8901]]], ID["EPSG",4035]], CONVERSION["Lambert Conic Conformal (2SP)", METHOD["Lambert Conic Conformal (2SP)", ID["EPSG", 9802]], PARAMETER["Latitude of false origin", 56.7, ANGLEUNIT["degree", 0.0174532925199433, ID["EPSG", 8821]]], PARAMETER["Longitude of false origin", 25, ANGLEUNIT["degree", 0.0174532925199433, ID["EPSG", 8822]]], PARAMETER["Latitude of 1st standard parallel", 56.7, ANGLEUNIT["degree", 0.0174532925199433, ID["EPSG", 8823]]], PARAMETER["Latitude of 2nd standard parallel", 56.7, ANGLEUNIT["degree", 0.0174532925199433, ID["EPSG", 8824]]], PARAMETER["Easting at false origin", 0, LENGTHUNIT["metre", 1, ID["EPSG", 8826]]], PARAMETER["Northing at false origin", 0, LENGTHUNIT["metre", 1, ID["EPSG", 8827]]]], CS[Cartesian, 2], AXIS["(E)", east, ORDER[1], LENGTHUNIT["metre", 1, ID["EPSG", 9001]]], AXIS["(N)", north, ORDER[2], LENGTHUNIT["metre", 1, ID["EPSG", 9001]]], USAGE[AREA["Denmark and surrounding regions"], BBOX[47, -3, 65, 25], SCOPE["Danra reanalysis projection"]]]""",
+            }
+        },
+        {"proj2": {"dims": "[x y]", "crs_wkt": "EPSG:4326"}},
+    ],
+)
+def test_projection_from_config(projection: Dict):
+    """
+    Test parsing of projection information from config
+    and check if it is written to the output file.
+    """
+    # Adding projection config to the example config
+    config = yaml.safe_load(testconfig.VALID_EXAMPLE_CONFIG_YAML)
+    config["inputs"]["danra_surface"]["projections"] = projection
+    config["inputs"]["danra_height_levels"]["projections"] = projection
+    config_yaml = yaml.dump(config)
+
+    config = mdp.Config.from_yaml(config_yaml)
+
+    ds = mdp.create_dataset(config=config)
+
+    for proj in projection.keys():
+        assert proj in ds, "Projection variable not found in dataset"
+        assert pyproj.CRS.from_cf(
+            {"crs_wkt": ds[proj].attrs["crs_wkt"]}
+        ) == pyproj.CRS.from_cf(
+            {"crs_wkt": projection[proj]["crs_wkt"]}
+        ), "CRS mismatch"
+
+
+@pytest.mark.parametrize(
+    "projection",
+    [
+        {"proj2": {"dims": "[x y]", "crs_wkt": "EPSG:4326"}},
+    ],
+)
+def test_requirement_of_single_projection(projection: Dict):
+    """
+    Test that assertion is raised when projections
+    are missing from input datasets.
+    """
+    # Adding projection config to the example config
+    config = yaml.safe_load(testconfig.VALID_EXAMPLE_CONFIG_YAML)
+    config["inputs"]["danra_surface"]["projections"] = projection
+    config_yaml = yaml.dump(config)
+
+    config = mdp.Config.from_yaml(config_yaml)
+
+    with pytest.raises(NotImplementedError):
+        mdp.create_dataset(config=config)
 
 
 def test_danra_example():
@@ -307,6 +398,12 @@ def test_optional_extra_section(extra_content):
                 path=datasets["static"],
                 dims=["x", "y"],
                 variables=testdata.DEFAULT_STATIC_VARS,
+                projections=dict(
+                    danra_projection=dict(
+                        dims=["x", "y"],
+                        crs_wkt=testdata.DANRA_CRS_WKT,
+                    )
+                ),
                 dim_mapping=dict(
                     grid_index=dict(
                         method="stack",

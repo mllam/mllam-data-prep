@@ -181,6 +181,27 @@ class DimMapping:
 
 
 @dataclass
+class Projection:
+    """
+    Definition of a single coordinate reference system (CRS) projection that
+    variables in the dataset refer to.
+
+    Attributes
+    ----------
+    dims : List[str]
+        The dimensions of the projection, usually ["x", "y"].
+    crs_wkt : str
+        The well-known text (WKT) representation of the CRS. For compatibility with cartopy the WKT string
+        needs to contain a BBOX parameter, e.g. `crs_wkt = "PROJCS[...], BBOX[...]"`.
+        Registered CRSs at e.g. EPSG can be used as well, e.g. `crs_wkt = "EPSG:4326"`. These often will resolve to
+        a WKT string that includes the BBOX parameter (see https://epsg.io/4326).
+    """
+
+    dims: List[str]
+    crs_wkt: str
+
+
+@dataclass
 class InputDataset:
     """
     Definition of a single input dataset which will be mapped to one the
@@ -233,6 +254,7 @@ class InputDataset:
     target_output_variable: str
     variables: Optional[Union[List[str], Dict[str, Dict[str, ValueSelection]]]] = None
     derived_variables: Optional[Dict[str, DerivedVariable]] = None
+    projections: Optional[Dict[str, Projection]] = None
     attributes: Optional[Dict[str, Any]] = field(default_factory=dict)
 
 

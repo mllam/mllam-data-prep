@@ -42,6 +42,10 @@ inputs:
         altitude:
           values: [100, ]
           units: m
+    projections:
+      danra_projection:
+        dims: [x, y]
+        crs_wkt: 'PROJCRS["DMI HARMONIE DANRA lambert projection", BASEGEOGCRS["DMI HARMONIE DANRA lambert CRS", DATUM["DMI HARMONIE DANRA lambert datum", ELLIPSOID["Sphere", 6367470, 0, LENGTHUNIT["metre", 1, ID["EPSG", 9001]]]], PRIMEM["Greenwich", 0, ANGLEUNIT["degree", 0.0174532925199433, ID["EPSG", 8901]]], ID["EPSG",4035]], CONVERSION["Lambert Conic Conformal (2SP)", METHOD["Lambert Conic Conformal (2SP)", ID["EPSG", 9802]], PARAMETER["Latitude of false origin", 56.7, ANGLEUNIT["degree", 0.0174532925199433, ID["EPSG", 8821]]], PARAMETER["Longitude of false origin", 25, ANGLEUNIT["degree", 0.0174532925199433, ID["EPSG", 8822]]], PARAMETER["Latitude of 1st standard parallel", 56.7, ANGLEUNIT["degree", 0.0174532925199433, ID["EPSG", 8823]]], PARAMETER["Latitude of 2nd standard parallel", 56.7, ANGLEUNIT["degree", 0.0174532925199433, ID["EPSG", 8824]]], PARAMETER["Easting at false origin", 0, LENGTHUNIT["metre", 1, ID["EPSG", 8826]]], PARAMETER["Northing at false origin", 0, LENGTHUNIT["metre", 1, ID["EPSG", 8827]]]], CS[Cartesian, 2], AXIS["(E)", east, ORDER[1], LENGTHUNIT["metre", 1, ID["EPSG", 9001]]], AXIS["(N)", north, ORDER[2], LENGTHUNIT["metre", 1, ID["EPSG", 9001]]], USAGE[AREA["Denmark and surrounding regions"], BBOX[47, -3, 65, 25], SCOPE["Danra reanalysis projection"]]]'
     dim_mapping:
       time:
         method: rename
@@ -61,6 +65,10 @@ inputs:
     variables:
       # use surface incoming shortwave radiation as forcing
       - swavr0m
+    projections:
+      danra_projection:
+        dims: [x, y]
+        crs_wkt: 'PROJCRS["DMI HARMONIE DANRA lambert projection", BASEGEOGCRS["DMI HARMONIE DANRA lambert CRS", DATUM["DMI HARMONIE DANRA lambert datum", ELLIPSOID["Sphere", 6367470, 0, LENGTHUNIT["metre", 1, ID["EPSG", 9001]]]], PRIMEM["Greenwich", 0, ANGLEUNIT["degree", 0.0174532925199433, ID["EPSG", 8901]]], ID["EPSG",4035]], CONVERSION["Lambert Conic Conformal (2SP)", METHOD["Lambert Conic Conformal (2SP)", ID["EPSG", 9802]], PARAMETER["Latitude of false origin", 56.7, ANGLEUNIT["degree", 0.0174532925199433, ID["EPSG", 8821]]], PARAMETER["Longitude of false origin", 25, ANGLEUNIT["degree", 0.0174532925199433, ID["EPSG", 8822]]], PARAMETER["Latitude of 1st standard parallel", 56.7, ANGLEUNIT["degree", 0.0174532925199433, ID["EPSG", 8823]]], PARAMETER["Latitude of 2nd standard parallel", 56.7, ANGLEUNIT["degree", 0.0174532925199433, ID["EPSG", 8824]]], PARAMETER["Easting at false origin", 0, LENGTHUNIT["metre", 1, ID["EPSG", 8826]]], PARAMETER["Northing at false origin", 0, LENGTHUNIT["metre", 1, ID["EPSG", 8827]]]], CS[Cartesian, 2], AXIS["(E)", east, ORDER[1], LENGTHUNIT["metre", 1, ID["EPSG", 9001]]], AXIS["(N)", north, ORDER[2], LENGTHUNIT["metre", 1, ID["EPSG", 9001]]], USAGE[AREA["Denmark and surrounding regions"], BBOX[47, -3, 65, 25], SCOPE["Danra reanalysis projection"]]]'
     derived_variables:
       # derive variables to be used as forcings
       toa_radiation:
@@ -96,6 +104,10 @@ inputs:
     dims: [x, y]
     variables:
       - lsm
+    projections:
+      danra_projection:
+        dims: [x, y]
+        crs_wkt: 'PROJCRS["DMI HARMONIE DANRA lambert projection", BASEGEOGCRS["DMI HARMONIE DANRA lambert CRS", DATUM["DMI HARMONIE DANRA lambert datum", ELLIPSOID["Sphere", 6367470, 0, LENGTHUNIT["metre", 1, ID["EPSG", 9001]]]], PRIMEM["Greenwich", 0, ANGLEUNIT["degree", 0.0174532925199433, ID["EPSG", 8901]]], ID["EPSG",4035]], CONVERSION["Lambert Conic Conformal (2SP)", METHOD["Lambert Conic Conformal (2SP)", ID["EPSG", 9802]], PARAMETER["Latitude of false origin", 56.7, ANGLEUNIT["degree", 0.0174532925199433, ID["EPSG", 8821]]], PARAMETER["Longitude of false origin", 25, ANGLEUNIT["degree", 0.0174532925199433, ID["EPSG", 8822]]], PARAMETER["Latitude of 1st standard parallel", 56.7, ANGLEUNIT["degree", 0.0174532925199433, ID["EPSG", 8823]]], PARAMETER["Latitude of 2nd standard parallel", 56.7, ANGLEUNIT["degree", 0.0174532925199433, ID["EPSG", 8824]]], PARAMETER["Easting at false origin", 0, LENGTHUNIT["metre", 1, ID["EPSG", 8826]]], PARAMETER["Northing at false origin", 0, LENGTHUNIT["metre", 1, ID["EPSG", 8827]]]], CS[Cartesian, 2], AXIS["(E)", east, ORDER[1], LENGTHUNIT["metre", 1, ID["EPSG", 9001]]], AXIS["(N)", north, ORDER[2], LENGTHUNIT["metre", 1, ID["EPSG", 9001]]], USAGE[AREA["Denmark and surrounding regions"], BBOX[47, -3, 65, 25], SCOPE["Danra reanalysis projection"]]]'
     dim_mapping:
       grid_index:
         method: stack

@@ -49,6 +49,8 @@ interface and addresses bugs around optional dependencies for
 
 ### Added
 
+- add support for reading, setting (via `projections["__common__"]` section in config) and outputting CF-Conventions complient projection information. ![\#38](https://github.com/mllam/mllam-data-prep/pull/38)
+- add `doctest-modules` to CI. ![\#38](https://github.com/mllam/mllam-data-prep/pull/38)
 - add optional output path argument to parser. ![\#26](https://github.com/mllam/mllam-data-prep/pull/26)
 
 ### Changed

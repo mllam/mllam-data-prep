@@ -26,6 +26,10 @@ jobs:
           python -m pip install . "zarr${{ matrix.zarr-version }}"
           python -m pip install pytest
 
+      - name: Run doctests
+        run: |
+          python -m pytest --doctest-modules mllam_data_prep/
+
       - name: Run tests
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}

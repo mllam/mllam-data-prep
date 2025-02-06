@@ -2,6 +2,7 @@ import pytest
 from dataclass_wizard.errors import MissingFields, UnknownJSONKey
 
 import mllam_data_prep as mdp
+import tests.data as testdata
 
 INVALID_EXTRA_FIELDS_CONFIG_YAML = """
 schema_version: v0.1.0
@@ -36,7 +37,7 @@ def test_get_config_issues():
 
 
 VALID_EXAMPLE_CONFIG_YAML = """
-schema_version: v0.1.0
+schema_version: {schema_version}
 dataset_version: v0.1.0
 
 output:
@@ -67,7 +68,7 @@ output:
 
 inputs:
   danra_height_levels:
-    path: ~/Desktop/mldev/height_levels.zarr
+    path: https://mllam-test-data.s3.eu-north-1.amazonaws.com/height_levels.zarr
     dims: [time, x, y, altitude]
     variables:
       u:
@@ -78,6 +79,10 @@ inputs:
         altitude:
           values: [100, ]
           units: m
+    projections:
+      danra_projection:
+        dims: [x, y]
+        crs_wkt: {crs_wkt}
     dim_mapping:
       time:
         method: rename
@@ -85,29 +90,36 @@ inputs:
       state_feature:
         method: stack_variables_by_var_name
         dims: [altitude]
-        name_format: f"{var_name}{altitude}m"
+        name_format: f"{{var_name}}{{altitude}}m"
       grid_index:
-        method: flatten
+        method: stack
         dims: [x, y]
     target_output_variable: state
 
   danra_surface:
-    path: ~/Desktop/mldev/single_levels.zarr
+    path: https://mllam-test-data.s3.eu-north-1.amazonaws.com/single_levels.zarr
     dims: [time, x, y]
     variables:
       - pres_seasurface
+    projections:
+      danra_projection:
+        dims: [x, y]
+        crs_wkt: {crs_wkt}
     dim_mapping:
       time:
         method: rename
         dim: time
       grid_index:
-        method: flatten
+        method: stack
         dims: [x, y]
       forcing_feature:
         method: stack_variables_by_var_name
-        name_format: f"{var_name}"
+        name_format: f"{{var_name}}"
     target_output_variable: forcing
-"""
+""".format(
+    schema_version=testdata.SCHEMA_VERSION,
+    crs_wkt=testdata.DANRA_CRS_WKT,
+)
 
 
 def test_get_config_nested():

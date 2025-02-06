@@ -42,7 +42,7 @@ def call(args=None):
         type=float,
         default=0.9,
     )
-    args = parser.parse_args()
+    args = parser.parse_args(args)
 
     if args.show_progress:
         ProgressBar().register()

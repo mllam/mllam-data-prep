@@ -423,6 +423,7 @@ if __name__ == "__main__":
     )
     args = argparser.parse_args()
 
+    assert args.f.endswith(".yaml"), "Config file must have a .yaml extension."
     config = Config.from_yaml_file(args.f)
     import rich
 

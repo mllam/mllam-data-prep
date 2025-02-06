@@ -145,7 +145,7 @@ output:
 
 inputs:
   danra_height_levels:
-    path: https://mllam-test-data.s3.eu-north-1.amazonaws.com/height_levels.zarr
+    path: https://object-store.os-api.cci1.ecmwf.int/mllam-testdata/danra_cropped/v0.2.0/height_levels.zarr
     dims: [time, x, y, altitude]
     variables:
       u:
@@ -170,7 +170,7 @@ inputs:
     target_output_variable: state
 
   danra_surface:
-    path: https://mllam-test-data.s3.eu-north-1.amazonaws.com/single_levels.zarr
+    path: https://object-store.os-api.cci1.ecmwf.int/mllam-testdata/danra_cropped/v0.2.0/single_levels.zarr
     dims: [time, x, y]
     variables:
       # use surface incoming shortwave radiation as forcing
@@ -205,11 +205,12 @@ inputs:
         name_format: "{var_name}"
     target_output_variable: forcing
 
-  danra_lsm:
-    path: https://mllam-test-data.s3.eu-north-1.amazonaws.com/lsm.zarr
+  danra_static:
+    path: https://object-store.os-api.cci1.ecmwf.int/mllam-testdata/danra_cropped/v0.2.0/single_levels.zarr
     dims: [x, y]
     variables:
       - lsm
+      - orography
     dim_mapping:
       grid_index:
         method: stack
@@ -282,7 +283,7 @@ The `output` section defines three things:
 ```yaml
 inputs:
   danra_height_levels:
-    path: https://mllam-test-data.s3.eu-north-1.amazonaws.com/height_levels.zarr
+    path: https://object-store.os-api.cci1.ecmwf.int/mllam-testdata/danra_cropped/v0.2.0/height_levels.zarr
     dims: [time, x, y, altitude]
     variables:
       u:
@@ -307,7 +308,7 @@ inputs:
     target_output_variable: state
 
   danra_surface:
-    path: https://mllam-test-data.s3.eu-north-1.amazonaws.com/single_levels.zarr
+    path: https://object-store.os-api.cci1.ecmwf.int/mllam-testdata/danra_cropped/v0.2.0/single_levels.zarr
     dims: [time, x, y]
     variables:
       # use surface incoming shortwave radiation as forcing

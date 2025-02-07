@@ -1,3 +1,4 @@
+"""Tests for the output dataset created by `mllam-data-prep`."""
 import re
 import shutil
 import tempfile
@@ -111,7 +112,7 @@ inputs:
 """
 
 
-def modify_example_config(new_inputs_section):
+def modify_example_config_inputs_section(new_inputs_section):
     """
     Get the example config file as a yaml string and replace the
     `inputs` section with a new inputs section before reading the config
@@ -168,7 +169,7 @@ def test_selected_output_variables(new_inputs_section):
     present in the output dataset.
     """
     # Modify the example config
-    config = modify_example_config(new_inputs_section)
+    config = modify_example_config_inputs_section(new_inputs_section)
 
     # Create the dataset
     ds = mdp.create_dataset(config=config)
@@ -186,7 +187,7 @@ def test_selected_output_variables(new_inputs_section):
         else:
             pytest.fail(
                 "Expected either 'list' or 'dict' but got"
-                f" type {type(selected_variables)} for 'selected_variables'."
+                f" type {type(selected_variables)} for 'variables'."
             )
 
         # Get the expected derived variable names
@@ -290,7 +291,7 @@ def test_output_dataset_for_nans(new_inputs_section, expected_result):
     Test that the output dataset does not contain any nan values.
     """
     # Modify the example config
-    config = modify_example_config(new_inputs_section)
+    config = modify_example_config_inputs_section(new_inputs_section)
 
     # Create the dataset
     ds = mdp.create_dataset(config=config)

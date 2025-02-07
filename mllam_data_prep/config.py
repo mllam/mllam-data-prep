@@ -11,10 +11,14 @@ class InvalidConfigException(Exception):
 
 def validate_config(config_inputs):
     """
-    Validate that, in the config:
-    - either `variables` or `derived_variables` are present in the config
-    - if both `variables` and `derived_variables` are present, that they don't
-      add the same variables to the dataset
+    Validate that, in a dataset in the inputs section of the config:
+    1. at least either `variables` or `derived_variables` are present in the config
+    2. if both `variables` and `derived_variables` are present, that they don't
+       include overlapping variable names
+    3. if the `variables` section contains a selection of variables by coordinates
+       that all variables are selected on the same coordinate since we currently
+       do not support variables selected from different coord levels in the same inputs
+       dataset
 
     Parameters
     ----------
@@ -25,13 +29,17 @@ def validate_config(config_inputs):
     """
 
     for input_dataset_name, input_dataset in config_inputs.items():
+        # Check that at least either `variables` or `derived_variables` are preset
         if not input_dataset.variables and not input_dataset.derived_variables:
             raise InvalidConfigException(
+                "Missing `variables` and/or `derived_variables`\n."
                 f"Input dataset '{input_dataset_name}' is missing the keys `variables` and/or"
                 " `derived_variables`. Make sure that you update the config so that the input"
                 f" dataset '{input_dataset_name}' contains at least either a `variables` or"
                 " `derived_variables` section."
             )
+        # Check that there are no overlapping variable names between `variables`
+        # and `derived_variables`
         elif input_dataset.variables and input_dataset.derived_variables:
             # Check so that there are no overlapping variables
             if isinstance(input_dataset.variables, list):
@@ -46,11 +54,47 @@ def validate_config(config_inputs):
             common_vars = list(set(variable_vars) & set(derived_variable_vars))
             if len(common_vars) > 0:
                 raise InvalidConfigException(
+                    "Overlapping variable names in `variables` and `derived_variables`\n."
                     "Both `variables` and `derived_variables` include the following variables name(s):"
                     f" '{', '.join(common_vars)}'. This is not allowed. Make sure that there"
                     " are no overlapping variable names between `variables` and `derived_variables`,"
                     f" either by renaming or removing '{', '.join(common_vars)}' from one of them."
                 )
+
+        # Check the values of the selected coordinates among variables
+        # We are currently not supporting the selection of multiple variables from different
+        # coord levels.
+        dim_mapping = input_dataset.dim_mapping.copy()
+        variable_dim_mappings = {}
+        for arch_dim in list(dim_mapping.keys()):
+            if dim_mapping[arch_dim].method == "stack_variables_by_var_name":
+                variable_dim_mappings[arch_dim] = dim_mapping.pop(arch_dim)
+
+        if input_dataset.variables and isinstance(input_dataset.variables, dict):
+            dict_of_coord_values = {}
+            for arch_dim, input_dim_map in variable_dim_mappings.items():
+                dims = input_dim_map.dims[0]
+
+                for var_name, var in input_dataset.variables.items():
+                    dict_of_coord_values[var_name] = var[dims].values
+
+            if len(input_dataset.variables) > 1:
+                if not all(
+                    coord_values == list(dict_of_coord_values.values())[0]
+                    for coord_values in dict_of_coord_values.values()
+                ):
+                    raise NotImplementedError(
+                        "Selection of variables from different coord levels is currently not supported.\n"
+                        f"Input dataset '{input_dataset_name}' is trying to select variables"
+                        f" '{', '.join(list(input_dataset.variables.keys()))}' from different coord levels.\n"
+                        f"Coord values per variable to select from:\n"
+                        f"{'\n'.join(f' - {var}: {values}' for var, values in dict_of_coord_values.items())}"
+                        "\nThis type of selection of variables with different coord levels is currently not supported."
+                        "\nIf you want to make this type of selection you can split your selection among several"
+                        " input datasets. Either you split it such that each input dataset is only containing a"
+                        " selection of variables from the same coord levels, or such that each input dataset is only"
+                        " containing one variable with the selection from the desired coord levels."
+                    )
 
 
 @dataclass

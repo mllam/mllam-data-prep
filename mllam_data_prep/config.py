@@ -332,9 +332,9 @@ class Output:
     """
 
     variables: Dict[str, List[str]]
-    coord_ranges: Dict[str, Range] = None
+    coord_ranges: Dict[str, Range] = field(default_factory=dict)
     chunking: Dict[str, int] = field(default_factory=dict)
-    splitting: Splitting = None
+    splitting: Optional[Splitting] = None
 
 
 @dataclass
@@ -371,7 +371,7 @@ class Config(dataclass_wizard.JSONWizard, dataclass_wizard.YAMLWizard):
     inputs: Dict[str, InputDataset]
     schema_version: str
     dataset_version: str
-    extra: Dict[str, Any] = None
+    extra: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
         validate_config(self.inputs)

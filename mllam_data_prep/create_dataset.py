@@ -126,7 +126,7 @@ def create_dataset(config: Config):
             f" {', '.join(SUPPORTED_CONFIG_VERSIONS)} are supported by mllam-data-prep "
             f"v{__version__}."
         )
-    if config.schema_version == "v0.2.0" and config.extra is not None:
+    if config.schema_version == "v0.2.0" and config.extra != {}:
         raise ValueError(
             "Config schema version v0.2.0 does not support the `extra` field. Please "
             "update the schema version used in your config to v0.5.0."

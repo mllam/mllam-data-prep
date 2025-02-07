@@ -5,7 +5,9 @@ from pathlib import Path
 
 import numpy as np
 import xarray as xr
+import yaml
 import zarr
+from deepdiff import DeepDiff
 from loguru import logger
 from packaging.version import Version
 
@@ -286,11 +288,73 @@ def create_dataset(config: Config):
         "created_with"
     ] = "mllam-data-prep (https://github.com/mllam/mllam-data-prep)"
     ds.attrs["mdp_version"] = f"v{__version__}"
+    ds.attrs["creation_config"] = config.to_yaml()
 
     return ds
 
 
-def create_dataset_zarr(fp_config, fp_zarr: str = None):
+class UnsupportedMllamDataPrepVersion(Exception):
+    pass
+
+
+def handle_existing_dataset(config: Config, fp_zarr: str, overwrite: str) -> None:
+    """
+    Handle an existing dataset at the provided path by either deleting it or raising an error.
+
+    Parameters
+    ----------
+    config : Config
+        The configuration object for the dataset we want to create
+    fp_zarr : str
+        The path to the zarr file where the dataset is to be written
+    overwrite : str
+        How to handle an existing dataset at the provided path. Options are:
+        - "always": Always delete the existing dataset
+        - "never": Never delete the existing dataset
+        - "on_config_change": Only delete the existing dataset if the configuration has changed
+    """
+    delete_dataset = False
+    if overwrite == "always":
+        delete_dataset = True
+    elif overwrite == "on_config_change":
+        # storage of the config within created dataset was added in mllam-data-prep v0.6.0
+        required_mdp_version = Version("v0.6.0")
+
+        ds_existing = xr.open_zarr(fp_zarr)
+        config_mdp_version = Version(ds_existing.attrs["mdp_version"])
+        if config_mdp_version >= required_mdp_version:
+            config_yaml = ds_existing.attrs.get("creation_config", None)
+            if config_yaml is None:
+                raise ValueError(
+                    f"Existing dataset at {fp_zarr} does not have a creation_config attribute"
+                )
+            existing_config = Config.from_yaml(config_yaml)
+            if existing_config != config:
+                logger.info(
+                    "The existing dataset was created with a different configuration than the current one."
+                )
+                delete_dataset = True
+                differences = DeepDiff(
+                    existing_config.to_dict(), config.to_dict(), ignore_order=True
+                ).to_dict()
+                diff_yaml = yaml.dump(differences, default_flow_style=False)
+                logger.info(
+                    f"Differences between existing and new configuration:\n{diff_yaml}"
+                )
+        else:
+            raise UnsupportedMllamDataPrepVersion(
+                "The existing dataset was created with an older version of mllam-data-prep "
+                f"({config_mdp_version}), and does not have the creation_config attribute "
+                f"(added in v{required_mdp_version}). Please delete the existing dataset "
+                "or set overwrite='always' to overwrite it."
+            )
+
+    if delete_dataset:
+        logger.info(f"Removing existing dataset at {fp_zarr}")
+        shutil.rmtree(fp_zarr)
+
+
+def create_dataset_zarr(fp_config, fp_zarr: str = None, overwrite: str = "always"):
     """
     Create a dataset from the input datasets specified in the config file and write it to a zarr file.
     The path to the zarr file is the same as the config file, but with the extension changed to '.zarr'.
@@ -302,6 +366,11 @@ def create_dataset_zarr(fp_config, fp_zarr: str = None):
     fp_zarr : Path, optional
         The path to the zarr file to write the dataset to. If not provided, the zarr file will be written
         to the same directory as the config file with the extension changed to '.zarr'.
+    overwrite : str, optional
+        How to handle an existing dataset at the provided path. Options are:
+        - "always": Always delete the existing dataset (default)
+        - "never": Never delete the existing dataset
+        - "on_config_change": Only delete the existing dataset if the configuration has changed
     """
     config = Config.from_yaml_file(file=fp_config)
 
@@ -314,8 +383,9 @@ def create_dataset_zarr(fp_config, fp_zarr: str = None):
         fp_zarr = Path(fp_zarr)
 
     if fp_zarr.exists():
-        logger.info(f"Removing existing dataset at {fp_zarr}")
-        shutil.rmtree(fp_zarr)
+        handle_existing_dataset(
+            config=config, fp_zarr=str(fp_zarr), overwrite=overwrite
+        )
 
     # use zstd compression since it has a good balance of speed and compression ratio
     # https://engineering.fb.com/2016/08/31/core-infra/smaller-and-faster-data-compression-with-zstandard/

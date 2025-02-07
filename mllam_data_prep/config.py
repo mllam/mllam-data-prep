@@ -83,12 +83,15 @@ def validate_config(config_inputs):
                     coord_values == list(dict_of_coord_values.values())[0]
                     for coord_values in dict_of_coord_values.values()
                 ):
+                    formatted_variables_and_coord_selection = "\n".join(
+                        f" - {var}: {values}"
+                        for var, values in dict_of_coord_values.items()
+                    )
                     raise NotImplementedError(
                         "Selection of variables from different coord levels is currently not supported.\n"
                         f"Input dataset '{input_dataset_name}' is trying to select variables"
                         f" '{', '.join(list(input_dataset.variables.keys()))}' from different coord levels.\n"
-                        f"Coord values per variable to select from:\n"
-                        f"{'\n'.join(f' - {var}: {values}' for var, values in dict_of_coord_values.items())}"
+                        f"Coord values per variable to select from:\n{formatted_variables_and_coord_selection}"
                         "\nThis type of selection of variables with different coord levels is currently not supported."
                         "\nIf you want to make this type of selection you can split your selection among several"
                         " input datasets. Either you split it such that each input dataset is only containing a"

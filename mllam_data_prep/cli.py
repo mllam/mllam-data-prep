@@ -76,7 +76,6 @@ def call(args=None):
             memory_limit=memory_per_worker,
         )
 
-        client = cluster.get_client()
         # print the dashboard link
         logger.info(f"Dashboard link: {cluster.dashboard_link}")
 

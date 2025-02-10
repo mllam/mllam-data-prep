@@ -28,6 +28,7 @@ def distributed():
     "args",
     [
         ["example.danra.yaml", "--dask-distributed-local-core-fraction", "1.0"],
+        ["example.danra.yaml", "--dask-distributed-local-core-fraction", "0.0"],
         ["example.danra.yaml"],
     ],
 )
@@ -39,15 +40,11 @@ def test_run_distributed(args):
         core_fraction = float(args[index + 1])
         if core_fraction > 0:
             pytest.raises(
-                NameError,
-                call_wrapper,
-                args=args,
-            )
-        else:
-            pytest.raises(
                 ModuleNotFoundError,
                 call_wrapper,
                 args=args,
             )
+        else:
+            call_wrapper(args)
     else:
         call_wrapper(args)

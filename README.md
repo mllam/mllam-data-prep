@@ -59,7 +59,7 @@ The package can also be used as a python module to create datasets in a more pro
 ### Command-line usage
 
 ```bash
-python -m mllam_data_prep example.danra.yaml
+mllam_data_prep example.danra.yaml
 ```
 
 Example output:
@@ -78,7 +78,7 @@ fraction given. For example, to use 50% of the cores on the machine you would
 run:
 
 ```bash
-python -m mllam_data_prep example.danra.yaml --dask-distributed-local-core-fraction 0.5
+mllam_data_prep example.danra.yaml --dask-distributed-local-core-fraction 0.5
 ```
 
 Unfortunately, the number of cores to use can only be worked out by trial and

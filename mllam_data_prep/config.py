@@ -74,7 +74,7 @@ class Range:
 
     start: Union[str, int, float]
     end: Union[str, int, float]
-    step: Union[str, int, float] = None
+    step: Optional[Union[str, int, float]] = None
 
 
 @dataclass
@@ -93,7 +93,7 @@ class ValueSelection:
     """
 
     values: Union[List[Union[float, int]], Range]
-    units: str = None
+    units: Optional[str] = None
 
 
 @dataclass
@@ -177,7 +177,7 @@ class DimMapping:
     method: str
     dims: Optional[List[str]] = None
     dim: Optional[str] = None
-    name_format: str = field(default=None)
+    name_format: Optional[str] = field(default=None)
 
 
 @dataclass
@@ -273,7 +273,7 @@ class Split:
 
     start: str
     end: str
-    compute_statistics: Statistics = None
+    compute_statistics: Optional[Statistics] = None
 
 
 @dataclass

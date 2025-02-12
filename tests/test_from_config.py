@@ -1,3 +1,4 @@
+import datetime
 import shutil
 import tempfile
 from pathlib import Path
@@ -8,6 +9,7 @@ import yaml
 
 import mllam_data_prep as mdp
 import tests.data as testdata
+from mllam_data_prep.ops.selection import str_to_datetime, str_to_timedelta
 
 
 def test_gen_data():
@@ -373,6 +375,26 @@ def test_sliced_dataset_can_instantiate_with_right_dimensions():
     """
     fp = "tests/resources/sliced_example.danra.yaml"
     config = mdp.Config.from_yaml(open(fp))
+    ds = mdp.create_dataset(config)
+    # We pick a 10x10km slice of the data which should result in 16 grid points.
+    assert ds.state.shape == (2, 49, 16)
+
+
+def test_allow_timedelta_in_config():
+    """
+    The sliced example has a 10x10 km slice, so there should be 4x4 = 16 points herekj.
+    """
+    fp = "tests/resources/sliced_example.danra.yaml"
+    config = mdp.Config.from_yaml(open(fp))
+    config.output.coord_ranges["time"].start = str_to_datetime(
+        config.output.coord_ranges["time"].start
+    )
+    config.output.coord_ranges["time"].end = str_to_datetime(
+        config.output.coord_ranges["time"].end
+    )
+    config.output.coord_ranges["time"].step = str_to_timedelta(
+        config.output.coord_ranges["time"].step
+    )
     ds = mdp.create_dataset(config)
     # We pick a 10x10km slice of the data which should result in 16 grid points.
     assert ds.state.shape == (2, 49, 16)

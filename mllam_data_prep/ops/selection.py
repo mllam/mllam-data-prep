@@ -1,9 +1,8 @@
-import datetime
 import warnings
 
 import pandas as pd
 
-from ..config import Range
+from mllam_data_prep.config import Range
 
 
 def normalize_slice_startstop(s):
@@ -70,13 +69,11 @@ def select_by_kwargs(ds, **coord_ranges):
 
             assert sel_start != sel_end, "Start and end cannot be the same"
 
-            # TODO Implement handling of time step size. See issue #69
             if coord == "time" and sel_step is not None:
                 warnings.warn(
-                    "Step size for time coordinate is not yet supported and is ignored"
+                    "Step size for time coordinate is not supported and is ignored"
                 )
                 sel_step = None
-            ################
 
             ds = ds.sel({coord: slice(sel_start, sel_end, sel_step)})
 
@@ -91,20 +88,3 @@ def select_by_kwargs(ds, **coord_ranges):
                 f"Selection for coordinate {coord} must be a list or a dict"
             )
     return ds
-
-
-def check_step(sel_step, coord, ds):
-    """
-    check that the step requested is exactly what the data has
-    """
-    all_steps = ds[coord].diff(dim=coord).values
-    first_step = all_steps[0].astype("timedelta64[s]").astype(datetime.timedelta)
-
-    if not all(all_steps[0] == all_steps):
-        raise ValueError(
-            f"Step size for coordinate {coord} is not constant: {all_steps}"
-        )
-    if sel_step != first_step:
-        raise ValueError(
-            f"Step size for coordinate {coord} is not the same as requested: {first_step} != {sel_step}"
-        )

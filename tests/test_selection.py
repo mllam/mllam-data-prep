@@ -32,8 +32,6 @@ def test_range_slice_within_range(ds):
     assert ds.y.min() >= y_start
     assert ds.y.max() <= y_end
 
-    ds
-
 
 @pytest.mark.parametrize("x_start, x_end", ([-50000, -51000], [0, 500000]))
 def test_error_on_empty_range(ds, x_start, x_end):
@@ -49,3 +47,17 @@ def test_error_on_empty_range(ds, x_start, x_end):
 
     with pytest.raises(AssertionError):
         ds = mdp.ops.selection.select_by_kwargs(ds, **coord_ranges)
+
+
+def test_can_slice_time(ds):
+    """
+    test if the slice is within the specified range
+    """
+    start = "1990-09-03T00:03"
+    end = "1990-09-09T00:00"
+    step = "PT3H"
+    coord_ranges = {
+        "time": mdp.config.Range(start=start, end=end, step=step),
+    }
+
+    ds = mdp.ops.selection.select_by_kwargs(ds, **coord_ranges)

@@ -1,11 +1,12 @@
 import datetime
+import warnings
 
 import pandas as pd
 
 from ..config import Range
 
 
-def _normalize_slice_startstop(s):
+def normalize_slice_startstop(s):
     if isinstance(s, pd.Timestamp):
         return s
     elif isinstance(s, str):
@@ -17,7 +18,7 @@ def _normalize_slice_startstop(s):
         return s
 
 
-def _normalize_slice_step(s):
+def normalize_slice_step(s):
     if isinstance(s, pd.Timedelta):
         return s
     elif isinstance(s, str):
@@ -63,21 +64,21 @@ def select_by_kwargs(ds, **coord_ranges):
                 raise ValueError(
                     f"Selection for coordinate {coord} must have either 'start' and 'end' given"
                 )
-            sel_start = _normalize_slice_startstop(selection.start)
-            sel_end = _normalize_slice_startstop(selection.end)
-            sel_step = _normalize_slice_step(selection.step)
+            sel_start = normalize_slice_startstop(selection.start)
+            sel_end = normalize_slice_startstop(selection.end)
+            sel_step = normalize_slice_step(selection.step)
 
             assert sel_start != sel_end, "Start and end cannot be the same"
 
-            # we don't select with the step size for now, but simply check (below) that
-            # the step size in the data is the same as the requested step size
-            ds = ds.sel({coord: slice(sel_start, sel_end)})
+            # TODO Implement handling of time step size. See issue #69
+            if coord == "time" and sel_step is not None:
+                warnings.warn(
+                    "Step size for time coordinate is not yet supported and is ignored"
+                )
+                sel_step = None
+            ################
 
-            if coord == "time":
-                check_point_in_dataset(coord, sel_start, ds)
-                check_point_in_dataset(coord, sel_end, ds)
-                if sel_step is not None:
-                    check_step(sel_step, coord, ds)
+            ds = ds.sel({coord: slice(sel_start, sel_end, sel_step)})
 
             assert (
                 len(ds[coord]) > 0
@@ -90,16 +91,6 @@ def select_by_kwargs(ds, **coord_ranges):
                 f"Selection for coordinate {coord} must be a list or a dict"
             )
     return ds
-
-
-def check_point_in_dataset(coord, point, ds):
-    """
-    check that the requested point is in the data.
-    """
-    if point is not None and point not in ds[coord].values:
-        raise ValueError(
-            f"Provided value for coordinate {coord} ({point}) is not in the data."
-        )
 
 
 def check_step(sel_step, coord, ds):

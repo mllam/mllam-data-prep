@@ -5,7 +5,7 @@ import pandas as pd
 from mllam_data_prep.config import Range
 
 
-def normalize_slice_startstop(s):
+def str_to_datetime(s):
     if isinstance(s, pd.Timestamp):
         return s
     elif isinstance(s, str):
@@ -17,7 +17,7 @@ def normalize_slice_startstop(s):
         return s
 
 
-def normalize_slice_step(s):
+def str_to_timedelta(s):
     if isinstance(s, pd.Timedelta):
         return s
     elif isinstance(s, str):
@@ -63,9 +63,9 @@ def select_by_kwargs(ds, **coord_ranges):
                 raise ValueError(
                     f"Selection for coordinate {coord} must have either 'start' and 'end' given"
                 )
-            sel_start = normalize_slice_startstop(selection.start)
-            sel_end = normalize_slice_startstop(selection.end)
-            sel_step = normalize_slice_step(selection.step)
+            sel_start = str_to_datetime(selection.start)
+            sel_end = str_to_datetime(selection.end)
+            sel_step = str_to_timedelta(selection.step)
 
             assert sel_start != sel_end, "Start and end cannot be the same"
 

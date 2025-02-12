@@ -177,7 +177,7 @@ class DimMapping:
     method: str
     dims: Optional[List[str]] = None
     dim: Optional[str] = None
-    name_format: Optioanl[str] = field(default=None)
+    name_format: Optional[str] = field(default=None)
     coord_ranges: Optional[Dict[str, Range]] = None
 
 

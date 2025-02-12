@@ -25,3 +25,4 @@ repos:
       - id: mypy
         additional_dependencies: [types-PyYAML, types-Pillow, types-tqdm]
         description: Check for type errors
+        files: ^mllam_data_prep/

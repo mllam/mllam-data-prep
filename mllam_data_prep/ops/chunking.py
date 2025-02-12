@@ -24,22 +24,23 @@ def check_chunk_size(ds, chunks):
     """
 
     for var_name, var_data in ds.data_vars.items():
-        total_size = 1
+        total_chunk_size = 1
 
+        # Loop over all dims in the dataset to be chunked
         for dim, chunk_size in chunks.items():
-            dim_size = ds.sizes.get(dim, None)
-            if dim_size is None:
-                raise KeyError(f"Dimension '{dim}' not found in the dataset.")
-            total_size *= chunk_size
+            chunk_dim_size = var_data.sizes.get(dim, None)
+            if chunk_dim_size is None:
+                continue  # Dimension 'dim' not found in the data-array
+            total_chunk_size *= chunk_size
 
         dtype = var_data.dtype
         bytes_per_element = np.dtype(dtype).itemsize
 
-        memory_usage = total_size * bytes_per_element
+        memory_usage = total_chunk_size * bytes_per_element
 
         if memory_usage > CHUNK_MAX_SIZE_WARNING:
             logger.warning(
-                f"The chunk size for '{var_name}' exceeds '{CHUNK_MAX_SIZE_WARNING}' GB."
+                f"The chunk size for '{var_name}' exceeds '{CHUNK_MAX_SIZE_WARNING / 1024**3}' GB."
             )
 
 

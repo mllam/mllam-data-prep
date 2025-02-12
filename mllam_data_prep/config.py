@@ -178,6 +178,7 @@ class DimMapping:
     dims: Optional[List[str]] = None
     dim: Optional[str] = None
     name_format: str = field(default=None)
+    coord_ranges: Dict[str, Range] = None
 
 
 @dataclass
@@ -234,6 +235,7 @@ class InputDataset:
     variables: Optional[Union[List[str], Dict[str, Dict[str, ValueSelection]]]] = None
     derived_variables: Optional[Dict[str, DerivedVariable]] = None
     attributes: Optional[Dict[str, Any]] = field(default_factory=dict)
+    coord_ranges: Dict[str, Range] = None
 
 
 @dataclass

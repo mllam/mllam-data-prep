@@ -335,7 +335,7 @@ class Output:
 
     variables: Dict[str, List[str]]
     coord_ranges: Optional[Dict[str, Range]] = field(default_factory=dict)
-    chunking: Optional[Dict[str, int]] = field(default_factory=dict)
+    chunking: Dict[str, int] = field(default_factory=dict)
     splitting: Optional[Splitting] = None
 
 

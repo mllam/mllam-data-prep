@@ -2,6 +2,7 @@ import datetime
 import shutil
 from collections import defaultdict
 from pathlib import Path
+from typing import Optional
 
 import numpy as np
 import xarray as xr
@@ -290,7 +291,7 @@ def create_dataset(config: Config):
     return ds
 
 
-def create_dataset_zarr(fp_config, fp_zarr: str = None):
+def create_dataset_zarr(fp_config: Path, fp_zarr: Optional[str | Path] = None):
     """
     Create a dataset from the input datasets specified in the config file and write it to a zarr file.
     The path to the zarr file is the same as the config file, but with the extension changed to '.zarr'.

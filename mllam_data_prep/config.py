@@ -74,7 +74,7 @@ class Range:
 
     start: Union[str, int, float]
     end: Union[str, int, float]
-    step: Union[str, int, float] = None
+    step: Optional[Union[str, int, float]] = None
 
 
 @dataclass
@@ -93,7 +93,7 @@ class ValueSelection:
     """
 
     values: Union[List[Union[float, int]], Range]
-    units: str = None
+    units: Optional[str] = None
 
 
 @dataclass
@@ -177,7 +177,7 @@ class DimMapping:
     method: str
     dims: Optional[List[str]] = None
     dim: Optional[str] = None
-    name_format: str = field(default=None)
+    name_format: Optional[str] = field(default=None)
 
 
 @dataclass
@@ -273,7 +273,7 @@ class Split:
 
     start: str
     end: str
-    compute_statistics: Statistics = None
+    compute_statistics: Optional[Statistics] = None
 
 
 @dataclass
@@ -332,9 +332,9 @@ class Output:
     """
 
     variables: Dict[str, List[str]]
-    coord_ranges: Dict[str, Range] = None
+    coord_ranges: Optional[Dict[str, Range]] = None
     chunking: Dict[str, int] = field(default_factory=dict)
-    splitting: Splitting = None
+    splitting: Optional[Splitting] = None
 
 
 @dataclass
@@ -371,7 +371,7 @@ class Config(dataclass_wizard.JSONWizard, dataclass_wizard.YAMLWizard):
     inputs: Dict[str, InputDataset]
     schema_version: str
     dataset_version: str
-    extra: Dict[str, Any] = None
+    extra: Optional[Dict[str, Any]] = None
 
     def __post_init__(self):
         validate_config(self.inputs)

@@ -29,9 +29,9 @@ def _normalize_slice_step(s):
         return s
 
 
-def select_by_kwargs(ds, **config_dict):
+def select_by_kwargs(ds, **coord_ranges):
     """
-    Do `xr.Dataset.sel` on `ds` using the `config_dict` to select the coordinates, for each
+    Do `xr.Dataset.sel` on `ds` using the `coord_ranges` to select the coordinates, for each
     entry in the dictionary, the key is the coordinate name and the value is the selection
     to make, either given as 1) a list of values or a 2) dictionary with keys "start" and "end".
     This functionally works like `xr.Dataset.sel` but can create slice objects for each
@@ -44,7 +44,7 @@ def select_by_kwargs(ds, **config_dict):
     ----------
     ds : xr.Dataset
         Dataset to select from
-    config_dict : dict
+    coord_ranges : dict
         Dictionary with the coordinate names as keys and the selection to make as values,
         either a list of values or a dictionary with keys "start" and "end"
         (and optionally "step" for the slice object)
@@ -54,7 +54,8 @@ def select_by_kwargs(ds, **config_dict):
     xr.Dataset
         Dataset with the selection made
     """
-    for coord, selection in config_dict.items():
+
+    for coord, selection in coord_ranges.items():
         if coord not in ds.coords:
             raise ValueError(f"Coordinate {coord} not found in dataset")
         if isinstance(selection, Range):
@@ -72,34 +73,15 @@ def select_by_kwargs(ds, **config_dict):
             # the step size in the data is the same as the requested step size
             ds = ds.sel({coord: slice(sel_start, sel_end)})
 
-            # check that the start and end are in the data
-            coord_minmax = ds[coord].min().values, ds[coord].max().values
-            if sel_start is not None and sel_start not in ds[coord].values:
-                raise ValueError(
-                    f"Provided start value for coordinate {coord} ({sel_start}) is not in the data."
-                    f"Coord {coord} spans [{coord_minmax[0]}, {coord_minmax[1]}]"
-                )
-            if sel_end is not None and sel_end not in ds[coord].values:
-                raise ValueError(
-                    f"Provided end value for coordinate {coord} ({sel_end}) is not in the data. "
-                    f"Coord {coord} spans [{coord_minmax[0]}, {coord_minmax[1]}]"
-                )
+            if coord == "time":
+                check_point_in_dataset(coord, sel_start, ds)
+                check_point_in_dataset(coord, sel_end, ds)
+                if sel_step is not None:
+                    check_step(sel_step, coord, ds)
 
-            if sel_step is not None:
-                # check that the step requested is exactly what the data has
-                all_steps = ds[coord].diff(dim=coord).values
-                first_step = (
-                    all_steps[0].astype("timedelta64[s]").astype(datetime.timedelta)
-                )
-
-                if not all(all_steps[0] == all_steps):
-                    raise ValueError(
-                        f"Step size for coordinate {coord} is not constant: {all_steps}"
-                    )
-                if sel_step != first_step:
-                    raise ValueError(
-                        f"Step size for coordinate {coord} is not the same as requested: {first_step} != {sel_step}"
-                    )
+            assert (
+                len(ds[coord]) > 0
+            ), f"You have selected an empty range {sel_start}:{sel_end} for coordinate {coord}"
 
         elif isinstance(selection, list):
             ds = ds.sel({coord: selection})
@@ -108,3 +90,30 @@ def select_by_kwargs(ds, **config_dict):
                 f"Selection for coordinate {coord} must be a list or a dict"
             )
     return ds
+
+
+def check_point_in_dataset(coord, point, ds):
+    """
+    check that the requested point is in the data.
+    """
+    if point is not None and point not in ds[coord].values:
+        raise ValueError(
+            f"Provided value for coordinate {coord} ({point}) is not in the data."
+        )
+
+
+def check_step(sel_step, coord, ds):
+    """
+    check that the step requested is exactly what the data has
+    """
+    all_steps = ds[coord].diff(dim=coord).values
+    first_step = all_steps[0].astype("timedelta64[s]").astype(datetime.timedelta)
+
+    if not all(all_steps[0] == all_steps):
+        raise ValueError(
+            f"Step size for coordinate {coord} is not constant: {all_steps}"
+        )
+    if sel_step != first_step:
+        raise ValueError(
+            f"Step size for coordinate {coord} is not the same as requested: {first_step} != {sel_step}"
+        )

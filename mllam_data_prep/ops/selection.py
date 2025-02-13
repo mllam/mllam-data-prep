@@ -3,28 +3,16 @@ import warnings
 import pandas as pd
 
 
-def str_to_datetime(s):
-    if isinstance(s, pd.Timestamp):
-        return s
-    elif isinstance(s, str):
-        try:
-            return pd.Timestamp(s)
-        except ValueError:
-            return s
-    else:
-        return s
+def str_to_timestamp(s):
+    if isinstance(s, str):
+        return pd.Timestamp(s)
+    return s
 
 
 def str_to_timedelta(s):
-    if isinstance(s, pd.Timedelta):
-        return s
-    elif isinstance(s, str):
-        try:
-            return pd.to_timedelta(s)
-        except ValueError:
-            return s
-    else:
-        return s
+    if isinstance(s, str):
+        return pd.to_time_delta(s)
+    return s
 
 
 def select_by_kwargs(ds, **coord_ranges):

@@ -81,10 +81,5 @@ def select_by_kwargs(ds, **coord_ranges):
                 len(ds[coord]) > 0
             ), f"You have selected an empty range {sel_start}:{sel_end} for coordinate {coord}"
 
-        elif isinstance(selection, list):
-            ds = ds.sel({coord: selection})
-        else:
-            raise NotImplementedError(
-                f"Selection for coordinate {coord} must be a list or a dict"
             )
     return ds

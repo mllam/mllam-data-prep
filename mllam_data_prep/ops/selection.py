@@ -82,4 +82,11 @@ def select_by_kwargs(ds, **coord_ranges):
             ), f"You have selected an empty range {sel_start}:{sel_end} for coordinate {coord}"
 
             )
+        check_selection(ds, coord, sel_start, sel_end)
     return ds
+
+def check_selection(ds, coord, sel_start, sel_end):
+    if ds[coord].values.min() < sel_start or ds[coord].values.max() > sel_end:
+        warnings.warn(
+            f"Selection points is outside the range of the range of {coord}, the data spans from {ds[coord].values.min()} to {ds[coord].values.max()}"
+        )

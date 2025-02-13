@@ -1,7 +1,10 @@
+import datetime
+
 import pytest
 from dataclass_wizard.errors import MissingFields, UnknownJSONKey
 
 import mllam_data_prep as mdp
+from mllam_data_prep import config
 
 INVALID_EXTRA_FIELDS_CONFIG_YAML = """
 schema_version: v0.1.0
@@ -119,3 +122,11 @@ def test_get_config_nested():
         assert input_config.target_output_variable is not None
         with pytest.raises(AttributeError):
             input_config.foobarfield
+
+
+def test_that_range_accepts_datetime():
+    start = datetime.datetime(1990, 9, 3, 0, 0)
+    end = datetime.datetime(1990, 9, 4, 0, 0)
+    step = "PT3H"
+
+    range_ = config.Range(start=start, end=end, step=step)

@@ -2,8 +2,6 @@ import warnings
 
 import pandas as pd
 
-from mllam_data_prep.config import Range
-
 
 def str_to_datetime(s):
     if isinstance(s, pd.Timestamp):
@@ -77,8 +75,9 @@ def select_by_kwargs(ds, **coord_ranges):
 
     return ds
 
+
 def check_selection(ds, coord, sel_start, sel_end):
     if ds[coord].values.min() < sel_start or ds[coord].values.max() > sel_end:
         warnings.warn(
-            f"Selection points is outside the range of the range of {coord}, the data spans from {ds[coord].values.min()} to {ds[coord].values.max()}"
+            f"Endpoints are outside the range of {coord}, the data spans [ {ds[coord].values.min()} : {ds[coord].values.max()} ] and the selection is [ {sel_start} : {sel_end} ]"
         )

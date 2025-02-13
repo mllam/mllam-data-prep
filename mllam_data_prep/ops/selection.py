@@ -56,8 +56,6 @@ def select_by_kwargs(ds, **coord_ranges):
     """
 
     for coord, selection in coord_ranges.items():
-        if coord not in ds.coords:
-            raise ValueError(f"Coordinate {coord} not found in dataset")
         if isinstance(selection, Range):
             if selection.start is None and selection.end is None:
                 raise ValueError(

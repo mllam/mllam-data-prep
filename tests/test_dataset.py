@@ -185,7 +185,6 @@ def update_config(config: str, update: str):
     return modified_config
 
 
-@skip_on(NotImplementedError, reason="This functionality is not yet implemented.")
 @pytest.mark.parametrize(
     "base_config, new_inputs_section",
     [
@@ -277,6 +276,7 @@ def test_selected_output_variables(base_config, new_inputs_section):
             pytest.fail(error_message)
 
 
+@skip_on(NotImplementedError, reason="This functionality is not yet implemented.")
 @pytest.mark.parametrize(
     "base_config, update, expected_result",
     [

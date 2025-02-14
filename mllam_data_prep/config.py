@@ -77,7 +77,7 @@ class Range:
 
     start: Union[str, int, float]
     end: Union[str, int, float]
-    step: Union[str, int, float] = None
+    step: Optional[Union[str, int, float]] = None
 
 
 @dataclass
@@ -96,7 +96,7 @@ class ValueSelection:
     """
 
     values: Union[List[Union[float, int]], Range]
-    units: str = None
+    units: Optional[str] = None
 
 
 @dataclass
@@ -180,7 +180,8 @@ class DimMapping:
     method: str
     dims: Optional[List[str]] = None
     dim: Optional[str] = None
-    name_format: str = field(default=None)
+    name_format: Optional[str] = field(default=None)
+    coord_ranges: Optional[Dict[str, Range]] = field(default_factory=dict)
 
 
 @dataclass
@@ -237,6 +238,7 @@ class InputDataset:
     variables: Optional[Union[List[str], Dict[str, Dict[str, ValueSelection]]]] = None
     derived_variables: Optional[Dict[str, DerivedVariable]] = None
     attributes: Optional[Dict[str, Any]] = field(default_factory=dict)
+    coord_ranges: Optional[Dict[str, Range]] = None
 
 
 @dataclass
@@ -276,7 +278,7 @@ class Split:
 
     start: str
     end: str
-    compute_statistics: Statistics = None
+    compute_statistics: Optional[Statistics] = None
 
 
 @dataclass
@@ -437,6 +439,8 @@ def find_config_differences(
                 existing_config.to_dict(), config.to_dict(), ignore_order=True
             ).to_dict()
             return differences
+
+        return None
 
 
 if __name__ == "__main__":

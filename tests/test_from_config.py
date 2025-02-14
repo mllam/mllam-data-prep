@@ -277,6 +277,7 @@ def test_feature_collision(use_common_feature_var_name):
         mdp.create_dataset_zarr(fp_config=fp_config)
 
 
+@pytest.mark.slow
 def test_danra_example():
     fp_config = Path(__file__).parent.parent / "example.danra.yaml"
     with tempfile.TemporaryDirectory(suffix=".zarr") as tmpdir:
@@ -350,6 +351,7 @@ def find_config_revision_examples():
     return examples.values()
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("fp_example", find_config_revision_examples())
 def test_config_revision_examples(fp_example):
     """
@@ -363,3 +365,14 @@ def test_config_revision_examples(fp_example):
     shutil.copy(fp_example, fp_config_copy)
 
     mdp.create_dataset_zarr(fp_config=fp_config_copy)
+
+
+def test_sliced_dataset_can_instantiate_with_right_dimensions():
+    """
+    The sliced example has a 10x10 km slice, so there should be 4x4 = 16 points herekj.
+    """
+    fp = "tests/resources/sliced_example.danra.yaml"
+    config = mdp.Config.from_yaml(open(fp))
+    ds = mdp.create_dataset(config)
+    # We pick a 10x10km slice of the data which should result in 16 grid points.
+    assert ds.state.shape == (2, 49, 16)

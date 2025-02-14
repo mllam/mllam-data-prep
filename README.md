@@ -203,6 +203,13 @@ inputs:
       forcing_feature:
         method: stack_variables_by_var_name
         name_format: "{var_name}"
+    coord_ranges:
+      x:
+        start: -170000
+        end: -120000
+      y:
+        start: -600000
+        end: -550000
     target_output_variable: forcing
 
   danra_static:
@@ -341,6 +348,13 @@ inputs:
       forcing_feature:
         method: stack_variables_by_var_name
         name_format: "{var_name}"
+    coord_ranges:
+      x:
+        start: -170000
+        end: -120000
+      y:
+        start: -600000
+        end: -550000
     target_output_variable: forcing
 
   ...
@@ -359,6 +373,10 @@ The `inputs` section defines the source datasets to extract data from. Each sour
 - `derived_variables`: defines the variables to be derived from the variables available in the source dataset. This should be a dictionary where each key is the name of the variable to be derived and the value defines a dictionary with the following additional information. See also the 'Derived Variables' section for more details.
   - `function`: the function used to derive a variable. This should be a string with the full namespace of the function, e.g. `mllam_data_prep.ops.derived_variables.physical_field.calculate_toa_radiation`.
   - `kwargs`: arguments to `function`. This is a dictionary where each key is the named argument to `function` and each value is the input to the function. Here we distinguish between values to be extracted/selected from the input dataset and values supplied by the users themselves. Arguments with values to be extracted from the input dataset need to be prefixed with "ds_input." to distinguish them from other arguments. See the 'Derived Variables' section for more details.
+  - `coord_ranges`
+    - `varable` : the variable to extract the coordinate from
+        `start`: start value of the variable
+        `end`: end value of the variable
 
 #### Derived Variables
 Variables that are not part of the source dataset but can be derived from variables in the source dataset can also be included. They should be defined in their own section, called `derived_variables` as illustrated in the example config above and in the example config file [example.danra.yaml](example.danra.yaml).

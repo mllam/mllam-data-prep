@@ -65,7 +65,7 @@ def test_can_slice_time(ds):
 
 
 @pytest.mark.parametrize("step", ["PT6H", "PT3H"])
-def test_if_steps_time(ds, step):
+def test_if_step_time_matches_output(ds, step):
     start = "1990-09-01T00:00"
     end = "1990-09-09T00:00"
     coord_ranges = {
@@ -75,13 +75,13 @@ def test_if_steps_time(ds, step):
     ds = mdp.ops.selection.select_by_kwargs(ds, **coord_ranges)
 
     td = isodate.parse_duration(step)
-    timestep_in_slice = np.timedelta64(int(td.total_seconds()), "s")
+    timestep_chosen_in_slice = np.timedelta64(int(td.total_seconds()), "s")
     timestep_in_dataset = np.diff(ds.time)[0]
 
-    assert timestep_in_slice == timestep_in_dataset
+    assert timestep_chosen_in_slice == timestep_in_dataset
 
 
-def test_raises_if_time_step_is_not_multiple(ds):
+def test_raises_if_time_step_is_not_multiple_of_dataset_frequency(ds):
     step = "PT5H"
     start = "1990-09-01T03:00"
     end = "1990-09-09T00:00"

@@ -1,5 +1,3 @@
-import pickle as pkl
-
 import isodate
 import numpy as np
 import pytest

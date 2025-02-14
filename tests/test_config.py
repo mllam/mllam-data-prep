@@ -113,6 +113,16 @@ inputs:
 """
 
 
+def test_can_load_config_with_datetime_object_in_time_range():
+    fp = "tests/resources/sliced_example.danra.yaml"
+    mdp.Config.from_yaml_file(fp)
+
+
+def test_can_load_config_with_datetime_string_in_time_range():
+    fp = "tests/resources/sliced_example_with_datetime_strings.danra.yaml"
+    mdp.Config.from_yaml_file(fp)
+
+
 def test_get_config_nested():
     config = mdp.Config.from_yaml(VALID_EXAMPLE_CONFIG_YAML)
 

@@ -2,7 +2,10 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Union
 
 import dataclass_wizard
+import xarray as xr
 from dataclass_wizard import JSONWizard
+from deepdiff import DeepDiff
+from packaging.version import Version
 
 
 class InvalidConfigException(Exception):
@@ -378,6 +381,62 @@ class Config(dataclass_wizard.JSONWizard, dataclass_wizard.YAMLWizard):
 
     class _(JSONWizard.Meta):
         raise_on_unknown_json_key = True
+
+
+class UnsupportedMllamDataPrepVersion(Exception):
+    pass
+
+
+def find_config_differences(
+    config: Config, ds_existing: xr.Dataset
+) -> Union[None, dict]:
+    """
+    Compare the provided config against the one the provided dataset is created
+    from (which is stored in the `creation_config` attribute), and return the
+    differences.
+
+    Parameters
+    ----------
+    config : Config
+        The configuration object to compare against
+    ds_existing : xr.Dataset
+        The existing dataset to compare against
+
+    Returns
+    -------
+    Union[None, dict]
+        If the configurations are the same, returns None. If they are different, returns
+        a dictionary of the differences.
+
+    Raises
+    ------
+    UnsupportedMllamDataPrepVersion
+        If the existing dataset was created with an older version of mllam-data-prep
+        that does not have the `creation_config` attribute
+
+    """
+    required_mdp_version = Version("v0.6.0")
+
+    config_mdp_version = Version(ds_existing.attrs["mdp_version"])
+    if config_mdp_version < required_mdp_version:
+        raise UnsupportedMllamDataPrepVersion(
+            "The existing dataset was created with an older version of mllam-data-prep "
+            f"({config_mdp_version}), and does not have the creation_config attribute "
+            f"(added in v{required_mdp_version}). Please delete the existing dataset "
+            "or set overwrite='always' to overwrite it."
+        )
+    else:
+        config_yaml = ds_existing.attrs.get("creation_config", None)
+        if config_yaml is None:
+            raise ValueError(
+                "The provided dataset does not have a creation_config attribute"
+            )
+        existing_config = Config.from_yaml(config_yaml)
+        if existing_config != config:
+            differences = DeepDiff(
+                existing_config.to_dict(), config.to_dict(), ignore_order=True
+            ).to_dict()
+            return differences
 
 
 if __name__ == "__main__":

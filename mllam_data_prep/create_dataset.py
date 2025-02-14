@@ -7,12 +7,16 @@ import numpy as np
 import xarray as xr
 import yaml
 import zarr
-from deepdiff import DeepDiff
 from loguru import logger
 from packaging.version import Version
 
 from . import __version__
-from .config import Config, InvalidConfigException
+from .config import (
+    Config,
+    InvalidConfigException,
+    UnsupportedMllamDataPrepVersion,
+    find_config_differences,
+)
 from .ops.chunking import chunk_dataset
 from .ops.derive_variable import derive_variable
 from .ops.loading import load_input_dataset
@@ -293,71 +297,12 @@ def create_dataset(config: Config):
     return ds
 
 
-class UnsupportedMllamDataPrepVersion(Exception):
-    pass
-
-
-def handle_existing_dataset(config: Config, fp_zarr: str, overwrite: str) -> None:
-    """
-    Handle an existing dataset at the provided path by either deleting it or raising an error.
-
-    Parameters
-    ----------
-    config : Config
-        The configuration object for the dataset we want to create
-    fp_zarr : str
-        The path to the zarr file where the dataset is to be written
-    overwrite : str
-        How to handle an existing dataset at the provided path. Options are:
-        - "always": Always delete the existing dataset
-        - "never": Never delete the existing dataset
-        - "on_config_change": Only delete the existing dataset if the configuration has changed
-    """
-    delete_dataset = False
-    if overwrite == "always":
-        delete_dataset = True
-    elif overwrite == "on_config_change":
-        # storage of the config within created dataset was added in mllam-data-prep v0.6.0
-        required_mdp_version = Version("v0.6.0")
-
-        ds_existing = xr.open_zarr(fp_zarr)
-        config_mdp_version = Version(ds_existing.attrs["mdp_version"])
-        if config_mdp_version >= required_mdp_version:
-            config_yaml = ds_existing.attrs.get("creation_config", None)
-            if config_yaml is None:
-                raise ValueError(
-                    f"Existing dataset at {fp_zarr} does not have a creation_config attribute"
-                )
-            existing_config = Config.from_yaml(config_yaml)
-            if existing_config != config:
-                logger.info(
-                    "The existing dataset was created with a different configuration than the current one."
-                )
-                delete_dataset = True
-                differences = DeepDiff(
-                    existing_config.to_dict(), config.to_dict(), ignore_order=True
-                ).to_dict()
-                diff_yaml = yaml.dump(differences, default_flow_style=False)
-                logger.info(
-                    f"Differences between existing and new configuration:\n{diff_yaml}"
-                )
-        else:
-            raise UnsupportedMllamDataPrepVersion(
-                "The existing dataset was created with an older version of mllam-data-prep "
-                f"({config_mdp_version}), and does not have the creation_config attribute "
-                f"(added in v{required_mdp_version}). Please delete the existing dataset "
-                "or set overwrite='always' to overwrite it."
-            )
-
-    if delete_dataset:
-        logger.info(f"Removing existing dataset at {fp_zarr}")
-        shutil.rmtree(fp_zarr)
-
-
 def create_dataset_zarr(fp_config, fp_zarr: str = None, overwrite: str = "always"):
     """
-    Create a dataset from the input datasets specified in the config file and write it to a zarr file.
-    The path to the zarr file is the same as the config file, but with the extension changed to '.zarr'.
+    Create a dataset from the input datasets specified in the config file and
+    write it to a zarr dataset. The path to the zarr dataset is the same as the
+    config file (unless `fp_zarr` is provided), but with the extension changed
+    to '.zarr'.
 
     Parameters
     ----------
@@ -374,18 +319,73 @@ def create_dataset_zarr(fp_config, fp_zarr: str = None, overwrite: str = "always
     """
     config = Config.from_yaml_file(file=fp_config)
 
-    ds = create_dataset(config=config)
-
-    logger.info("Writing dataset to zarr")
     if fp_zarr is None:
         fp_zarr = fp_config.parent / fp_config.name.replace(".yaml", ".zarr")
     else:
         fp_zarr = Path(fp_zarr)
 
     if fp_zarr.exists():
-        handle_existing_dataset(
-            config=config, fp_zarr=str(fp_zarr), overwrite=overwrite
-        )
+        if overwrite == "never":
+            ds_existing = xr.open_zarr(fp_zarr)
+            try:
+                config_differences = find_config_differences(
+                    config=config, ds_existing=ds_existing
+                )
+            except UnsupportedMllamDataPrepVersion:
+                config_differences = None
+
+            ex_str = f"There already exists a dataset at {fp_zarr}, and the overwrite option is set to 'never'. "
+            # try and parse the differences in the config in case the existing
+            # dataset was created with a supported version
+            if config_differences:
+                ex_str += (
+                    "The existing dataset was created with a different configuration than the current one."
+                    "Differences between existing and new configuration: \n"
+                    f"{yaml.dump(config_differences, default_flow_style=False)}"
+                )
+            raise FileExistsError(ex_str)
+        elif overwrite == "on_config_change":
+            try:
+                logger.debug(
+                    "Checking for differences between existing and new configuration"
+                )
+                ds_existing = xr.open_zarr(fp_zarr)
+                config_differences = find_config_differences(
+                    config=config, ds_existing=ds_existing
+                )
+            except UnsupportedMllamDataPrepVersion as ex:
+                raise FileExistsError(
+                    "There already exists a dataset at {fp_zarr}, however it was created with an older version of mllam-data-prep "
+                    "and so doesn't contain a record of the configuration used to create it. Either delete the existing dataset or "
+                    "set overwrite='always' to overwrite it."
+                ) from ex
+
+            if config_differences:
+                logger.info(
+                    "The existing dataset was created with a different configuration than the current one."
+                )
+                diff_yaml = yaml.dump(config_differences, default_flow_style=False)
+                logger.info(
+                    f"Differences between existing and new configuration:\n{diff_yaml}"
+                )
+                logger.info(f"Removing existing dataset at {fp_zarr}")
+                shutil.rmtree(fp_zarr)
+            else:
+                logger.info(
+                    f"Skipping creation of writing of dataset to {fp_zarr} as the configuration is unchanged"
+                )
+                return
+        elif overwrite == "always":
+            logger.info(f"Removing existing dataset at {fp_zarr}")
+            shutil.rmtree(fp_zarr)
+        else:
+            raise NotImplementedError(
+                f"Unsupported overwrite option {overwrite}. Options are 'always', 'never', or 'on_config_change'"
+            )
+
+    ds = create_dataset(config=config)
+
+    logger.info("Writing dataset to zarr")
 
     # use zstd compression since it has a good balance of speed and compression ratio
     # https://engineering.fb.com/2016/08/31/core-infra/smaller-and-faster-data-compression-with-zstandard/
@@ -396,7 +396,8 @@ def create_dataset_zarr(fp_config, fp_zarr: str = None, overwrite: str = "always
         compressor = Blosc(cname="zstd", clevel=1, shuffle=Blosc.BITSHUFFLE)
         encoding = {v: {"compressor": compressor} for v in ds.data_vars}
 
-    ds.to_zarr(fp_zarr, consolidated=True, mode="w", encoding=encoding)
+    # default mode to "w-" so that an error is raised if the dataset already exists
+    ds.to_zarr(fp_zarr, consolidated=True, mode="w-", encoding=encoding)
     logger.info(f"Wrote training-ready dataset to {fp_zarr}")
 
     logger.info(ds)

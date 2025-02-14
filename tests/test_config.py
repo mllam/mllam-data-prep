@@ -278,3 +278,13 @@ def test_config_validation_of_inputs_section(
 
     with pytest.raises(expected_exception, match=expected_message):
         mdp.Config.from_yaml(invalid_config_yaml)
+
+
+def test_config_roundtrip():
+    original_config = mdp.Config.from_yaml(VALID_EXAMPLE_CONFIG_YAML)
+    roundtrip_config_dict = mdp.Config.from_dict(original_config.to_dict())
+    roundtrip_config_yaml = mdp.Config.from_yaml(original_config.to_yaml())
+    roundtrip_config_json = mdp.Config.from_json(original_config.to_json())
+    assert original_config == roundtrip_config_dict
+    assert original_config == roundtrip_config_yaml
+    assert original_config == roundtrip_config_json

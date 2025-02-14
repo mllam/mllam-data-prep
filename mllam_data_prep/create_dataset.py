@@ -2,12 +2,15 @@ import datetime
 import shutil
 from collections import defaultdict
 from pathlib import Path
+from typing import Optional
 
 import numpy as np
 import xarray as xr
 import zarr
 from loguru import logger
 from packaging.version import Version
+
+from mllam_data_prep.ops import selection
 
 from . import __version__
 from .config import Config, InvalidConfigException
@@ -126,7 +129,7 @@ def create_dataset(config: Config):
             f" {', '.join(SUPPORTED_CONFIG_VERSIONS)} are supported by mllam-data-prep "
             f"v{__version__}."
         )
-    if config.schema_version == "v0.2.0" and config.extra is not None:
+    if config.schema_version == "v0.2.0" and config.extra:
         raise ValueError(
             "Config schema version v0.2.0 does not support the `extra` field. Please "
             "update the schema version used in your config to v0.5.0."
@@ -154,11 +157,12 @@ def create_dataset(config: Config):
         except Exception as ex:
             raise Exception(f"Error loading dataset {dataset_name} from {path}") from ex
 
-        # Initialize the output dataset and add dimensions
+        if input_config.coord_ranges is not None:
+            ds_input = selection.select_by_kwargs(ds_input, **input_config.coord_ranges)
+
+        # Initialize the output dataset
         ds = xr.Dataset()
         ds.attrs.update(ds_input.attrs)
-        for dim in ds_input.dims:
-            ds = ds.assign_coords({dim: ds_input.coords[dim]})
 
         if selected_variables:
             logger.info(f"Extracting selected variables from dataset {dataset_name}")
@@ -184,6 +188,7 @@ def create_dataset(config: Config):
                     ds=ds_input,
                     derived_variable=derived_variable,
                     chunking=chunking_config,
+                    target_dims=expected_input_var_dims,
                 )
 
         _check_dataset_attributes(
@@ -225,11 +230,10 @@ def create_dataset(config: Config):
 
         # only need to do selection for the coordinates that the input dataset actually has
         if output_coord_ranges is not None:
-            selection_kwargs = {}
-            for dim in output_dims:
-                if dim in output_coord_ranges:
-                    selection_kwargs[dim] = output_coord_ranges[dim]
-            da_target = select_by_kwargs(da_target, **selection_kwargs)
+            output_coord_ranges = {
+                k: w for k, w in output_coord_ranges.items() if k in output_dims
+            }
+            da_target = select_by_kwargs(da_target, **output_coord_ranges)
 
         dataarrays_by_target[target_output_var].append(da_target)
 
@@ -290,7 +294,7 @@ def create_dataset(config: Config):
     return ds
 
 
-def create_dataset_zarr(fp_config, fp_zarr: str = None):
+def create_dataset_zarr(fp_config: Path, fp_zarr: Optional[str | Path] = None):
     """
     Create a dataset from the input datasets specified in the config file and write it to a zarr file.
     The path to the zarr file is the same as the config file, but with the extension changed to '.zarr'.

@@ -39,7 +39,7 @@ def validate_config(config_inputs):
             elif isinstance(input_dataset.variables, dict):  # pragma: no cover
                 variable_vars = input_dataset.variables.keys()
             else:
-                raise TypeError(
+                raise TypeError(  # pragma: no cover
                     f"Expected an instance of list or dict, but got {type(input_dataset.variables)}."
                 )
             derived_variable_vars = input_dataset.derived_variables.keys()

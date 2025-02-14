@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixes
 
+- fix bug which adds unwanted dimensions to the dataset [\#60](https://github.com/mllam/mllam-data-prep/pull/60), @ealerskans, @observingClouds
 - correct chunk size estimate [\#59](https://github.com/mllam/mllam-data-prep/pull/59), @ealerskans
 - fix bug arising when variables provided to derived functions are renamed [\#56](https://github.com/mllam/mllam-data-prep/pull/56), @leifdenby
 - ensure config fields defaulting to `None` are typed as `Optional` and fields defaulting to `{}` are given a default-factory so that serialization with default values works correctly [\#63](https://github.com/mllam/mllam-data-prep/pull/63), @leifdenby

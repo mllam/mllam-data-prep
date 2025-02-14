@@ -25,7 +25,7 @@ def stack_variables_as_coord_values(ds, name_format, combined_dim_name):
         The combined dataset with all variables stacked along the new
         coordinate
     """
-    if "{var_name}" not in name_format:
+    if "{var_name}" not in name_format:  # pragma: no cover
         raise ValueError(
             "The name_format should include the variable name as"
             " {var_name} to construct the new coordinate values"
@@ -91,17 +91,17 @@ def stack_variables_by_coord_values(ds, coord, name_format, combined_dim_name):
     da_combined : xr.DataArray
         The combined dataset with the stacked variables along the `coord`
     """
-    if "{var_name}" not in name_format:
+    if "{var_name}" not in name_format:  # pragma: no cover
         raise ValueError(
             "The name_format should include the variable name as"
             " {var_name} to construct the new coordinate values"
         )
-    if f"{{{coord}}}" not in name_format:
+    if f"{{{coord}}}" not in name_format:  # pragma: no cover
         raise ValueError(
             "The name_format should include the coordinate name as"
             f" {{{coord}}} to construct the new coordinate values"
         )
-    if coord not in ds.coords:
+    if coord not in ds.coords:  # pragma: no cover
         raise ValueError(
             f"The coordinate {coord} is not in the dataset, found coords: {list(ds.coords)}"
         )

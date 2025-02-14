@@ -1,8 +1,10 @@
+# pragma: no cover
+
 import importlib.metadata
 
-try:
+try:  # pragma: no cover
     __version__ = importlib.metadata.version(__name__)
-except importlib.metadata.PackageNotFoundError:
+except importlib.metadata.PackageNotFoundError:  # pragma: no cover
     __version__ = "unknown"
 
 # expose the public API

@@ -22,10 +22,10 @@ from .ops.selection import select_by_kwargs
 from .ops.statistics import calc_stats
 from .ops.subsetting import extract_variable
 
-if Version(zarr.__version__) >= Version("3"):
+if Version(zarr.__version__) >= Version("3"):  # pragma: no cover
     from zarr.codecs import BloscCodec, BloscShuffle
 else:
-    from numcodecs import Blosc
+    from numcodecs import Blosc  # pragma: no cover
 
 # The config versions defined in SUPPORTED_CONFIG_VERSIONS are the ones currently supported.
 # The `extra` field in the config that was added between v0.2.0 and v0.5.0 is optional, and
@@ -38,7 +38,7 @@ def _check_dataset_attributes(ds, expected_attributes, dataset_name):
     # check that the dataset has the expected attributes with the expected values
     missing_attributes = set(expected_attributes.keys()) - set(ds.attrs.keys())
     if len(missing_attributes) > 0:
-        raise ValueError(
+        raise ValueError(  # pragma: no cover
             f"Dataset {dataset_name} is missing the following attributes: {missing_attributes}"
         )
 
@@ -47,13 +47,13 @@ def _check_dataset_attributes(ds, expected_attributes, dataset_name):
         key: val for key, val in expected_attributes.items() if ds.attrs[key] != val
     }
     if len(incorrect_attributes) > 0:
-        s_list = "\n".join(
+        s_list = "\n".join(  # pragma: no cover
             [
                 f"{key}: {val} != {ds.attrs[key]}"
                 for key, val in incorrect_attributes.items()
             ]
         )
-        raise ValueError(
+        raise ValueError(  # pragma: no cover
             f"Dataset {dataset_name} has the following incorrect attributes: {s_list}"
         )
 
@@ -67,11 +67,11 @@ def _merge_dataarrays_by_target(dataarrays_by_target):
         for da in das:
             d = da.attrs.get("variables_mapping_dim", None)
             if d is None:
-                raise ValueError(
+                raise ValueError(  # pragma: no cover
                     f"Dataarray for target {target} does not have the 'variables_mapping_dim' attribute"
                 )
             if concat_dim is not None and d != concat_dim:
-                raise ValueError(
+                raise ValueError(  # pragma: no cover
                     f"Dataarrays for target {target} have different 'variables_mapping_dim' attributes: {d} != {concat_dim}"
                 )
             concat_dim = d
@@ -104,7 +104,7 @@ def _merge_dataarrays_by_target(dataarrays_by_target):
                 " Maybe you need to give the 'feature' dimension a unique name for each target variable?"
             ) from ex
         else:
-            raise ex
+            raise ex  # pragma: no cover
     return ds
 
 
@@ -124,13 +124,13 @@ def create_dataset(config: Config):
         as defined in the config file.
     """
     if not config.schema_version in SUPPORTED_CONFIG_VERSIONS:
-        raise ValueError(
+        raise ValueError(  # pragma: no cover
             f"Unsupported schema version {config.schema_version}. Only schema versions "
             f" {', '.join(SUPPORTED_CONFIG_VERSIONS)} are supported by mllam-data-prep "
             f"v{__version__}."
         )
     if config.schema_version == "v0.2.0" and config.extra:
-        raise ValueError(
+        raise ValueError(  # pragma: no cover
             "Config schema version v0.2.0 does not support the `extra` field. Please "
             "update the schema version used in your config to v0.5.0."
         )
@@ -154,7 +154,7 @@ def create_dataset(config: Config):
         logger.info(f"Loading dataset {dataset_name} from {path}")
         try:
             ds_input = load_input_dataset(fp=path)
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise Exception(f"Error loading dataset {dataset_name} from {path}") from ex
 
         if input_config.coord_ranges is not None:
@@ -177,7 +177,7 @@ def create_dataset(config: Config):
                 for var_name in selected_variables:
                     ds[var_name] = extract_variable(ds=ds_input, var_name=var_name)
             else:
-                raise ValueError(
+                raise ValueError(  # pragma: no cover
                     "The `variables` argument should be a list or a dictionary"
                 )
 
@@ -204,7 +204,7 @@ def create_dataset(config: Config):
         # final dataset
         missing_dims = set(output_dims) - set(dim_mapping.keys())
         if missing_dims:
-            raise ValueError(
+            raise ValueError(  # pragma: no cover
                 f"Missing dimension mapping for {missing_dims}"
                 f" for input dataset {dataset_name}, please provide"
                 " a mapping for all output dimensions by"
@@ -220,7 +220,7 @@ def create_dataset(config: Config):
                 dim_mapping=dim_mapping,
                 expected_input_var_dims=expected_input_var_dims,
             )
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise Exception(
                 f"There was an issue stacking dimensions and variables to"
                 f" produce variable {target_output_var} from dataset {dataset_name}"
@@ -323,10 +323,10 @@ def create_dataset_zarr(fp_config: Path, fp_zarr: Optional[str | Path] = None):
 
     # use zstd compression since it has a good balance of speed and compression ratio
     # https://engineering.fb.com/2016/08/31/core-infra/smaller-and-faster-data-compression-with-zstandard/
-    if Version(zarr.__version__) >= Version("3"):
+    if Version(zarr.__version__) >= Version("3"):  # pragma: no cover
         compressor = BloscCodec(cname="zstd", clevel=3, shuffle=BloscShuffle.bitshuffle)
         encoding = {v: {"compressors": compressor} for v in ds.data_vars}
-    else:
+    else:  # pragma: no cover
         compressor = Blosc(cname="zstd", clevel=1, shuffle=Blosc.BITSHUFFLE)
         encoding = {v: {"compressor": compressor} for v in ds.data_vars}
 

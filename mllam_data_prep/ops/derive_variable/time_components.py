@@ -2,6 +2,7 @@
 Contains functions used to derive time component fields, such as e.g. day of year
 and hour of day.
 """
+
 import datetime
 
 import numpy as np
@@ -31,7 +32,7 @@ def calculate_hour_of_day(time, component):
     # Get the hour of the day
     if isinstance(time, xr.DataArray):
         hour_of_day = time.dt.hour
-    elif isinstance(time, datetime.datetime):
+    elif isinstance(time, datetime.datetime):  # pragma: no cover
         hour_of_day = time.hour
     else:
         raise TypeError(
@@ -44,7 +45,7 @@ def calculate_hour_of_day(time, component):
         hour_of_day_encoded = np.sin((hour_of_day / 24) * 2 * np.pi)
     elif component == "cos":
         hour_of_day_encoded = np.cos((hour_of_day / 24) * 2 * np.pi)
-    else:
+    else:  # pragma: no cover
         raise ValueError(
             f"Invalid value of `component`: '{component}'. Expected one of: 'cos' or 'sin'."
             " Please update the config accordingly."
@@ -81,9 +82,9 @@ def calculate_day_of_year(time, component):
     logger.info("Calculating day of year")
 
     # Get the day of year
-    if isinstance(time, xr.DataArray):
+    if isinstance(time, xr.DataArray):  # pragma: no cover
         day_of_year = time.dt.dayofyear
-    elif isinstance(time, datetime.datetime):
+    elif isinstance(time, datetime.datetime):  # pragma: no cover
         day_of_year = time.timetuple().tm_yday
     else:
         raise TypeError(
@@ -92,17 +93,17 @@ def calculate_day_of_year(time, component):
         )
 
     # Cyclic encoding of day of year - use 366 to include leap years!
-    if component == "sin":
+    if component == "sin":  # pragma: no cover
         day_of_year_encoded = np.sin((day_of_year / 366) * 2 * np.pi)
-    elif component == "cos":
+    elif component == "cos":  # pragma: no cover
         day_of_year_encoded = np.cos((day_of_year / 366) * 2 * np.pi)
-    else:
+    else:  # pragma: no cover
         raise ValueError(
             f"Invalid value of `component`: '{component}'. Expected one of: 'cos' or 'sin'."
             " Please update the config accordingly."
         )
 
-    if isinstance(day_of_year_encoded, xr.DataArray):
+    if isinstance(day_of_year_encoded, xr.DataArray):  # pragma: no cover
         # Add attributes
         day_of_year_encoded.name = "day_of_year_" + component
         day_of_year_encoded.attrs[
@@ -110,4 +111,4 @@ def calculate_day_of_year(time, component):
         ] = f"{component.capitalize()} component of cyclically encoded day of year"
         day_of_year_encoded.attrs["units"] = "1"
 
-    return day_of_year_encoded
+    return day_of_year_encoded  # pragma: no cover

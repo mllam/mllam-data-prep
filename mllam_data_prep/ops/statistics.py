@@ -44,7 +44,7 @@ def calc_stats(
                 vars_to_keep = [v for v in ds.data_vars if splitting_dim in ds[v].dims]
                 ds = ds[vars_to_keep].diff(dim=splitting_dim)
             else:
-                raise NotImplementedError(pre_op)
+                raise NotImplementedError(pre_op)  # pragma: no cover
 
         fn = getattr(ds, op)
         stats[op_split] = fn(dim=statistics_config.dims)

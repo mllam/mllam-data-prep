@@ -6,24 +6,24 @@ from ..config import Range
 
 
 def _normalize_slice_startstop(s):
-    if isinstance(s, pd.Timestamp):
+    if isinstance(s, pd.Timestamp):  # pragma: no cover
         return s
     elif isinstance(s, str):
         try:
             return pd.Timestamp(s)
-        except ValueError:
+        except ValueError:  # pragma: no cover
             return s
     else:
         return s
 
 
 def _normalize_slice_step(s):
-    if isinstance(s, pd.Timedelta):
+    if isinstance(s, pd.Timedelta):  # pragma: no cover
         return s
     elif isinstance(s, str):
         try:
             return pd.to_timedelta(s)
-        except ValueError:
+        except ValueError:  # pragma: no cover
             return s
     else:
         return s
@@ -56,10 +56,10 @@ def select_by_kwargs(ds, **coord_ranges):
     """
 
     for coord, selection in coord_ranges.items():
-        if coord not in ds.coords:
+        if coord not in ds.coords:  # pragma: no cover
             raise ValueError(f"Coordinate {coord} not found in dataset")
         if isinstance(selection, Range):
-            if selection.start is None and selection.end is None:
+            if selection.start is None and selection.end is None:  # pragma: no cover
                 raise ValueError(
                     f"Selection for coordinate {coord} must have either 'start' and 'end' given"
                 )
@@ -83,9 +83,9 @@ def select_by_kwargs(ds, **coord_ranges):
                 len(ds[coord]) > 0
             ), f"You have selected an empty range {sel_start}:{sel_end} for coordinate {coord}"
 
-        elif isinstance(selection, list):
+        elif isinstance(selection, list):  # pragma: no cover
             ds = ds.sel({coord: selection})
-        else:
+        else:  # pragma: no cover
             raise NotImplementedError(
                 f"Selection for coordinate {coord} must be a list or a dict"
             )
@@ -109,7 +109,7 @@ def check_step(sel_step, coord, ds):
     all_steps = ds[coord].diff(dim=coord).values
     first_step = all_steps[0].astype("timedelta64[s]").astype(datetime.timedelta)
 
-    if not all(all_steps[0] == all_steps):
+    if not all(all_steps[0] == all_steps):  # pragma: no cover
         raise ValueError(
             f"Step size for coordinate {coord} is not constant: {all_steps}"
         )

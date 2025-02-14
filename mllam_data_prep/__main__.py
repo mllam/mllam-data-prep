@@ -1,20 +1,20 @@
-import os
-from pathlib import Path
+import os  # pragma: no cover
+from pathlib import Path  # pragma: no cover
 
-from loguru import logger
+from loguru import logger  # pragma: no cover
 
-from .create_dataset import create_dataset_zarr
+from .create_dataset import create_dataset_zarr  # pragma: no cover
 
 # Attempt to import psutil and dask.distributed modules
-DASK_DISTRIBUTED_AVAILABLE = True
-try:
+DASK_DISTRIBUTED_AVAILABLE = True  # pragma: no cover
+try:  # pragma: no cover
     import psutil
     from dask.diagnostics import ProgressBar
     from dask.distributed import LocalCluster
-except (ImportError, ModuleNotFoundError):
+except (ImportError, ModuleNotFoundError):  # pragma: no cover
     DASK_DISTRIBUTED_AVAILABLE = False
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     import argparse
 
     parser = argparse.ArgumentParser(

@@ -9,7 +9,6 @@ import yaml
 
 import mllam_data_prep as mdp
 import tests.data as testdata
-from mllam_data_prep.ops.selection import str_to_datetime, str_to_timedelta
 
 
 def test_gen_data():

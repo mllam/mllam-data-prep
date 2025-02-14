@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - add support for zarr 3.0.0 and above [\#51](https://github.com/mllam/mllam-data-prep/pull/51), @kashif
 - warn if the user tries to load a non-YAML file [\#50](https://github.com/mllam/mllam-data-prep/pull/50), @j6k4m8
 - add mypy typing action to pre-commit hooks [\#67](https://github.com/mllam/mllam-data-prep/pull/67), @observingClouds
+- add support for storing config in created datasets and option to only overwrite zarr dataset of config change [\#64](https://github.com/mllam/mllam-data-prep/pull/64), @leifdenby
 
 ### Fixes
 

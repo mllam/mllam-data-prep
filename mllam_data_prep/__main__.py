@@ -41,7 +41,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--overwrite",
-        help="Overwrite existing zarr file if it exists",
+        help="Overwrite existing zarr dataset if it exists",
         choices=["always", "never", "on_config_change"],
         default="always",
     )

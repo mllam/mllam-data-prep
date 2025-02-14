@@ -286,9 +286,9 @@ def create_dataset(config: Config):
     ds.attrs["schema_version"] = config.schema_version
     ds.attrs["dataset_version"] = config.dataset_version
     ds.attrs["created_on"] = datetime.datetime.now().replace(microsecond=0).isoformat()
-    ds.attrs["created_with"] = (
-        "mllam-data-prep (https://github.com/mllam/mllam-data-prep)"
-    )
+    ds.attrs[
+        "created_with"
+    ] = "mllam-data-prep (https://github.com/mllam/mllam-data-prep)"
     ds.attrs["mdp_version"] = f"v{__version__}"
 
     return ds

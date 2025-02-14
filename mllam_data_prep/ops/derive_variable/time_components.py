@@ -54,9 +54,9 @@ def calculate_hour_of_day(time, component):
     if isinstance(hour_of_day_encoded, xr.DataArray):
         # Add attributes
         hour_of_day_encoded.name = "hour_of_day_" + component
-        hour_of_day_encoded.attrs["long_name"] = (
-            f"{component.capitalize()} component of cyclically encoded hour of day"
-        )
+        hour_of_day_encoded.attrs[
+            "long_name"
+        ] = f"{component.capitalize()} component of cyclically encoded hour of day"
         hour_of_day_encoded.attrs["units"] = "1"
 
     return hour_of_day_encoded
@@ -106,9 +106,9 @@ def calculate_day_of_year(time, component):
     if isinstance(day_of_year_encoded, xr.DataArray):  # pragma: no cover
         # Add attributes
         day_of_year_encoded.name = "day_of_year_" + component
-        day_of_year_encoded.attrs["long_name"] = (
-            f"{component.capitalize()} component of cyclically encoded day of year"
-        )
+        day_of_year_encoded.attrs[
+            "long_name"
+        ] = f"{component.capitalize()} component of cyclically encoded day of year"
         day_of_year_encoded.attrs["units"] = "1"
 
     return day_of_year_encoded  # pragma: no cover

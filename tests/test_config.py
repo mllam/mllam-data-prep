@@ -1,12 +1,11 @@
-import re
-import shutil
-import tempfile
-from pathlib import Path
-
 import pytest
+import yaml
 from dataclass_wizard.errors import MissingFields, UnknownJSONKey
 
 import mllam_data_prep as mdp
+
+with open("example.danra.yaml", "r") as file:
+    BASE_CONFIG = file.read()
 
 INVALID_EXTRA_FIELDS_CONFIG_YAML = """
 schema_version: v0.1.0
@@ -200,48 +199,36 @@ inputs:
 """
 
 
-def modify_example_config_inputs_section_yaml(new_inputs_section):
+def update_config(config: str, update: str):
     """
-    Get the example config file as a yaml string and replace the
-    `inputs` section with a new inputs section before
+    Update provided config
 
     Parameters
     ----------
-    new_inputs_section: str
-        String with a new inputs section
+    config: str
+        String with config in yaml format
+    update: dict
+        Dictionary with the updated config
+
     Returns
     -------
-    modified_yaml: str
-        Modified config yaml with the new inputs section replacing
-        the old one in the example config
+    config: Config
+        Updated config
     """
-    # Copy the config file to a temporary directory before reading it
-    fp_example = "example.danra.yaml"
-    tmpdir = tempfile.TemporaryDirectory()
-    fp_config_copy = Path(tmpdir.name) / fp_example
-    shutil.copy(fp_example, fp_config_copy)
+    original_config = mdp.Config.from_yaml(config)
+    update = yaml.safe_load(update)
+    modified_config = original_config.to_dict()
+    modified_config.update(update)
 
-    # Read the example config file as text to preserve the order
-    base_config_yaml = Path(fp_config_copy).read_text()
-
-    # Use regex to replace the entire "inputs:" block
-    if new_inputs_section:
-        modified_yaml = re.sub(
-            r"inputs:\n((?:\s{2,}.*\n)*)",  # Matches "inputs:" and all indented content
-            new_inputs_section,
-            base_config_yaml,
-        )
-    else:
-        modified_yaml = base_config_yaml
-
-    return modified_yaml
+    return modified_config
 
 
 @pytest.mark.parametrize(
-    "invalid_inputs_section, expected_exception, expected_message",
+    "base_config, invalid_inputs_section, expected_exception, expected_message",
     [
         (
             # Invalid inputs section with missing `variables` and/or `derived_variables`
+            BASE_CONFIG,
             INVALID_MISSING_VARIABLES_YAML,  # invalid config yaml example
             mdp.InvalidConfigException,  # expected exception
             "Missing `variables` and/or `derived_variables`",  # expected error message from
@@ -249,6 +236,7 @@ def modify_example_config_inputs_section_yaml(new_inputs_section):
         (
             # Invalid inputs section with overlapping variable names between `variables`
             # and `derived_variables`
+            BASE_CONFIG,
             INVALID_OVERLAPPING_VARIABLE_NAMES_YAML,
             mdp.InvalidConfigException,
             "Overlapping variable names in `variables` and `derived_variables`",
@@ -256,6 +244,7 @@ def modify_example_config_inputs_section_yaml(new_inputs_section):
         (
             # Invalid inputs section selection of variables from different coords levels,
             # which is currently not implemented
+            BASE_CONFIG,
             INVALID_INPUTS_COORDS_SELECTION_YAML,
             NotImplementedError,
             "Selection of variables from different coord levels is currently not supported",
@@ -263,7 +252,7 @@ def modify_example_config_inputs_section_yaml(new_inputs_section):
     ],
 )
 def test_config_validation_of_inputs_section(
-    invalid_inputs_section, expected_exception, expected_message
+    base_config, invalid_inputs_section, expected_exception, expected_message
 ):
     """
     Test that `validate_config` raises the coerrect exceptions when an inputs dataset
@@ -271,13 +260,10 @@ def test_config_validation_of_inputs_section(
     2. has overlapping variable names between `variables` and `derived_variables`
     3. includes a selection of variables from different coord levels, since this is not yet implemented
     """
-    # Modify the example config
-    invalid_config_yaml = modify_example_config_inputs_section_yaml(
-        invalid_inputs_section
-    )
+    invalid_config_dict = update_config(base_config, invalid_inputs_section)
 
     with pytest.raises(expected_exception, match=expected_message):
-        mdp.Config.from_yaml(invalid_config_yaml)
+        mdp.Config.from_dict(invalid_config_dict)
 
 
 def test_config_roundtrip():

@@ -139,7 +139,7 @@ def test_that_range_accepts_datetime():
     end = datetime.datetime(1990, 9, 4, 0, 0)
     step = "PT3H"
 
-    range_ = config.Range(start=start, end=end, step=step)
+    config.Range(start=start, end=end, step=step)
 
 
 def test_config_roundtrip():

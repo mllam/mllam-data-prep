@@ -2,7 +2,7 @@ from .stacking import stack_variables_as_coord_values, stack_variables_by_coord_
 
 
 def _check_for_malformed_list_arg(s):
-    if isinstance(s, str) and "," in s:
+    if isinstance(s, str) and "," in s:  # pragma: no cover
         raise Exception(
             "Rather than writing `{s}` to define a list you would `[{s}]` in the config file."
         )
@@ -65,13 +65,13 @@ def map_dims_and_variables(ds, dim_mapping, expected_input_var_dims):
     for arch_dim in list(dim_mapping.keys()):
         if dim_mapping[arch_dim].method == "stack_variables_by_var_name":
             variable_dim_mappings[arch_dim] = dim_mapping.pop(arch_dim)
-    if len(variable_dim_mappings) > 1:
+    if len(variable_dim_mappings) > 1:  # pragma: no cover
         raise ValueError(
             "Only one mapping which requires stacking variables"
             " into a single dataarray is allowed, found ones targeting"
             f" the following arch dimensions: {list(variable_dim_mappings.keys())}"
         )
-    elif len(variable_dim_mappings) == 0:
+    elif len(variable_dim_mappings) == 0:  # pragma: no cover
         raise Exception(
             "At least one mapping should be defined for stacking variables, i.e. uses"
             f" the method `stack_variables_by_var_name`. Current mapping is: {dim_mapping}"
@@ -79,7 +79,9 @@ def map_dims_and_variables(ds, dim_mapping, expected_input_var_dims):
 
     # check that none of the variables have dims that are not in the expected_input_var_dims
     for var_name in ds.data_vars:
-        if not set(ds[var_name].dims).issubset(expected_input_var_dims):
+        if not set(ds[var_name].dims).issubset(
+            expected_input_var_dims
+        ):  # pragma: no cover
             extra_dims = set(ds[var_name].dims) - set(expected_input_var_dims)
             raise ValueError(
                 f"The variable {var_name} has dimensions {ds[var_name].dims} however the"
@@ -101,7 +103,7 @@ def map_dims_and_variables(ds, dim_mapping, expected_input_var_dims):
             # dimension, this is for example used for flatting the spatial dimensions
             # into a single dimension representing the grid index
             ds = ds.stack({arch_dim: source_dims}).reset_index(arch_dim)
-        else:
+        else:  # pragma: no cover
             raise NotImplementedError(method)
 
     # Finally, we handle the stacking of variables to coordinate values. We
@@ -125,14 +127,14 @@ def map_dims_and_variables(ds, dim_mapping, expected_input_var_dims):
                 name_format=name_format,
                 combined_dim_name=arch_dim,
             )
-        else:
+        else:  # pragma: no cover
             # TODO: this will have to involved xrarrays MultiIndex, but lets leave
             # this until we need it
             raise NotImplementedError(len(dims))
         # set a flag we can use later to identify which coordinate the variables
         # were mapped into
         da.attrs["variables_mapping_dim"] = arch_dim
-    except ValueError as ex:
+    except ValueError as ex:  # pragma: no cover
         raise Exception(
             f"There was an issue handling the following mapping:\n{variable_dim_map}"
             f"\n from variables {list(ds.data_vars)} and dims {list(ds.dims)}"

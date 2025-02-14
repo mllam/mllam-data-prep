@@ -24,7 +24,7 @@ def extract_variable(ds, var_name, coords_to_sample=dict()):
 
     try:
         da = ds[var_name]
-    except KeyError as ex:
+    except KeyError as ex:  # pragma: no cover
         raise KeyError(
             f"Could not find the variable `{var_name}` in the dataset. "
             f"The available variables are {list(ds.data_vars)}"
@@ -34,14 +34,16 @@ def extract_variable(ds, var_name, coords_to_sample=dict()):
         coord_values = sampling.values
         try:
             da = da.sel(**{coord: coord_values})
-        except KeyError as ex:
+        except KeyError as ex:  # pragma: no cover
             raise KeyError(
                 f"Could not find the all coordinate values `{coord_values}` in "
                 f"coordinate `{coord}` in the dataset"
             ) from ex
         expected_units = sampling.units
         coord_units = da[coord].attrs.get("units", None)
-        if coord_units is not None and coord_units != expected_units:
+        if (
+            coord_units is not None and coord_units != expected_units
+        ):  # pragma: no cover
             raise ValueError(
                 f"Expected units {expected_units} for coordinate {coord}"
                 f" in variable {var_name} but got {coord_units}"

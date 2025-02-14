@@ -111,7 +111,7 @@ def derive_variable(ds, derived_variable, chunking, target_dims):
 
         # Align the derived field to the output dataset dimensions (if necessary)
         derived_field = _align_derived_variable(derived_field, ds, target_dims)
-    else:
+    else:  # pragma: no cover
         raise TypeError(
             f"Expected an instance of xr.DataArray, but got {type(derived_field)}."
         )

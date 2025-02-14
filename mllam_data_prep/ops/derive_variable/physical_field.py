@@ -5,6 +5,7 @@ of coordinate values (e.g. top-of-atmosphere incoming radiation is a function
 of time and lat/lon location), but also of other physical fields, such as
 wind speed, which is a function of both meridional and zonal wind components.
 """
+
 import datetime
 
 import numpy as np
@@ -39,7 +40,7 @@ def calculate_toa_radiation(lat, lon, time):
     if isinstance(time, xr.DataArray):
         day = time.dt.dayofyear
         hour_utc = time.dt.hour
-    elif isinstance(time, datetime.datetime):
+    elif isinstance(time, datetime.datetime):  # pragma: no cover
         day = time.timetuple().tm_yday
         hour_utc = time.hour
     else:

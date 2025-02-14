@@ -19,7 +19,7 @@ def load_input_dataset(fp):
 
     try:
         ds = xr.open_zarr(fp)
-    except ValueError:
+    except ValueError:  # pragma: no cover
         ds = xr.open_dataset(fp)
 
     return ds

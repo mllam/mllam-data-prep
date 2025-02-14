@@ -11,7 +11,7 @@ try:
     import psutil
     from dask.diagnostics import ProgressBar
     from dask.distributed import LocalCluster
-except (ImportError, ModuleNotFoundError):
+except ImportError or ModuleNotFoundError:
     DASK_DISTRIBUTED_AVAILABLE = False
 
 if __name__ == "__main__":

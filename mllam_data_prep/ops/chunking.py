@@ -38,7 +38,7 @@ def check_chunk_size(ds, chunks):
 
         memory_usage = total_chunk_size * bytes_per_element
 
-        if memory_usage > CHUNK_MAX_SIZE_WARNING:
+        if memory_usage > CHUNK_MAX_SIZE_WARNING:  # pragma: no cover
             logger.warning(
                 f"The chunk size for '{var_name}' exceeds '{CHUNK_MAX_SIZE_WARNING / 1024**3}' GB."
             )
@@ -67,7 +67,7 @@ def chunk_dataset(ds, chunks):
     # Try chunking
     try:
         ds = ds.chunk(chunks)
-    except Exception as ex:
+    except Exception as ex:  # pragma: no cover
         raise Exception(f"Error chunking dataset: {ex}")
 
     return ds

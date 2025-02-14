@@ -1,17 +1,18 @@
 import warnings
 
+import numpy as np
 import pandas as pd
 
 
-def str_to_timestamp(s):
+def to_timestamp(s):
     if isinstance(s, str):
         return pd.Timestamp(s)
     return s
 
 
-def str_to_timedelta(s):
+def to_timedelta(s):
     if isinstance(s, str):
-        return pd.to_time_delta(s)
+        return np.timedelta64(pd.to_timedelta(s))
     return s
 
 
@@ -42,17 +43,16 @@ def select_by_kwargs(ds, **coord_ranges):
     """
 
     for coord, selection in coord_ranges.items():
-        sel_start = str_to_datetime(selection.start)
-        sel_end = str_to_datetime(selection.end)
-        sel_step = str_to_timedelta(selection.step)
+        sel_start = selection.start
+        sel_end = selection.end
+        sel_step = selection.step
+
+        if coord == "time":
+            sel_start = to_timestamp(selection.start)
+            sel_end = to_timestamp(selection.end)
+            sel_step = get_time_step(sel_step, ds)
 
         assert sel_start != sel_end, "Start and end cannot be the same"
-
-        if coord == "time" and sel_step is not None:
-            warnings.warn(
-                "Step size for time coordinate is not supported and is ignored"
-            )
-            sel_step = None
 
         check_selection(ds, coord, sel_start, sel_end)
         ds = ds.sel({coord: slice(sel_start, sel_end, sel_step)})
@@ -64,8 +64,23 @@ def select_by_kwargs(ds, **coord_ranges):
     return ds
 
 
+def get_time_step(sel_step, ds):
+    if sel_step is None:
+        return None
+
+    dataset_timedelta = ds.time[1] - ds.time[0]
+    sel_timedelta = to_timedelta(sel_step)
+    step = sel_timedelta / dataset_timedelta
+    if step % 1 != 0:
+        raise ValueError(
+            f"The chosen stepsize {sel_step} is not multiple of the stepsize in the dataset {dataset_timedelta}"
+        )
+
+    return int(step)
+
+
 def check_selection(ds, coord, sel_start, sel_end):
     if ds[coord].values.min() < sel_start or ds[coord].values.max() > sel_end:
         warnings.warn(
-            f"Endpoints are outside the range of {coord}, the data spans [ {ds[coord].values.min()} : {ds[coord].values.max()} ] and the selection is [ {sel_start} : {sel_end} ]"
+            f"\nEndpoints are outside the range of {coord}, \nDataset span: [ {ds[coord].values.min()} : {ds[coord].values.max()} ] \nChosen slice: [ {sel_start} : {sel_end} ]\n"
         )

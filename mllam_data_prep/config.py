@@ -426,12 +426,12 @@ def find_config_differences(
             "or set overwrite='always' to overwrite it."
         )
     else:
-        config_yaml = ds_existing.attrs.get("creation_config", None)
-        if config_yaml is None:
+        existing_config_yaml = ds_existing.attrs.get("creation_config", None)
+        if existing_config_yaml is None:
             raise ValueError(
                 "The provided dataset does not have a creation_config attribute"
             )
-        existing_config = Config.from_yaml(config_yaml)
+        existing_config = Config.from_yaml(existing_config_yaml)
         if existing_config != config:
             differences = DeepDiff(
                 existing_config.to_dict(), config.to_dict(), ignore_order=True

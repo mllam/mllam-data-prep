@@ -75,7 +75,7 @@ class Range:
 
     start: Union[str, int, float, datetime]
     end: Union[str, int, float, datetime]
-    step: Union[str, int, float, timedelta] = None
+    step: Union[str, int, float, timedelta, None] = None
 
 
 @dataclass

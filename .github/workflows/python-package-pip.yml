@@ -32,5 +32,5 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
-          python -m pytest tests/ --cov --cov-fail-under=100
+          python -m pytest tests/ --cov mllam_data_prep --cov-fail-under=100
 

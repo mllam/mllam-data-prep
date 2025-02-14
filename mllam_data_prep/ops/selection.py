@@ -82,5 +82,5 @@ def get_time_step(sel_step, ds):
 def check_selection(ds, coord, sel_start, sel_end):
     if ds[coord].values.min() < sel_start or ds[coord].values.max() > sel_end:
         warnings.warn(
-            f"\nEndpoints are outside the range of {coord}, \nDataset span: [ {ds[coord].values.min()} : {ds[coord].values.max()} ] \nChosen slice: [ {sel_start} : {sel_end} ]\n"
+            f"\nChosen slice exceeds the range of {coord} in the dataset.\n    Dataset span: [ {ds[coord].values.min()} : {ds[coord].values.max()} ]\n    Chosen slice: [ {sel_start} : {sel_end} ]\n"
         )

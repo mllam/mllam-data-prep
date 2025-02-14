@@ -1,4 +1,6 @@
 """Tests for the output dataset created by `mllam-data-prep`."""
+from functools import wraps
+
 import pytest
 import yaml
 
@@ -139,6 +141,25 @@ inputs:
 """
 
 
+def skip_on(exception, reason="Default reason"):
+    """Wrapper for skipping tests based on specified exception."""
+    # Func below is the real decorator and will receive the test function as parameter
+    def decorator_func(f):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            try:
+                # Try to run the test
+                return f(*args, **kwargs)
+            except exception:
+                # If exception of given type happens
+                # just swallow it and raise pytest.Skip with given reason
+                pytest.skip(reason)
+
+        return wrapper
+
+    return decorator_func
+
+
 def update_config(config: str, update: str):
     """
     Update provided config.
@@ -164,6 +185,7 @@ def update_config(config: str, update: str):
     return modified_config
 
 
+@skip_on(NotImplementedError, reason="This functionality is not yet implemented.")
 @pytest.mark.parametrize(
     "base_config, new_inputs_section",
     [

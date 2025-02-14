@@ -277,7 +277,6 @@ def test_config_revision_examples(fp_example):
     """
     tmpdir = tempfile.TemporaryDirectory()
 
-    # copy example to tempdir
     fp_config_copy = Path(tmpdir.name) / fp_example.name
     shutil.copy(fp_example, fp_config_copy)
 

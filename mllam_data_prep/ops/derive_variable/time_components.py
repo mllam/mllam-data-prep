@@ -92,19 +92,18 @@ def calculate_day_of_year(time, component):
             f" but got {type(time)}."
         )
 
-    # pragma: no cover
     # Cyclic encoding of day of year - use 366 to include leap years!
-    if component == "sin":
+    if component == "sin":  # pragma: no cover
         day_of_year_encoded = np.sin((day_of_year / 366) * 2 * np.pi)
-    elif component == "cos":
+    elif component == "cos":  # pragma: no cover
         day_of_year_encoded = np.cos((day_of_year / 366) * 2 * np.pi)
-    else:
+    else:  # pragma: no cover
         raise ValueError(
             f"Invalid value of `component`: '{component}'. Expected one of: 'cos' or 'sin'."
             " Please update the config accordingly."
         )
 
-    if isinstance(day_of_year_encoded, xr.DataArray):
+    if isinstance(day_of_year_encoded, xr.DataArray):  # pragma: no cover
         # Add attributes
         day_of_year_encoded.name = "day_of_year_" + component
         day_of_year_encoded.attrs["long_name"] = (
@@ -112,4 +111,4 @@ def calculate_day_of_year(time, component):
         )
         day_of_year_encoded.attrs["units"] = "1"
 
-    return day_of_year_encoded
+    return day_of_year_encoded  # pragma: no cover

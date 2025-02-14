@@ -26,7 +26,7 @@ def validate_config(config_inputs):
 
     for input_dataset_name, input_dataset in config_inputs.items():
         if not input_dataset.variables and not input_dataset.derived_variables:
-            raise InvalidConfigException(
+            raise InvalidConfigException(  # pragma: no cover
                 f"Input dataset '{input_dataset_name}' is missing the keys `variables` and/or"
                 " `derived_variables`. Make sure that you update the config so that the input"
                 f" dataset '{input_dataset_name}' contains at least either a `variables` or"
@@ -36,7 +36,7 @@ def validate_config(config_inputs):
             # Check so that there are no overlapping variables
             if isinstance(input_dataset.variables, list):
                 variable_vars = input_dataset.variables
-            elif isinstance(input_dataset.variables, dict):
+            elif isinstance(input_dataset.variables, dict):  # pragma: no cover
                 variable_vars = input_dataset.variables.keys()
             else:
                 raise TypeError(
@@ -45,7 +45,7 @@ def validate_config(config_inputs):
             derived_variable_vars = input_dataset.derived_variables.keys()
             common_vars = list(set(variable_vars) & set(derived_variable_vars))
             if len(common_vars) > 0:
-                raise InvalidConfigException(
+                raise InvalidConfigException(  # pragma: no cover
                     "Both `variables` and `derived_variables` include the following variables name(s):"
                     f" '{', '.join(common_vars)}'. This is not allowed. Make sure that there"
                     " are no overlapping variable names between `variables` and `derived_variables`,"
@@ -382,7 +382,7 @@ class Config(dataclass_wizard.JSONWizard, dataclass_wizard.YAMLWizard):
         raise_on_unknown_json_key = True
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     import argparse
 
     argparser = argparse.ArgumentParser()

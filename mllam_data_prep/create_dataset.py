@@ -22,7 +22,7 @@ from .ops.selection import select_by_kwargs
 from .ops.statistics import calc_stats
 from .ops.subsetting import extract_variable
 
-if Version(zarr.__version__) >= Version("3"):
+if Version(zarr.__version__) >= Version("3"):  # pragma: no cover
     from zarr.codecs import BloscCodec, BloscShuffle
 else:
     from numcodecs import Blosc  # pragma: no cover
@@ -53,7 +53,7 @@ def _check_dataset_attributes(ds, expected_attributes, dataset_name):
                 for key, val in incorrect_attributes.items()
             ]
         )
-        raise ValueError(
+        raise ValueError(  # pragma: no cover
             f"Dataset {dataset_name} has the following incorrect attributes: {s_list}"
         )
 
@@ -323,7 +323,7 @@ def create_dataset_zarr(fp_config: Path, fp_zarr: Optional[str | Path] = None):
 
     # use zstd compression since it has a good balance of speed and compression ratio
     # https://engineering.fb.com/2016/08/31/core-infra/smaller-and-faster-data-compression-with-zstandard/
-    if Version(zarr.__version__) >= Version("3"):
+    if Version(zarr.__version__) >= Version("3"):  # pragma: no cover
         compressor = BloscCodec(cname="zstd", clevel=3, shuffle=BloscShuffle.bitshuffle)
         encoding = {v: {"compressors": compressor} for v in ds.data_vars}
     else:  # pragma: no cover

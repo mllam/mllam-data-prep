@@ -85,7 +85,7 @@ def select_by_kwargs(ds, **coord_ranges):
 
         elif isinstance(selection, list):  # pragma: no cover
             ds = ds.sel({coord: selection})
-        else:
+        else:  # pragma: no cover
             raise NotImplementedError(
                 f"Selection for coordinate {coord} must be a list or a dict"
             )

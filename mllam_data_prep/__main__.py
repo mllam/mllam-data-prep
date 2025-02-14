@@ -11,7 +11,7 @@ try:  # pragma: no cover
     import psutil
     from dask.diagnostics import ProgressBar
     from dask.distributed import LocalCluster
-except ImportError or ModuleNotFoundError:  # pragma: no cover
+except (ImportError, ModuleNotFoundError):  # pragma: no cover
     DASK_DISTRIBUTED_AVAILABLE = False
 
 if __name__ == "__main__":  # pragma: no cover

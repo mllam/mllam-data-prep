@@ -340,7 +340,10 @@ def create_dataset_zarr(
             except UnsupportedMllamDataPrepVersion:
                 config_differences = None
 
-            ex_str = f"There already exists a dataset at {fp_zarr}, and the overwrite option is set to 'never'. "
+            ex_str = (
+                f"There already exists a dataset at {fp_zarr}, and the overwrite option is set to 'never'. "
+                "Either delete the existing dataset or set overwrite='always' to overwrite it."
+            )
             # try and parse the differences in the config in case the existing
             # dataset was created with a supported version
             if config_differences:
@@ -352,16 +355,13 @@ def create_dataset_zarr(
             raise FileExistsError(ex_str)
         elif overwrite == "on_config_change":
             try:
-                logger.debug(
-                    "Checking for differences between existing and new configuration"
-                )
                 ds_existing = xr.open_zarr(fp_zarr)
                 config_differences = find_config_differences(
                     config=config, ds_existing=ds_existing
                 )
             except UnsupportedMllamDataPrepVersion as ex:
                 raise FileExistsError(
-                    "There already exists a dataset at {fp_zarr}, however it was created with an older version of mllam-data-prep "
+                    f"There already exists a dataset at {fp_zarr}, however it was created with an older version of mllam-data-prep "
                     "and so doesn't contain a record of the configuration used to create it. Either delete the existing dataset or "
                     "set overwrite='always' to overwrite it."
                 ) from ex

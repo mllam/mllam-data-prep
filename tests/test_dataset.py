@@ -1,12 +1,11 @@
 """Tests for the output dataset created by `mllam-data-prep`."""
-import re
-import shutil
-import tempfile
-from pathlib import Path
-
 import pytest
+import yaml
 
 import mllam_data_prep as mdp
+
+with open("example.danra.yaml", "r") as file:
+    BASE_CONFIG = file.read()
 
 HEIGHT_LEVEL_TEST_SECTION = """\
 inputs:
@@ -111,71 +110,83 @@ inputs:
     target_output_variable: state
 """
 
+INVALID_PRESSURE_LEVEL_TEST_SECTION = """\
+inputs:
+  danra_pressure_levels:
+    path: https://object-store.os-api.cci1.ecmwf.int/mllam-testdata/danra_cropped/v0.2.0/pressure_levels.zarr
+    dims: [time, x, y, pressure]
+    variables:
+      z:
+        pressure:
+          values: [1000,]
+          units: hPa
+      t:
+        pressure:
+          values: [800, ]
+          units: hPa
+    dim_mapping:
+      time:
+        method: rename
+        dim: time
+      state_feature:
+        method: stack_variables_by_var_name
+        dims: [pressure]
+        name_format: "{var_name}{pressure}m"
+      grid_index:
+        method: stack
+        dims: [x, y]
+    target_output_variable: state
+"""
 
-def modify_example_config_inputs_section(new_inputs_section):
+
+def update_config(config: str, update: str):
     """
-    Get the example config file as a yaml string and replace the
-    `inputs` section with a new inputs section before reading the config
+    Update provided config.
 
     Parameters
     ----------
-    new_inputs_section: str
-        String with a new inputs section
+    config: str
+        String with config in yaml format
+    update: str
+        String with the update in yaml format
 
     Returns
     -------
     config: Config
-        Modified config with the new inputs section replacing the old one
-        in the example config
+        Updated config
     """
-    # Copy the config file to a temporary directory before reading it
-    fp_example = "example.danra.yaml"
-    tmpdir = tempfile.TemporaryDirectory()
-    fp_config_copy = Path(tmpdir.name) / fp_example
-    shutil.copy(fp_example, fp_config_copy)
-
-    # Read the example config file as text to preserve the order
-    base_config_yaml = Path(fp_config_copy).read_text()
-
-    # Use regex to replace the entire "inputs:" block
-    if new_inputs_section:
-        modified_yaml = re.sub(
-            r"inputs:\n((?:\s{2,}.*\n)*)",  # Matches "inputs:" and all indented content
-            new_inputs_section,
-            base_config_yaml,
-        )
-    else:
-        modified_yaml = base_config_yaml
-
-    # Read the config
-    modified_config = mdp.Config.from_yaml(modified_yaml)
+    original_config = mdp.Config.from_yaml(config)
+    update = yaml.safe_load(update)
+    modified_config = original_config.to_dict()
+    modified_config.update(update)
+    modified_config = mdp.Config.from_dict(modified_config)
 
     return modified_config
 
 
 @pytest.mark.parametrize(
-    "new_inputs_section",
+    "base_config, new_inputs_section",
     [
-        None,  # Does not modify the example config
-        PRESSURE_LEVEL_TEST_SECTION,
-        HEIGHT_LEVEL_TEST_SECTION,
-        SINGLE_LEVEL_SELECTED_VARIABLES_TEST_SECTION,
-        SINGLE_LEVEL_DERIVED_VARIABLES_TEST_SECTION,
+        (BASE_CONFIG, "{}"),  # Does not modify the example config
+        (BASE_CONFIG, PRESSURE_LEVEL_TEST_SECTION),
+        (BASE_CONFIG, HEIGHT_LEVEL_TEST_SECTION),
+        (BASE_CONFIG, SINGLE_LEVEL_SELECTED_VARIABLES_TEST_SECTION),
+        (BASE_CONFIG, SINGLE_LEVEL_DERIVED_VARIABLES_TEST_SECTION),
     ],
 )
-def test_selected_output_variables(new_inputs_section):
+def test_selected_output_variables(base_config, new_inputs_section):
     """
     Test that the variables specified in each input dataset are
     present in the output dataset.
     """
     # Modify the example config
-    config = modify_example_config_inputs_section(new_inputs_section)
+    config = update_config(base_config, new_inputs_section)
 
     # Create the dataset
     ds = mdp.create_dataset(config=config)
 
     # Check that the output variables are the ones selected
-    for dataset_name, input_config in config.inputs.items():
+    for _, input_config in config.inputs.items():
         target_output_variable = input_config.target_output_variable
 
         # Get the expected selected variable names
@@ -244,58 +255,26 @@ def test_selected_output_variables(new_inputs_section):
             pytest.fail(error_message)
 
 
-INVALID_PRESSURE_LEVEL_TEST_SECTION = """\
-inputs:
-  danra_pressure_levels:
-    path: https://object-store.os-api.cci1.ecmwf.int/mllam-testdata/danra_cropped/v0.2.0/pressure_levels.zarr
-    dims: [time, x, y, pressure]
-    variables:
-      z:
-        pressure:
-          values: [1000,]
-          units: hPa
-      t:
-        pressure:
-          values: [800, ]
-          units: hPa
-    dim_mapping:
-      time:
-        method: rename
-        dim: time
-      state_feature:
-        method: stack_variables_by_var_name
-        dims: [pressure]
-        name_format: "{var_name}{pressure}m"
-      grid_index:
-        method: stack
-        dims: [x, y]
-    target_output_variable: state
-"""
-
-
 @pytest.mark.parametrize(
-    "new_inputs_section, expected_result",
+    "base_config, update, expected_result",
     [
         (
-            None,
+            BASE_CONFIG,
+            "{}",
             False,
         ),  # Do not modify the example config - should return False since we're expecting no nans
         (
+            BASE_CONFIG,
             INVALID_PRESSURE_LEVEL_TEST_SECTION,
             True,
         ),  # Dataset with nans - should return True
     ],
 )
-def test_output_dataset_for_nans(new_inputs_section, expected_result):
+def test_output_dataset_for_nans(base_config, update, expected_result):
     """
     Test that the output dataset does not contain any nan values.
     """
-    # Modify the example config
-    config = modify_example_config_inputs_section(new_inputs_section)
-
-    # Create the dataset
+    config = update_config(base_config, update)
     ds = mdp.create_dataset(config=config)
-
-    # Test that we have no nans
-    nan_in_ds = ds.isnull().any().compute().to_array().any().item()
+    nan_in_ds = any(ds.isnull().any().compute().to_array())
     assert nan_in_ds == expected_result

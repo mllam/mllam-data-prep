@@ -134,7 +134,7 @@ def test_get_config_nested():
             input_config.foobarfield
 
 
-def test_that_range_accepts_datetime():
+def test_range_accepts_datetime():
     start = datetime.datetime(1990, 9, 3, 0, 0)
     end = datetime.datetime(1990, 9, 4, 0, 0)
     step = "PT3H"

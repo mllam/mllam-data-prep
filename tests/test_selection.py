@@ -63,7 +63,7 @@ def test_can_slice_time(ds):
 
 
 @pytest.mark.parametrize("step", ["PT6H", "PT3H"])
-def test_if_step_time_matches_output(ds, step):
+def test_timestep_matches_output(ds, step):
     start = "1990-09-01T00:00"
     end = "1990-09-09T00:00"
     coord_ranges = {

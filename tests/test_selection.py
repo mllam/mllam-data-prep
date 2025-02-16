@@ -52,7 +52,7 @@ def test_error_on_empty_range(ds, x_start, x_end):
         ds = mdp.ops.selection.select_by_kwargs(ds, **coord_ranges)
 
 
-def test_can_slice_time(ds):
+def test_slice_time(ds):
     start = "1990-09-01T00:00"
     end = "1990-09-09T00:00"
     coord_ranges = {

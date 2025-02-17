@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:ed345b0df8664a5ab1aadb77d5c4218ef15f135ddacd674f0d029e5a39f9654d"
+content_hash = "sha256:ddf89721fded0149987f6873b3d361036a9257fc2663cb29d4ee426687741c84"
 
 [[metadata.targets]]
 requires_python = ">=3.9"
@@ -279,17 +279,15 @@ files = [
 
 [[package]]
 name = "dataclass-wizard"
-version = "0.22.3"
-summary = "Marshal dataclasses to/from JSON. Use field properties with initial values. Construct a dataclass schema with JSON input."
+version = "0.35.0"
+summary = "Lightning-fast JSON wizardry for Python dataclasses — effortless serialization right out of the box!"
 groups = ["default"]
 dependencies = [
-    "backports-datetime-fromisoformat==1.0.0; python_version == \"3.6\"",
-    "dataclasses; python_version == \"3.6\"",
-    "typing-extensions>=3.7.4.2; python_version <= \"3.9\"",
+    "typing-extensions>=4.9.0; python_version <= \"3.12\"",
 ]
 files = [
-    {file = "dataclass-wizard-0.22.3.tar.gz", hash = "sha256:4c46591782265058f1148cfd1f54a3a91221e63986fdd04c9d59f4ced61f4424"},
-    {file = "dataclass_wizard-0.22.3-py2.py3-none-any.whl", hash = "sha256:63751203e54b9b9349212cc185331da73c1adc99c51312575eb73bb5c00c1962"},
+    {file = "dataclass-wizard-0.35.0.tar.gz", hash = "sha256:8e4b254991bf93416a48e2911bb985e3787cff11f00270c3d1165d2523cb3fb6"},
+    {file = "dataclass_wizard-0.35.0-py2.py3-none-any.whl", hash = "sha256:3bb19292477f0bebb12e9cc9178f1a6b93d133af4ae065abf14b713142b32edf"},
 ]
 
 [[package]]
@@ -1148,7 +1146,7 @@ version = "4.12.2"
 requires_python = ">=3.8"
 summary = "Backported and Experimental Type Hints for Python 3.8+"
 groups = ["default", "dev"]
-marker = "python_version < \"3.10\""
+marker = "python_version <= \"3.12\""
 files = [
     {file = "typing_extensions-4.12.2-py3-none-any.whl", hash = "sha256:04e5ca0351e0f3f85c6853954072df659d0d13fac324d0072316b67d7794700d"},
     {file = "typing_extensions-4.12.2.tar.gz", hash = "sha256:1a7ead55c7e559dd4dee8856e3a88b41225abfe1ce8df57b7c13915fe121ffb8"},

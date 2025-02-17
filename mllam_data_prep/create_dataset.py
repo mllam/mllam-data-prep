@@ -342,7 +342,7 @@ def create_dataset_zarr(
 
             ex_str = (
                 f"There already exists a dataset at {fp_zarr}, and the overwrite option is set to 'never'. "
-                "Either delete the existing dataset or set overwrite='always' to overwrite it."
+                "Either delete the existing dataset or set overwrite='always' to overwrite it. "
             )
             # try and parse the differences in the config in case the existing
             # dataset was created with a supported version

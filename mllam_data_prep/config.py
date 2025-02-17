@@ -1,3 +1,4 @@
+import datetime
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Union
 
@@ -72,9 +73,9 @@ class Range:
         then the entire range will be selected.
     """
 
-    start: Union[str, int, float]
-    end: Union[str, int, float]
-    step: Optional[Union[str, int, float]] = None
+    start: Union[datetime.datetime, int, float]
+    end: Union[datetime.datetime, int, float]
+    step: Optional[Union[datetime.timedelta, int, float]] = None
 
 
 @dataclass

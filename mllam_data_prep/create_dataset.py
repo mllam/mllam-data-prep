@@ -348,7 +348,7 @@ def create_dataset_zarr(
             # dataset was created with a supported version
             if config_differences:
                 ex_str += (
-                    "The existing dataset was created with a different configuration than the current one."
+                    "The existing dataset was created with a different configuration than the current one. "
                     "Differences between existing and new configuration: \n"
                     f"{yaml.dump(config_differences, default_flow_style=False)}"
                 )

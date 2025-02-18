@@ -26,6 +26,7 @@ dependencies = [
     "dask>=2024.2.1",
     "psutil>=5.7.2",
     "packaging>=23.1",
+    "deepdiff>=8.2.0",
 ]
 requires-python = ">=3.9"
 readme = "README.md"

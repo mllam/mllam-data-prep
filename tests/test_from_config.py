@@ -10,6 +10,22 @@ import mllam_data_prep as mdp
 import tests.data as testdata
 
 
+def _find_example_config_files():
+    fps = Path(__file__).parent.parent.glob("example.*.yaml")
+    examples = {fp.name.split(".")[1]: fp for fp in fps}
+    return examples
+
+
+EXAMPLE_YAML_FILES = _find_example_config_files()
+
+
+@pytest.mark.parametrize("example_name", EXAMPLE_YAML_FILES.keys())
+def test_yaml_example(example_name):
+    fp_config = EXAMPLE_YAML_FILES[example_name]
+    with tempfile.TemporaryDirectory(suffix=".zarr") as tmpdir:
+        mdp.create_dataset_zarr(fp_config=fp_config, fp_zarr=tmpdir)
+
+
 def test_gen_data():
     tmpdir = tempfile.TemporaryDirectory()
     testdata.create_data_collection(

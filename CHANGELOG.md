@@ -5,9 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [unreleased](https://github.com/mllam/mllam-data-prep/)
+## [v0.6.0](https://github.com/mllam/mllam-data-prep/release/tag/v0.6.0)
 
-[All changes](https://github.com/mllam/mllam-data-prep/compare/v0.5.0...HEAD)
+[All changes](https://github.com/mllam/mllam-data-prep/compare/v0.6.0...v0.5.0)
+
+This release adds the ability to slice input data by any coordinate, derive variables from input datasets, and store config in created datasets. It also adds support for zarr 3.0.0 and above, and a mypy typing action to pre-commit hooks. In addition a number of bugs were fixed related to adding unwanted dimensions to the dataset, chunk size estimates, and derived functions. The release also includes a number of maintenance updates including updating the DANRA test dataset to v0.2.0 (which smaller, leading to faster test execution) and updating the `dataclass-wizard` dependency to at least v0.29.2.
 
 ### Added
 

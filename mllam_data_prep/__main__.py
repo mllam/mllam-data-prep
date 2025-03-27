@@ -39,6 +39,12 @@ if __name__ == "__main__":
         type=float,
         default=0.9,
     )
+    parser.add_argument(
+        "--overwrite",
+        help="Overwrite existing zarr dataset if it exists",
+        choices=["always", "never", "on_config_change"],
+        default="always",
+    )
     args = parser.parse_args()
 
     if args.show_progress:
@@ -77,4 +83,6 @@ if __name__ == "__main__":
         # print the dashboard link
         logger.info(f"Dashboard link: {cluster.dashboard_link}")
 
-    create_dataset_zarr(fp_config=args.config, fp_zarr=args.output)
+    create_dataset_zarr(
+        fp_config=args.config, fp_zarr=args.output, overwrite=args.overwrite
+    )

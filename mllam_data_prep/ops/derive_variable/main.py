@@ -18,7 +18,7 @@ from ..chunking import chunk_dataset
 REQUIRED_FIELD_ATTRIBUTES = ["units", "long_name"]
 
 
-def derive_variable(ds, derived_variable, chunking):
+def derive_variable(ds, derived_variable, chunking, target_dims):
     """
     Derive a variable using the `function` and `kwargs` of `derived_variable`.
 
@@ -33,14 +33,15 @@ def derive_variable(ds, derived_variable, chunking):
     chunking: Dict[str, int]
         Dictionary with keys as the dimensions to chunk along and values
         with the chunk size
+    target_dims: List[str]
+        List of dims from ds to broadcast derived variable to,
+        if not used in calculation
 
     Returns
     -------
     xr.Dataset
         Dataset with derived variables included
     """
-
-    target_dims = list(ds.sizes.keys())
 
     function_namespace = derived_variable.function
     expected_field_attributes = derived_variable.attrs

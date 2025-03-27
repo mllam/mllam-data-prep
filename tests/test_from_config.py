@@ -1,3 +1,4 @@
+import shutil
 import tempfile
 from pathlib import Path
 
@@ -29,7 +30,7 @@ def test_merging_static_and_surface_analysis():
     t_test_end = testdata.T_END_ANALYSIS
 
     config = dict(
-        schema_version="v0.2.0",
+        schema_version=testdata.SCHEMA_VERSION,
         dataset_version="v0.1.0",
         output=dict(
             variables=dict(
@@ -139,7 +140,7 @@ def test_time_selection(source_data_contains_time_range, time_stepsize):
         t_end_config = t_end_dataset + testdata.DT_ANALYSIS
 
     config = dict(
-        schema_version="v0.2.0",
+        schema_version=testdata.SCHEMA_VERSION,
         dataset_version="v0.1.0",
         output=dict(
             variables=dict(
@@ -215,7 +216,7 @@ def test_feature_collision(use_common_feature_var_name):
         state_feature_var_name = "state_feature"
 
     config = dict(
-        schema_version="v0.2.0",
+        schema_version=testdata.SCHEMA_VERSION,
         dataset_version="v0.1.0",
         output=dict(
             variables=dict(
@@ -276,7 +277,102 @@ def test_feature_collision(use_common_feature_var_name):
         mdp.create_dataset_zarr(fp_config=fp_config)
 
 
+@pytest.mark.slow
 def test_danra_example():
     fp_config = Path(__file__).parent.parent / "example.danra.yaml"
     with tempfile.TemporaryDirectory(suffix=".zarr") as tmpdir:
         mdp.create_dataset_zarr(fp_config=fp_config, fp_zarr=tmpdir)
+
+
+@pytest.mark.parametrize("extra_content", [None, {"foobar": {"baz": 42}}])
+def test_optional_extra_section(extra_content):
+    """
+    Test to ensure that the optional `extra` section of the config can contain
+    arbitrary information and is not required for the config to be valid
+    """
+    tmpdir = tempfile.TemporaryDirectory()
+    datasets = testdata.create_data_collection(
+        data_kinds=["static"], fp_root=tmpdir.name
+    )
+
+    config_dict = dict(
+        schema_version=testdata.SCHEMA_VERSION,
+        dataset_version="v0.1.0",
+        output=dict(
+            variables=dict(
+                static=["grid_index", "static_feature"],
+            ),
+        ),
+        inputs=dict(
+            danra_static=dict(
+                path=datasets["static"],
+                dims=["x", "y"],
+                variables=testdata.DEFAULT_STATIC_VARS,
+                dim_mapping=dict(
+                    grid_index=dict(
+                        method="stack",
+                        dims=["x", "y"],
+                    ),
+                    static_feature=dict(
+                        method="stack_variables_by_var_name",
+                        name_format="{var_name}",
+                    ),
+                ),
+                target_output_variable="static",
+            ),
+        ),
+    )
+
+    if extra_content is not None:
+        config_dict["extra"] = extra_content
+
+    # write yaml config to file
+    fn_config = "config.yaml"
+    fp_config = Path(tmpdir.name) / fn_config
+    with open(fp_config, "w") as f:
+        yaml.dump(config_dict, f)
+
+    mdp.create_dataset_zarr(fp_config=fp_config)
+
+
+CONFIG_REVISION_EXAMPLES_PATH = Path(__file__).parent / "old_config_schema_examples"
+
+
+def find_config_revision_examples():
+    """
+    Build a dictionary of examples for each revision of the config schema
+    so that we can check that the examples are valid and up-to-date
+    """
+    examples = {}
+    for fp in CONFIG_REVISION_EXAMPLES_PATH.rglob("*.yaml"):
+        revision = fp.parent.name
+        examples[revision] = fp
+
+    return examples.values()
+
+
+@pytest.mark.slow
+@pytest.mark.parametrize("fp_example", find_config_revision_examples())
+def test_config_revision_examples(fp_example):
+    """
+    Ensure that all the examples (which may be using different config schema
+    versions)in the `config_examples` directory are valid
+    """
+    tmpdir = tempfile.TemporaryDirectory()
+
+    # copy example to tempdir
+    fp_config_copy = Path(tmpdir.name) / fp_example.name
+    shutil.copy(fp_example, fp_config_copy)
+
+    mdp.create_dataset_zarr(fp_config=fp_config_copy)
+
+
+def test_sliced_dataset_can_instantiate_with_right_dimensions():
+    """
+    The sliced example has a 10x10 km slice, so there should be 4x4 = 16 points herekj.
+    """
+    fp = "tests/resources/sliced_example.danra.yaml"
+    config = mdp.Config.from_yaml(open(fp))
+    ds = mdp.create_dataset(config)
+    # We pick a 10x10km slice of the data which should result in 16 grid points.
+    assert ds.state.shape == (2, 49, 16)

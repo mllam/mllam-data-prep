@@ -119,3 +119,13 @@ def test_get_config_nested():
         assert input_config.target_output_variable is not None
         with pytest.raises(AttributeError):
             input_config.foobarfield
+
+
+def test_config_roundtrip():
+    original_config = mdp.Config.from_yaml(VALID_EXAMPLE_CONFIG_YAML)
+    roundtrip_config_dict = mdp.Config.from_dict(original_config.to_dict())
+    roundtrip_config_yaml = mdp.Config.from_yaml(original_config.to_yaml())
+    roundtrip_config_json = mdp.Config.from_json(original_config.to_json())
+    assert original_config == roundtrip_config_dict
+    assert original_config == roundtrip_config_yaml
+    assert original_config == roundtrip_config_json

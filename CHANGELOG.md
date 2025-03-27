@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Maintenance
 
 - update DANRA test dataset to v0.2.0 which uses a smaller cropped domain [\#62](https://github.com/mllam/mllam-data-prep/pull/62), @leifdenby
+- update `dataclass-wizard` dependency to at least v0.29.2 allowing for use of `Union` types together with check for unmatched keys in config yaml [\#73](https://github.com/mllam/mllam-data-prep/pull/73), @leifdenby
 
 
 ## [v0.5.0](https://github.com/mllam/mllam-data-prep/releases/tag/v0.5.0)

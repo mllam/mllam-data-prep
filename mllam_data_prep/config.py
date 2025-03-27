@@ -309,9 +309,9 @@ class ConvexHullCropping:
     coordinates of an *interior* dataset (this will typically be the
     "limited-area" domain when doing Limited Area Modelling) and then including
     all points that are within a margin of the convex hull boundary. In addition
-    to including the points inside the convex hull, you can also include the
-    points inside the convex hull of the interior dataset by setting the
-    `include_interior` attribute to `True`.
+    to including the points inside the defined margin around the convex hull,
+    you can also include the points inside the convex hull of the interior
+    dataset by setting the `include_interior` attribute to `True`.
 
     Attributes
     ----------

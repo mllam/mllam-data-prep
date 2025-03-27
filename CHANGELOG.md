@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - add support for zarr 3.0.0 and above [\#51](https://github.com/mllam/mllam-data-prep/pull/51), @kashif
 - warn if the user tries to load a non-YAML file [\#50](https://github.com/mllam/mllam-data-prep/pull/50), @j6k4m8
 - add mypy typing action to pre-commit hooks [\#67](https://github.com/mllam/mllam-data-prep/pull/67), @observingClouds
+- add support for storing config in created datasets and option to only overwrite zarr dataset of config change [\#64](https://github.com/mllam/mllam-data-prep/pull/64), @leifdenby
 
 ### Fixes
 
@@ -58,6 +59,7 @@ interface and addresses bugs around optional dependencies for
 
 ### Added
 
+- add access to CLI via `mllam_data_prep` and add tests for CLI with/without `dask.distributed` ![\25](https://github.com/mllam/mllam-data-prep/pull/25).
 - add optional output path argument to parser. ![\#26](https://github.com/mllam/mllam-data-prep/pull/26)
 
 ### Changed
@@ -66,6 +68,7 @@ interface and addresses bugs around optional dependencies for
 - change config example to call validation split `val` instead of `validation` [\#28](https://github.com/mllam/mllam-data-prep/pull/28)
 - fix typo in install dependency `distributed` ![\#20](https://github.com/mllam/mllam-data-prep/pull/20)
 - add missing `psutil` requirement. [\#21](https://github.com/mllam/mllam-data-prep/pull/21).
+
 
 ## [v0.3.0](https://github.com/mllam/mllam-data-prep/releases/tag/v0.3.0)
 

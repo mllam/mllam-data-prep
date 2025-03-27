@@ -26,6 +26,7 @@ dependencies = [
     "dask>=2024.2.1",
     "psutil>=5.7.2",
     "packaging>=23.1",
+    "deepdiff>=8.2.0",
 ]
 requires-python = ">=3.9"
 readme = "README.md"
@@ -52,3 +53,5 @@ dev = [
     "ipdb>=0.13.13",
     "pre-commit>=3.7.1",
 ]
+[project.scripts]
+mllam_data_prep = "mllam_data_prep:cli.call"

@@ -59,7 +59,7 @@ interface and addresses bugs around optional dependencies for
 
 ### Added
 
-- add access to CLI via `mllam-data-prep` and add tests for CLI with/without `dask.distributed` ![\25](https://github.com/mllam/mllam-data-prep/pull/25).
+- add access to CLI via `mllam_data_prep` and add tests for CLI with/without `dask.distributed` ![\25](https://github.com/mllam/mllam-data-prep/pull/25).
 - add optional output path argument to parser. ![\#26](https://github.com/mllam/mllam-data-prep/pull/26)
 
 ### Changed

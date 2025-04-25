@@ -1,6 +1,6 @@
 [project]
 name = "mllam-data-prep"
-version = "0.5.0"
+version = "0.6.0"
 description = "dataset preparation for data-driven weather models"
 authors = [
     {name = "Leif Denby", email = "lcd@dmi.dk"},
@@ -20,12 +20,13 @@ dependencies = [
     "isodate>=0.6.1",
     "requests>=2.31.0",
     "aiohttp>=3.9.3",
-    "dataclass-wizard>=0.22.3",
+    "dataclass-wizard>=0.29.2",
     "semver>=3.0.2",
     "rich>=13.7.1",
     "dask>=2024.2.1",
     "psutil>=5.7.2",
     "packaging>=23.1",
+    "deepdiff>=8.2.0",
 ]
 requires-python = ">=3.9"
 readme = "README.md"
@@ -52,3 +53,5 @@ dev = [
     "ipdb>=0.13.13",
     "pre-commit>=3.7.1",
 ]
+[project.scripts]
+mllam_data_prep = "mllam_data_prep:cli.call"

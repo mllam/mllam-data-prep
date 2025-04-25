@@ -1,6 +1,7 @@
 """Unit tests for the `mllam_data_prep.ops.derive_variable.time_components` module."""
 
 import datetime
+from typing import Union
 
 import numpy as np
 import pytest
@@ -21,7 +22,7 @@ from mllam_data_prep.ops.derive_variable.time_components import (
     ],
 )
 def test_hour_of_day(
-    time: np.datetime64 | datetime.datetime | xr.DataArray, component: str
+    time: Union[np.datetime64, datetime.datetime, xr.DataArray], component: str
 ):
     """Test the `calculate_hour_of_day` function.
 
@@ -43,7 +44,7 @@ def test_hour_of_day(
     ],
 )
 def test_day_of_year(
-    time: np.datetime64 | datetime.datetime | xr.DataArray, component: str
+    time: Union[np.datetime64, datetime.datetime, xr.DataArray], component: str
 ):
     """Test the `calculate_day_of_year` function.
 

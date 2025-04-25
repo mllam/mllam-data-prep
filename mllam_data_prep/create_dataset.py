@@ -302,7 +302,9 @@ def create_dataset(config: Config):
 
 
 def create_dataset_zarr(
-    fp_config: Path, fp_zarr: Optional[Union[str, Path]] = None, overwrite: str = "always"
+    fp_config: Path,
+    fp_zarr: Optional[Union[str, Path]] = None,
+    overwrite: str = "always",
 ):
     """
     Create a dataset from the input datasets specified in the config file and

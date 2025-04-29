@@ -1,7 +1,7 @@
 """Unit tests for the `mllam_data_prep.ops.derive_variable.physical_field` module."""
 
 import datetime
-from typing import List
+from typing import List, Union
 
 import numpy as np
 import pytest
@@ -11,7 +11,7 @@ from mllam_data_prep.ops.derive_variable.physical_field import calculate_toa_rad
 
 
 @pytest.fixture(name="lat")
-def fixture_lat(request) -> List[float | xr.DataArray]:
+def fixture_lat(request) -> List[Union[float, xr.DataArray]]:
     """Fixture that returns test latitude data
 
     The fixture has to be indirectly parametrized with the number of coordinates,
@@ -30,7 +30,7 @@ def fixture_lat(request) -> List[float | xr.DataArray]:
 
 
 @pytest.fixture(name="lon")
-def fixture_lon(request) -> List[float | xr.DataArray]:
+def fixture_lon(request) -> List[Union[float, xr.DataArray]]:
     """Fixture that returns test longitude data
 
     The fixture has to be indirectly parametrized with the number of coordinates,
@@ -62,9 +62,9 @@ def fixture_lon(request) -> List[float | xr.DataArray]:
 )
 @pytest.mark.parametrize("time", [1, 10, 100], indirect=True)
 def test_toa_radiation(
-    lat: float | xr.DataArray,
-    lon: float | xr.DataArray,
-    time: np.datetime64 | datetime.datetime | xr.DataArray,
+    lat: Union[float, xr.DataArray],
+    lon: Union[float, xr.DataArray],
+    time: Union[np.datetime64, datetime.datetime, xr.DataArray],
 ):
     """Test the `calculate_toa_radiation` function.
 

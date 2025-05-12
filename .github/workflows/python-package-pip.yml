@@ -10,21 +10,32 @@ on:
 
 jobs:
   test:
-    name: Test pip install python ${{ matrix.python-version }} on ${{ matrix.os }}
+    name: Test pip install python ${{ matrix.python-version }} on ${{ matrix.os }} with zarr ${{ matrix.zarr-version }}
 
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest]
         python-version: ["3.8", "3.9", "3.10"]
+        zarr-version: [">=2,<3", ">2,<=3"]
     steps:
       - uses: actions/checkout@v2
       - name: Install package with pip
         run: |
-          python -m pip install .
+          python -m pip install . "zarr${{ matrix.zarr-version }}"
           python -m pip install pytest
 
-      - name: Run tests
+      - name: Run tests (non-distributed)
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          python -m pytest tests/
+      - name: Install distributed dependencies
+        run: |
+          python -m pip install .[dask-distributed]
+      - name: Run tests (distributed)
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

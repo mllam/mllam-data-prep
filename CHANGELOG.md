@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.6.0](https://github.com/mllam/mllam-data-prep/release/tag/v0.6.0)
+
+[All changes](https://github.com/mllam/mllam-data-prep/compare/v0.6.0...v0.5.0)
+
+This release adds the ability to slice input data by any coordinate, derive variables from input datasets, and store config in created datasets. It also adds support for zarr 3.0.0 and above, and a mypy typing action to pre-commit hooks. In addition a number of bugs were fixed related to adding unwanted dimensions to the dataset, chunk size estimates, and derived functions. The release also includes a number of maintenance updates including updating the DANRA test dataset to v0.2.0 (which smaller, leading to faster test execution) and updating the `dataclass-wizard` dependency to at least v0.29.2.
+
+### Added
+
+- add functionality to slice input data by any coordinate [\#55](https://github.com/mllam/mllam-data-prep/pull/55a)@matschreiner
+- add ability to derive variables from input datasets [\#34](https://github.com/mllam/mllam-data-prep/pull/34), @ealerskans, @mafdmi
+- add github PR template to guide development process on github [\#44](https://github.com/mllam/mllam-data-prep/pull/44), @leifdenby
+- add support for zarr 3.0.0 and above [\#51](https://github.com/mllam/mllam-data-prep/pull/51), @kashif
+- warn if the user tries to load a non-YAML file [\#50](https://github.com/mllam/mllam-data-prep/pull/50), @j6k4m8
+- add mypy typing action to pre-commit hooks [\#67](https://github.com/mllam/mllam-data-prep/pull/67), @observingClouds
+- add support for storing config in created datasets and option to only overwrite zarr dataset of config change [\#64](https://github.com/mllam/mllam-data-prep/pull/64), @leifdenby
+
+### Fixes
+
+- fix bug which adds unwanted dimensions to the dataset [\#60](https://github.com/mllam/mllam-data-prep/pull/60), @ealerskans, @observingClouds
+- correct chunk size estimate [\#59](https://github.com/mllam/mllam-data-prep/pull/59), @ealerskans
+- fix bug arising when variables provided to derived functions are renamed [\#56](https://github.com/mllam/mllam-data-prep/pull/56), @leifdenby
+- ensure config fields defaulting to `None` are typed as `Optional` and fields defaulting to `{}` are given a default-factory so that serialization with default values works correctly [\#63](https://github.com/mllam/mllam-data-prep/pull/63), @leifdenby
+- fix reading of exported config files [\#67](https://github.com/mllam/mllam-data-prep/pull/67), @observingClouds
+
+### Maintenance
+
+- update DANRA test dataset to v0.2.0 which uses a smaller cropped domain [\#62](https://github.com/mllam/mllam-data-prep/pull/62), @leifdenby
+- update `dataclass-wizard` dependency to at least v0.29.2 allowing for use of `Union` types together with check for unmatched keys in config yaml [\#73](https://github.com/mllam/mllam-data-prep/pull/73), @leifdenby
+
+
 ## [v0.5.0](https://github.com/mllam/mllam-data-prep/releases/tag/v0.5.0)
 
 [All changes](https://github.com/mllam/mllam-data-prep/compare/v0.4.0...v0.5.0)
@@ -32,6 +62,7 @@ interface and addresses bugs around optional dependencies for
 
 ### Added
 
+- add access to CLI via `mllam_data_prep` and add tests for CLI with/without `dask.distributed` ![\25](https://github.com/mllam/mllam-data-prep/pull/25).
 - add optional output path argument to parser. ![\#26](https://github.com/mllam/mllam-data-prep/pull/26)
 
 ### Changed
@@ -40,6 +71,7 @@ interface and addresses bugs around optional dependencies for
 - change config example to call validation split `val` instead of `validation` [\#28](https://github.com/mllam/mllam-data-prep/pull/28)
 - fix typo in install dependency `distributed` ![\#20](https://github.com/mllam/mllam-data-prep/pull/20)
 - add missing `psutil` requirement. [\#21](https://github.com/mllam/mllam-data-prep/pull/21).
+
 
 ## [v0.3.0](https://github.com/mllam/mllam-data-prep/releases/tag/v0.3.0)
 

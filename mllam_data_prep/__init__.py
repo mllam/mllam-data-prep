@@ -7,4 +7,5 @@ except importlib.metadata.PackageNotFoundError:
 
 # expose the public API
 from .config import Config, InvalidConfigException  # noqa
-from .create_dataset import create_dataset, create_dataset_zarr, recreate_inputs  # noqa
+from .create_dataset import create_dataset, create_dataset_zarr  # noqa
+from .recreate_inputs import recreate_inputs  # noqa

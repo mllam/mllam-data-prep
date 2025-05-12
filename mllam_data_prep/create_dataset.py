@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Optional
 
 import numpy as np
-import parse
 import xarray as xr
 import yaml
 import zarr
@@ -414,48 +413,3 @@ def create_dataset_zarr(
     logger.info(f"Wrote training-ready dataset to {fp_zarr}")
 
     logger.info(ds)
-
-
-def recreate_inputs(config: Config, ds: xr.Dataset):
-    """
-    Recreate the input datasets from a zarr file created by
-    `create_dataset_zarr` by applying inverse operations to each step.
-
-    Parameters
-    ----------
-    config : Config
-        The configuration object defining the input datasets and how to map them to the output dataset.
-    """
-
-    for input_name, input_config in config.inputs.items():
-        dim_mapping = input_config.dim_mapping
-        da_target = ds[input_config.target_output_variable]
-
-        # find the dim mapping item that is the one where variable names
-        # are stacked into a feature dimension
-        feature_dim_name = None
-        source_dims: list[str] | None = []
-        for output_dim, mapping_config in dim_mapping.items():
-            if mapping_config.method == "stack_variables_by_var_name":
-                feature_dim_name = output_dim
-                source_dims = mapping_config.dims
-                name_format = mapping_config.name_format
-                break
-
-        name_parts = []
-        for feature_value in da_target[feature_dim_name].values:
-            name_parts.append(parse.parse(name_format, feature_value).named)
-
-        if source_dims is not None:
-
-            # add a variable for each source-dimension name, so that we can unstack with this later
-            for d in source_dims:
-                values = [name_part[d] for name_part in name_parts]
-                da_target[d] = xr.DataArray(values, dims=[feature_dim_name])
-
-            if len(source_dims) == 1:
-                da_target = da_target.swap_dims({feature_dim_name: source_dims[0]})
-            else:
-                da_target = da_target.set_index(
-                    {feature_dim_name: source_dims}
-                ).unstack(feature_dim_name)

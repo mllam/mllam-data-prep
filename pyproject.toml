@@ -45,9 +45,6 @@ latlon-domain-crop = [
     "jinja2>=3.1.4",
 ]
 
-[tool.uv.sources]
-#spherical_geometry = { path = "../../GitProjects/spherical_geometry" , editable = true}
-
 [build-system]
 requires = ["pdm-backend"]
 build-backend = "pdm.backend"

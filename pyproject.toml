@@ -27,6 +27,7 @@ dependencies = [
     "psutil>=5.7.2",
     "packaging>=23.1",
     "deepdiff>=8.2.0",
+    "shapely"
 ]
 requires-python = ">=3.9"
 readme = "README.md"
@@ -43,6 +44,7 @@ latlon-domain-crop = [
     "gcsfs>=2024.10.0",
     "jinja2>=3.1.4",
 ]
+
 [build-system]
 requires = ["pdm-backend"]
 build-backend = "pdm.backend"

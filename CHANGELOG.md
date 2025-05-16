@@ -5,7 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [unreleased](https://github.com/mllam/mllam-data-prep/compare/v0.6.0...HEAD)
+## [unreleased](https://github.com/mllam/mllam-data-prep/compare/v0.6.1...HEAD)
+
+## [v0.6.1](https://github.com/mllam/mllam-data-prep/release/tag/v0.6.1)
+
+[All changes](https://github.com/mllam/mllam-data-prep/compare/v0.6.1...v0.6.0)
+
+This release contains bugfixes to update tests to use newer version of pre-commit, use correct python version, and remove uses of incompatible typing notation.
 
 ### Fixes
 - use old union typing notation compatible with all required python versions [\#77](https://github.com/mllam/mllam-data-prep/pull/77) @SimonKamuk

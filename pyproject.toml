@@ -1,6 +1,6 @@
 [project]
 name = "mllam-data-prep"
-version = "0.6.0"
+version = "0.6.1"
 description = "dataset preparation for data-driven weather models"
 authors = [
     {name = "Leif Denby", email = "lcd@dmi.dk"},

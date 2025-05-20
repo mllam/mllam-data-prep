@@ -11,6 +11,7 @@ authors = [
     {name = "Kashif Rasul", email = "kashif.rasul@gmail.com"},
     {name = "Jordan Matelsky", email = "opensource@matelsky.com"},
     {name = "Martin Frølund", email = "maf@dmi.dk"},
+    {name = "Simon Kamuk Christiansen", email = "skc@dmi.dk"},
 ]
 dependencies = [
     "xarray>=2024.2.0",

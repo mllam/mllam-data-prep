@@ -1,7 +1,7 @@
 """Fixtures for the derive_variable module tests."""
 
 import datetime
-from typing import List
+from typing import List, Union
 
 import isodate
 import numpy as np
@@ -11,7 +11,9 @@ import xarray as xr
 
 
 @pytest.fixture(name="time")
-def fixture_time(request) -> List[np.datetime64 | datetime.datetime | xr.DataArray]:
+def fixture_time(
+    request,
+) -> List[Union[np.datetime64, datetime.datetime, xr.DataArray]]:
     """Fixture that returns test time data
 
     The fixture has to be indirectly parametrized with the number of time steps.

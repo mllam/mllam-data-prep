@@ -2,7 +2,7 @@ import datetime
 import shutil
 from collections import defaultdict
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 import numpy as np
 import xarray as xr
@@ -335,7 +335,9 @@ def create_dataset(config: Config):
 
 
 def create_dataset_zarr(
-    fp_config: Path, fp_zarr: Optional[str | Path] = None, overwrite: str = "always"
+    fp_config: Path,
+    fp_zarr: Optional[Union[str, Path]] = None,
+    overwrite: str = "always",
 ):
     """
     Create a dataset from the input datasets specified in the config file and

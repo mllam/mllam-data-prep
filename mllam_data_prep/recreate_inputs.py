@@ -272,7 +272,9 @@ def main(argv=None):
     config = Config.from_yaml_file(args.config_path) if args.config_path else None
 
     ds = xr.open_zarr(args.zarr_dataset_path)
-    input_datasets = recreate_inputs(ds=ds, config=config)
+    input_datasets = recreate_inputs(
+        ds=ds, config=config, only_selected_inputs=args.only_selected_inputs
+    )
     if args.only_selected_inputs is not None:
         missing_inputs = set(args.only_selected_inputs) - set(input_datasets.keys())
         if missing_inputs:

@@ -6,6 +6,7 @@ from typing import Optional, Union
 
 import cf_xarray as cfxr
 import numpy as np
+import pandas as pd
 import xarray as xr
 import yaml
 import zarr
@@ -304,7 +305,7 @@ def create_dataset(config: Config):
     # which allows us to safely roundtrip MultiIndexes through netcdf/zarr,
     # using their encode and decode functions.
     for idx in ds.indexes:
-        if isinstance(ds.indexes[idx], xr.MultiIndex):
+        if isinstance(ds.indexes[idx], pd.MultiIndex):
             ds = cfxr.encode_multi_index_as_compress(ds, idxnames=idx)
 
     ds.attrs = {}

@@ -29,6 +29,7 @@ dependencies = [
     "packaging>=23.1",
     "deepdiff>=8.2.0",
     "parse>=1.20.2",
+    "cf-xarray>=0.9.4",
 ]
 requires-python = ">=3.9"
 readme = "README.md"

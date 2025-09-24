@@ -1,3 +1,5 @@
+import cf_xarray as cfxr
+
 from .stacking import stack_variables_as_coord_values, stack_variables_by_coord_values
 
 
@@ -100,7 +102,12 @@ def map_dims_and_variables(ds, dim_mapping, expected_input_var_dims):
             # in the input dataset that we want to stack to create the architecture
             # dimension, this is for example used for flatting the spatial dimensions
             # into a single dimension representing the grid index
-            ds = ds.stack({arch_dim: source_dims}).reset_index(arch_dim)
+            ds = ds.stack({arch_dim: source_dims})
+            # rather than .reset_index(arch_dim) here to remove the MultiIndex
+            # (which we previously did, since MultiIndexes can't be serialised
+            # to netcdf/zarr) we use cf_xarrays cf-compliant encoding/decoding
+            # here:
+            ds = cfxr.encode_multi_index_as_compress(ds, idxnames=arch_dim)
         else:
             raise NotImplementedError(method)
 

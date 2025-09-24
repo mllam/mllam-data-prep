@@ -85,7 +85,9 @@ def _split_coord_values_as_variables(
 
 
 def recreate_inputs(
-    ds: xr.Dataset, config: Optional[Config] = None
+    ds: xr.Dataset,
+    config: Optional[Config] = None,
+    only_selected_inputs: Optional[list[str]] = None,
 ) -> dict[str, xr.Dataset]:
     """
     Recreate the input datasets from a zarr file created by
@@ -98,6 +100,9 @@ def recreate_inputs(
     config: Config, optional
         The configuration object defining the input datasets and how to map them to the output dataset.
         If not provided, the config will be read from the dataset attributes.
+    only_selected_inputs : list[str], optional
+        If provided, only the input datasets with these names will be recreated.
+        If not provided, all input datasets will be recreated.
 
     Returns
     -------
@@ -109,8 +114,18 @@ def recreate_inputs(
     if config is None:
         config = Config.from_yaml(ds.creation_config)
 
-    for input_name, input_config in config.inputs.items():
+    if only_selected_inputs is None:
+        only_selected_inputs = list(config.inputs.keys())
+
+    for input_name in only_selected_inputs:
+        input_config = config.inputs[input_name]
         dim_mapping = input_config.dim_mapping
+        if input_config.target_output_variable not in ds:
+            logger.warning(
+                f"Target output variable {input_config.target_output_variable} "
+                f"for input dataset {input_name} not found in dataset, skipping"
+            )
+            continue
         da_target = ds[input_config.target_output_variable]
 
         # 1. First, we need to split out the coordinate that was used to stack
@@ -211,6 +226,7 @@ def _parse_string_to_dict(input_string, value_type=int):
     return result
 
 
+@logger.catch(reraise=True)
 def main(argv=None):
     import argparse
 
@@ -221,6 +237,13 @@ def main(argv=None):
         "zarr_dataset_path",
         type=str,
         help="The path to the zarr file to recreate the input datasets from",
+    )
+    parser.add_argument(
+        "--config-path",
+        type=str,
+        default=None,
+        help="The path to the configuration file that was used to create the dataset. "
+        "If not provided, the config will be read from the dataset attributes.",
     )
     parser.add_argument(
         "--output-path-format",
@@ -246,8 +269,10 @@ def main(argv=None):
 
     args = parser.parse_args(argv)
 
+    config = Config.from_yaml_file(args.config_path) if args.config_path else None
+
     ds = xr.open_zarr(args.zarr_dataset_path)
-    input_datasets = recreate_inputs(ds=ds)
+    input_datasets = recreate_inputs(ds=ds, config=config)
     if args.only_selected_inputs is not None:
         missing_inputs = set(args.only_selected_inputs) - set(input_datasets.keys())
         if missing_inputs:

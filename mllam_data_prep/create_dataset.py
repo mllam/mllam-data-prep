@@ -4,6 +4,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Optional, Union
 
+import cf_xarray as cfxr
 import numpy as np
 import xarray as xr
 import yaml
@@ -293,6 +294,18 @@ def create_dataset(config: Config):
             coords={"split_name": list(splits.keys()), "split_part": ["start", "end"]},
         )
         ds["splits"] = da_splits
+
+    # We have to deal with the fact that MultiIndex objects (this would
+    # commonly before example `grid_index` created by stacking the `x` and `y`
+    # coordinates) can't be written to netcdf/zarr. In cf_xarray this has been
+    # handled in a cf-compliant manner using so-called "compression by
+    # gathering" (see
+    # https://cf-xarray.readthedocs.io/en/latest/generated/cf_xarray.encode_multi_index_as_compress.html#cf_xarray.encode_multi_index_as_compress).
+    # which allows us to safely roundtrip MultiIndexes through netcdf/zarr,
+    # using their encode and decode functions.
+    for idx in ds.indexes:
+        if isinstance(ds.indexes[idx], xr.MultiIndex):
+            ds = cfxr.encode_multi_index_as_compress(ds, idxnames=idx)
 
     ds.attrs = {}
     ds.attrs["schema_version"] = config.schema_version

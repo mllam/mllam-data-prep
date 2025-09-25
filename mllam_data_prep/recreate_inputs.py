@@ -248,7 +248,8 @@ def main(argv=None):
     import argparse
 
     parser = argparse.ArgumentParser(
-        description="Recreate the input datasets from a zarr file created by create_dataset_zarr"
+        description="Recreate the input datasets from a zarr file created by create_dataset_zarr",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
         "zarr_dataset_path",

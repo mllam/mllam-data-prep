@@ -1,10 +1,13 @@
+import datetime
 from typing import Optional
 
 import cf_xarray as cfxr
+import isodate
 import parse
 import xarray as xr
 from loguru import logger
 
+from . import __version__
 from .config import Config
 from .create_dataset import SOURCE_DATASET_NAME_ATTR
 
@@ -305,6 +308,14 @@ def main(argv=None):
         }
 
     for input_name, ds_input in input_datasets.items():
+        ds_input.attrs = {}
+        ds_input.attrs["recreated_from"] = args.zarr_dataset_path
+        if config is not None:
+            ds_input.attrs["recreation_config"] = config.to_yaml()
+        ds_input.attrs["source_dataset_name"] = input_name
+        ds_input.attrs["created_by"] = "mllam_data_prep.recreate_inputs"
+        ds_input.attrs["created_on"] = isodate.isoformat(datetime.datetime.utcnow())
+        ds_input.attrs["mdp-version"] = __version__
         output_path = args.output_path_format.format(input_name=input_name)
         logger.info(
             f"Saving input dataset {input_name} to {output_path} with chunks={args.chunks}"

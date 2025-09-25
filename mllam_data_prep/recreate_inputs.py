@@ -162,8 +162,8 @@ def recreate_inputs(
                 ds_source = ds_source.rename({output_dim: mapping_config.dim})
             elif method_name == "stack":
                 # unstack the stacked dimension
-                ds_source = cfxr.decode_multi_index_as_compression(
-                    ds_source, output_dim
+                ds_source = cfxr.decode_compress_to_multi_index(
+                    ds=ds_source, idxnames=output_dim
                 )
             else:
                 raise NotImplementedError(method_name)

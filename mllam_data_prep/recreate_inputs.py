@@ -162,9 +162,25 @@ def recreate_inputs(
                 ds_source = ds_source.rename({output_dim: mapping_config.dim})
             elif method_name == "stack":
                 # unstack the stacked dimension
+                # To allow MultiIndex to zarr/netcdf
+                # mllam_data_prep.create_dataset encodes these using
+                # cf-compliant "gather compression" (see
+                # https://cf-xarray.readthedocs.io/en/latest/coding.html).
+                # To make sure decoding of these MultiIndex is possible we need
+                # to ensure that the required stacked coordinates (defined
+                # through the "compress" attribute) are included in the dataset
+                compress_attr = ds_source[output_dim].attrs["compress"]
+                required_coords = compress_attr.split(" ")
+                for coord in required_coords:
+                    if coord not in ds.coords:
+                        raise ValueError(
+                            f"Cannot unstack dimension {output_dim} as the required "
+                            f"coordinate {coord} is not in the dataset"
+                        )
+                    ds_source[coord] = ds.coords[coord]
                 ds_source = cfxr.decode_compress_to_multi_index(
-                    ds=ds_source, idxnames=output_dim
-                )
+                    ds_source, idxnames=output_dim
+                ).unstack(output_dim)
             else:
                 raise NotImplementedError(method_name)
 

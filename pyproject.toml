@@ -28,7 +28,6 @@ dependencies = [
     "psutil>=5.7.2",
     "packaging>=23.1",
     "deepdiff>=8.2.0",
-    "shapely"
 ]
 requires-python = ">=3.9"
 readme = "README.md"

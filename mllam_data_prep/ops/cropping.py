@@ -1,12 +1,8 @@
 from typing import Tuple, Union
 
 import numpy as np
-import shapely
 import spherical_geometry as sg
 import xarray as xr
-from loguru import logger
-from shapely import Polygon, contains
-from shapely.geometry import MultiPoint
 from spherical_geometry.polygon import SphericalPolygon
 
 
@@ -66,23 +62,9 @@ def create_convex_hull_mask(ds: xr.Dataset, ds_reference: xr.Dataset) -> xr.Data
     chull_lam = SphericalPolygon.convex_hull(da_ref_xyz.values)
 
     # call .load() to avoid using dask arrays in the following apply_ufunc
-    logger.info("Creating convex hull mask...")
-    # Convert convex hull points to a Shapely Polygon in 3D
-    x = Polygon(chull_lam._polygons[0]._points)
-    shapely.prepare(x)
-    points_xyz = _latlon_to_unit_sphere_xyz(da_lat=da_lat.load(), da_lon=da_lon.load())
-    # Reshape to (N, 3) for vectorized operation
-    pts = points_xyz.values.reshape(-1, 3)
-    # Create a shapely MultiPoint geometry for all points at once
-    pts_geom = MultiPoint(pts)
-    # Vectorized contains: returns a boolean array
-    mask_flat = contains(x, pts_geom.geoms)
-    da_interior_mask = xr.DataArray(
-        mask_flat.reshape(points_xyz.shape[:-1]).astype(bool),
-        coords=da_lat.coords,
-        dims=da_lat.dims,
-    )
-    logger.info("Convex hull mask created.")
+    da_interior_mask = xr.apply_ufunc(
+        chull_lam.contains_lonlat, da_lon.load(), da_lat.load(), vectorize=True
+    ).astype(bool)
     da_interior_mask.attrs[
         "long_name"
     ] = "contained in convex hull of source dataset (da_ref)"

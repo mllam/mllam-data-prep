@@ -38,10 +38,10 @@ def calculate_toa_radiation(lat, lon, time):
     # Different handling if xr.DataArray or datetime object
     if isinstance(time, xr.DataArray):
         day = time.dt.dayofyear
-        hour_utc = time.dt.hour
+        hour_utc = time.dt.hour + time.dt.minute / 60 + time.dt.second / 3600
     elif isinstance(time, datetime.datetime):
         day = time.timetuple().tm_yday
-        hour_utc = time.hour
+        hour_utc = time.hour + time.minute / 60 + time.second / 3600
     else:
         raise TypeError(
             "Expected an instance of xr.DataArray or datetime object,"

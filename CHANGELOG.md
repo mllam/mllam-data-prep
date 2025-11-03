@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## unreleased
 
 ### Changed
-- consider full time information for derived calculation of TOA radiation [\#82](https://github.com/mllam/mllam-data-prep/pull/82) @observingClouds
+- consider full time information for derived calculation of TOA radiation [\#84](https://github.com/mllam/mllam-data-prep/pull/84) @observingClouds
 
 
 ## [v0.6.1](https://github.com/mllam/mllam-data-prep/release/tag/v0.6.1)

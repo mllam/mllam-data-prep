@@ -36,10 +36,3 @@ def _test():
                 da_orig = ds_input[var]
                 da_inverted = ds_input_inverted[var].transpose(*da_orig.dims)
                 xr.testing.assert_equal(da_orig.coords, da_inverted.coords)
-
-
-def test_danra_example_inverse():
-    import ipdb
-
-    with ipdb.launch_ipdb_on_exception():
-        _test()

@@ -285,6 +285,27 @@ The `output` section defines three things:
 3. `chunking`: the chunk sizes to use when writing the training dataset to zarr. This is optional, but can be used to optimise the performance of the zarr dataset. By default the chunk sizes are set to the size of the dimension, but this can be overridden by setting the chunk size in the configuration file. A common choice is to set the dimension along which you are batching to align with the of each training item (e.g. if you are training a model with time-step roll-out of 10 timesteps, you might choose a chunksize of 10 along the time dimension).
 4. Splitting and calculation of statistics of the output variables, using the `splitting` section. The `output.splitting.splits` attribute defines the individual splits to create (for example `train`, `val` and `test`) and `output.splitting.dim` defines the dimension to split along. The `compute_statistics` can be optionally set for a given split to calculate the statistical properties requested (for example `mean`, `std`) any method available on `xarray.Dataset.{op}` can be used. In addition methods prefixed by `diff_` (so the operational would be listed as `diff_{op}`) to compute a statistic based on difference of consecutive time-steps, e.g. `diff_mean` to compute the `mean` of the difference between consecutive timesteps (these are used for normalisating increments). The `dims` attribute defines the dimensions to calculate the statistics over (for example `grid_index` and `time`).
 
+In addition the `output` section can also contain a configuration for cropping the output dataset using the convex hull of coordinates from a different dataset. This is used for example when creating training datasets from limited area modelling (LAM) setups, where a separate dataset is used for the boundary data. The example above doesn't include this section, but [see below](#cropping-the-output-dataset-using-convex-hull-of-another-dataset) for an example of how to use this feature.
+
+#### Cropping the output dataset using convex hull of another dataset
+
+When creating training datasets for limited area models (LAMs) it is often useful to crop the training dataset to the convex hull of the coordinates of another dataset (for example a dataset containing boundary data). This can be done by adding a `domain_cropping` section to the `output` section of the configuration file. A full example where ERA5 is cropped is given in [example.danra.yaml](example.danra.yaml). The relevant section is reproduced here for completeness:
+
+```yaml
+output:
+  ...
+  domain_cropping:
+    margin_width_degrees: 10
+    interior_dataset_config_path: example.danra.yaml
+```
+
+The `domain_cropping` section has two required attributes, and one optional attribute:
+- `margin_width_degrees`: the width (in degrees) of the margin to add around the convex hull of the coordinates of the interior dataset. This allows you to control how much extra area to include around the convex hull of the interior dataset (e.g. how thick to make the boundary region for LAM boundary forcing datasets).
+- `interior_dataset_config_path`: the path to the configuration file of the interior dataset. This is used to load the interior dataset and extract the coordinates to calculate the convex hull from.
+- `include_interior_points`: optional, defaults to `false`. If set to `true` the points inside the convex hull of the interior dataset will also be included in the cropped output dataset. If set to `false` only the margin region around the convex hull will be included. This can be useful if you not only want to create a boundary forcing dataset from a global simulation for LAM, but also want to include the interior points of the global simulation that overlap with the LAM domain.
+
+Details on how the convex hull cropping is actually done can be found in the jupyter notebook in [docs/domain-cropping.ipynb](docs/domain-cropping.ipynb).
+
 ### The `inputs` section
 
 ```yaml

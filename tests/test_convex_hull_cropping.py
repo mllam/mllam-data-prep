@@ -202,12 +202,9 @@ def test_crop_era5_with_generated_lam_domain():
 
     ds_cropped = mdp.create_dataset(config=era5_config_cropped)
 
-    # check that the cropped dataset has the same variables and coordinates as the uncropped one, allowing for fewer grid points
+    # check that the cropped dataset has the same variables and coordinates as
+    # the uncropped one, allowing for fewer grid points
     for var in ds_uncropped.data_vars:
         assert var in ds_cropped.data_vars
         for coord in ds_uncropped[var].coords:
             assert coord in ds_cropped[var].coords
-
-    import ipdb
-
-    ipdb.set_trace()

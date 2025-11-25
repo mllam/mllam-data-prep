@@ -302,8 +302,19 @@ def create_static_dataset(
 
 def _add_latlon(ds: xr.Dataset) -> xr.Dataset:
     """
-    Add latitude and longitude coordinates to the dataset using a local equal
-    area projection centered on Denmark.
+    Add latitude and longitude coordinates (named `lat` and `lon`) to the
+    dataset using a local equal area projection centered on Denmark with the
+    coordinates `x` and `y` being the projected coordinates in meters.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+        The input dataset with `x` and `y` coordinates, modified in-place
+
+    Returns
+    -------
+    xarray.Dataset
+        The dataset with added `lat` and `lon` coordinates
     """
     if pyproj is None:
         raise ImportError("pyproj is required for this function")
@@ -361,6 +372,11 @@ def create_data_collection(
         Number of analysis times, by default NT_ANALYSIS
     nt_forecast : int, optional
         Number of forecast times, by default NT_FORECAST
+    add_latlon : bool, optional
+        Whether to add latitude and longitude coordinates to the datasets. In
+        this case, the x- and y-coordinates will be interpreted as local equal
+        area projection coordinates (in meters) centered on Copenhagen, by
+        default False
 
     Returns
     -------
@@ -452,6 +468,11 @@ def create_input_datasets_and_config(
         Number of grid points in x-direction, by default NX
     ny : int, optional
         Number of grid points in y-direction, by default NY
+    add_latlon : bool, optional
+        Whether to add latitude and longitude coordinates to the datasets. In
+        this case, the x- and y-coordinates will be interpreted as local equal
+        area projection coordinates (in meters) centered on Copenhagen, by
+        default False
 
     Returns
     -------

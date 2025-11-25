@@ -28,6 +28,8 @@ dependencies = [
     "psutil>=5.7.2",
     "packaging>=23.1",
     "deepdiff>=8.2.0",
+    "parse>=1.20.2",
+    "cf-xarray>=0.9.4",
 ]
 requires-python = ">=3.9"
 readme = "README.md"
@@ -53,6 +55,12 @@ dev = [
     "pytest>=8.0.2",
     "ipdb>=0.13.13",
     "pre-commit>=3.7.1",
+]
+
+[dependency-groups]
+dev = [
+    "ipdb>=0.13.13",
+    "pytest>=8.3.5",
 ]
 [project.scripts]
 mllam_data_prep = "mllam_data_prep:cli.call"

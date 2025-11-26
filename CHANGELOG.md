@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [unreleased](https://github.com/mllam/mllam-data-prep/compare/v0.6.1...HEAD)
+
+### Fixes
+- fix bug where coordinate selection of an unshared dimension isn't applied to subsequent ouput variables when an output variable without this dimension is processed before the others [\#87](https://github.com/mllam/mllam-data-prep/pull/87) @zweihuehner
+
 ## [v0.6.1](https://github.com/mllam/mllam-data-prep/release/tag/v0.6.1)
 
 [All changes](https://github.com/mllam/mllam-data-prep/compare/v0.6.1...v0.6.0)
@@ -13,7 +18,6 @@ This release contains bugfixes to update tests to use newer version of pre-commi
 
 ### Fixes
 - use old union typing notation compatible with all required python versions [\#77](https://github.com/mllam/mllam-data-prep/pull/77) @SimonKamuk
-- fix bug that would overwrite the output_coord_ranges dictionary if feature order in datastore.yaml is incorrect [\#87](https://github.com/mllam/mllam-data-prep/pull/87) @zweihuehner
 
 ### Maintenance
 - update pre-commit action to v3.0.1 [\#77](https://github.com/mllam/mllam-data-prep/pull/77) @SimonKamuk

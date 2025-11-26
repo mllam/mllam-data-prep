@@ -236,10 +236,12 @@ def create_dataset(config: Config):
 
         # only need to do selection for the coordinates that the input dataset actually has
         if output_coord_ranges is not None:
-            output_coord_ranges = {
+            # Use a temporary dict to avoid modifying the original ranges.
+            # Static features have no time dimension, so they would return an empty dict.
+            output_coord_ranges_tmp = {
                 k: w for k, w in output_coord_ranges.items() if k in output_dims
             }
-            da_target = select_by_kwargs(da_target, **output_coord_ranges)
+            da_target = select_by_kwargs(da_target, **output_coord_ranges_tmp)
 
         dataarrays_by_target[target_output_var].append(da_target)
 

@@ -13,6 +13,7 @@ This release contains bugfixes to update tests to use newer version of pre-commi
 
 ### Fixes
 - use old union typing notation compatible with all required python versions [\#77](https://github.com/mllam/mllam-data-prep/pull/77) @SimonKamuk
+- fix bug that would overwrite the output_coord_ranges dictionary if feature order in datastore.yaml is incorrect [\#87](https://github.com/mllam/mllam-data-prep/pull/87) @zweihuehner
 
 ### Maintenance
 - update pre-commit action to v3.0.1 [\#77](https://github.com/mllam/mllam-data-prep/pull/77) @SimonKamuk

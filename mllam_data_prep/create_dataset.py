@@ -236,8 +236,11 @@ def create_dataset(config: Config):
 
         # only need to do selection for the coordinates that the input dataset actually has
         if output_coord_ranges is not None:
-            # Use a temporary dict to avoid modifying the original ranges.
-            # Static features have no time dimension, so they would return an empty dict.
+            # Use a temporary dict to apply selection on coordinate ranges to avoid 
+		    # modifying the original ranges given in the config. This is needed because 
+		    # static features, for example, do not have a time dimension. Hence, the time
+		    # based selection returns an empty dictionary, which should not overwrite the 
+            # selection for the other variables.
             output_coord_ranges_tmp = {
                 k: w for k, w in output_coord_ranges.items() if k in output_dims
             }

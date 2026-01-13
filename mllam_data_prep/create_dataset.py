@@ -21,6 +21,7 @@ from .config import (
     find_config_differences,
 )
 from .ops.chunking import chunk_dataset
+from .ops.cropping import crop_with_convex_hull
 from .ops.derive_variable import derive_variable
 from .ops.loading import load_input_dataset
 from .ops.mapping import map_dims_and_variables
@@ -139,6 +140,14 @@ def create_dataset(config: Config):
         raise ValueError(
             "Config schema version v0.2.0 does not support the `extra` field. Please "
             "update the schema version used in your config to v0.5.0."
+        )
+
+    # parse the interior domain config already here if domain cropping is
+    # enabled, so that we can alert the user quickly if the config is invalid
+    ds_interior_domain = None
+    if config.output.domain_cropping is not None:
+        config_interior_domain = Config.from_yaml_file(
+            file=config.output.domain_cropping.interior_dataset_config_path
         )
 
     output_config = config.output
@@ -287,6 +296,30 @@ def create_dataset(config: Config):
             coords={"split_name": list(splits.keys()), "split_part": ["start", "end"]},
         )
         ds["splits"] = da_splits
+
+    # ensure any dimensions for which coordinate values aren't yet set that
+    # these are given integer values. This will for example apply when stacking
+    # (x, y)-coordinates to a grid-index coordinate. These need unique values
+    # for later reference.
+    for d in ds.dims:
+        if d not in ds.coords:
+            ds[d] = np.arange(ds[d].size)
+
+    if config.output.domain_cropping is not None:
+        domain_cropping = config.output.domain_cropping
+        ds_interior_domain = create_dataset(config=config_interior_domain)
+        logger.info(
+            f"Cropping dataset using convex hull "
+            f"({'including' if domain_cropping.include_interior_points else 'excluding'} interior points "
+            f"and including margin of {domain_cropping.margin_width_degrees} degrees) "
+            f"of {config.output.domain_cropping.interior_dataset_config_path} dataset "
+        )
+        ds = crop_with_convex_hull(
+            ds=ds,
+            ds_reference=ds_interior_domain,
+            margin_thickness=domain_cropping.margin_width_degrees,
+            include_interior_points=domain_cropping.include_interior_points,
+        )
 
     ds.attrs = {}
     ds.attrs["schema_version"] = config.schema_version

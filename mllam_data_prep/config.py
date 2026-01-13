@@ -298,6 +298,38 @@ class Splitting:
 
 
 @dataclass
+class ConvexHullCropping:
+    """
+    Define the method applied for cropping the spatial domain before writing
+    the transformed output dataset. This is typically used when you want to
+    create a dataset to provide data in a boundary around a limited-area
+    domain.
+
+    The cropping is done by creating a convex hull around the spatial
+    coordinates of an *interior* dataset (this will typically be the
+    "limited-area" domain when doing Limited Area Modelling) and then including
+    all points that are within a margin of the convex hull boundary. In addition
+    to including the points inside the defined margin around the convex hull,
+    you can also include the points inside the convex hull of the interior
+    dataset by setting the `include_interior` attribute to `True`.
+
+    Attributes
+    ----------
+    margin_width_degrees: float
+        The width (in degrees) of the margin applied to the convex hull
+        boundary of the interior dataset used to define the cropping domain.
+    interior_dataset_config_path: str
+        The path to the configuration file for the dataset defining the interior domain
+    include_interior_points: bool
+        Whether to include the points inside the convex hull of the interior dataset
+    """
+
+    margin_width_degrees: float
+    interior_dataset_config_path: str
+    include_interior_points: bool = False
+
+
+@dataclass
 class Output:
     """
     Definition of the output dataset that will be created by the dataset generation, you should
@@ -334,12 +366,19 @@ class Output:
     splitting: Splitting
         Defines the splits of the dataset (e.g. train, test, validation), the dimension to split
         the dataset along, and optionally the statistics to compute for each split.
+
+    domain_cropping: ConvexHullCropping
+        Defines the method applied for cropping the spatial domain before writing
+        the transformed output dataset. This is typically used when you want to
+        create a dataset to provide data in a boundary around a limited-area
+        domain.
     """
 
     variables: Dict[str, List[str]]
     coord_ranges: Dict[str, Range] = field(default_factory=dict)
     chunking: Dict[str, int] = field(default_factory=dict)
     splitting: Optional[Splitting] = None
+    domain_cropping: Optional[ConvexHullCropping] = None
 
 
 @dataclass

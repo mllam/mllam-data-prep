@@ -1,32 +1,19 @@
-import datetime
+import warnings
 
+import numpy as np
 import pandas as pd
 
-from ..config import Range
+
+def to_timestamp(s):
+    if isinstance(s, str):
+        return pd.Timestamp(s)
+    return s
 
 
-def _normalize_slice_startstop(s):
-    if isinstance(s, pd.Timestamp):
-        return s
-    elif isinstance(s, str):
-        try:
-            return pd.Timestamp(s)
-        except ValueError:
-            return s
-    else:
-        return s
-
-
-def _normalize_slice_step(s):
-    if isinstance(s, pd.Timedelta):
-        return s
-    elif isinstance(s, str):
-        try:
-            return pd.to_timedelta(s)
-        except ValueError:
-            return s
-    else:
-        return s
+def to_timedelta(s):
+    if isinstance(s, str):
+        return np.timedelta64(pd.to_timedelta(s))
+    return s
 
 
 def select_by_kwargs(ds, **coord_ranges):
@@ -56,64 +43,44 @@ def select_by_kwargs(ds, **coord_ranges):
     """
 
     for coord, selection in coord_ranges.items():
-        if coord not in ds.coords:
-            raise ValueError(f"Coordinate {coord} not found in dataset")
-        if isinstance(selection, Range):
-            if selection.start is None and selection.end is None:
-                raise ValueError(
-                    f"Selection for coordinate {coord} must have either 'start' and 'end' given"
-                )
-            sel_start = _normalize_slice_startstop(selection.start)
-            sel_end = _normalize_slice_startstop(selection.end)
-            sel_step = _normalize_slice_step(selection.step)
+        sel_start = selection.start
+        sel_end = selection.end
+        sel_step = selection.step
 
-            assert sel_start != sel_end, "Start and end cannot be the same"
+        if coord == "time":
+            sel_start = to_timestamp(selection.start)
+            sel_end = to_timestamp(selection.end)
+            sel_step = get_time_step(sel_step, ds)
 
-            # we don't select with the step size for now, but simply check (below) that
-            # the step size in the data is the same as the requested step size
-            ds = ds.sel({coord: slice(sel_start, sel_end)})
+        assert sel_start != sel_end, "Start and end cannot be the same"
 
-            if coord == "time":
-                check_point_in_dataset(coord, sel_start, ds)
-                check_point_in_dataset(coord, sel_end, ds)
-                if sel_step is not None:
-                    check_step(sel_step, coord, ds)
+        check_selection(ds, coord, sel_start, sel_end)
+        ds = ds.sel({coord: slice(sel_start, sel_end, sel_step)})
 
-            assert (
-                len(ds[coord]) > 0
-            ), f"You have selected an empty range {sel_start}:{sel_end} for coordinate {coord}"
+        assert (
+            len(ds[coord]) > 0
+        ), f"You have selected an empty range {sel_start}:{sel_end} for coordinate {coord}"
 
-        elif isinstance(selection, list):
-            ds = ds.sel({coord: selection})
-        else:
-            raise NotImplementedError(
-                f"Selection for coordinate {coord} must be a list or a dict"
-            )
     return ds
 
 
-def check_point_in_dataset(coord, point, ds):
-    """
-    check that the requested point is in the data.
-    """
-    if point is not None and point not in ds[coord].values:
+def get_time_step(sel_step, ds):
+    if sel_step is None:
+        return None
+
+    dataset_timedelta = ds.time[1] - ds.time[0]
+    sel_timedelta = to_timedelta(sel_step)
+    step = sel_timedelta / dataset_timedelta
+    if step % 1 != 0:
         raise ValueError(
-            f"Provided value for coordinate {coord} ({point}) is not in the data."
+            f"The chosen stepsize {sel_step} is not multiple of the stepsize in the dataset {dataset_timedelta}"
         )
 
+    return int(step)
 
-def check_step(sel_step, coord, ds):
-    """
-    check that the step requested is exactly what the data has
-    """
-    all_steps = ds[coord].diff(dim=coord).values
-    first_step = all_steps[0].astype("timedelta64[s]").astype(datetime.timedelta)
 
-    if not all(all_steps[0] == all_steps):
-        raise ValueError(
-            f"Step size for coordinate {coord} is not constant: {all_steps}"
-        )
-    if sel_step != first_step:
-        raise ValueError(
-            f"Step size for coordinate {coord} is not the same as requested: {first_step} != {sel_step}"
+def check_selection(ds, coord, sel_start, sel_end):
+    if ds[coord].values.min() < sel_start or ds[coord].values.max() > sel_end:
+        warnings.warn(
+            f"\nChosen slice exceeds the range of {coord} in the dataset.\n    Dataset span: [ {ds[coord].values.min()} : {ds[coord].values.max()} ]\n    Chosen slice: [ {sel_start} : {sel_end} ]\n"
         )

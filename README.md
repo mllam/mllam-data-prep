@@ -385,7 +385,7 @@ The `inputs` section defines the source datasets to extract data from. Each sour
 
 - `path`: the path to the source dataset. This can be a local path or a URL to e.g. a zarr dataset or netCDF file, anything that can be read by `xarray.open_dataset(...)`.
 - `dims`: the dimensions that the source dataset is expected to have. This is used to check that the source dataset has the expected dimensions and also makes it clearer in the config file what the dimensions of the source dataset are.
-- `variables`: selects which variables to extract from the source dataset. This may either be a list of variable names, or a dictionary where each key is the variable name and the value defines a dictionary of coordinates to do selection on. When doing selection you may also optionally define the units of the variable to check that the units of the variable match the units of the variable in the model architecture.
+- `variables`: selects which variables to extract from the source dataset. This may either be a list of variable names, or a dictionary where each key is the variable name and the value defines a dictionary of coordinates to do selection on. When doing selection you may also optionally define the units of the variable to check that the units of the variable match the units of the variable in the model architecture. See also the 'Selection of variables by coordinates' section for more details on the type of selections allowed.
 - `target_output_variable`: the variable in the model architecture that the source dataset should be mapped to.
 - `dim_mapping`: defines how the dimensions of the source dataset should be mapped to the dimensions of the model architecture. This is done by defining a method to apply to each dimension. The methods are:
   - `rename`: simply rename the dimension to the new name
@@ -398,6 +398,97 @@ The `inputs` section defines the source datasets to extract data from. Each sour
     - `varable` : the variable to extract the coordinate from
         `start`: start value of the variable
         `end`: end value of the variable
+
+#### Selection of variables by coordinates
+When selecting variables to extract from the source dataset it is possible to also specify a selection on coordinates. Currently it is only allowed to, within one input dataset, specify the variables to extract with a selection on coordinates **if the coordinates are for the same levels**, as illustrated in the example config [example.danra.yaml](example.danra.yaml), and also reproduced below, for the selection of `u` and `v` at 100 m height.
+```yaml
+    variables:
+      u:
+        altitude:
+          values: [100,]
+          units: m
+      v:
+        altitude:
+          values: [100, ]
+          units: m
+```
+
+Currently, support for the selection of variables from different coordinate levels within one input dataset is not implemented. This means that the following selections are currently not allowed within the same input dataset
+```yaml
+    variables:
+      z:
+        altitude:
+          values: [100, 50]
+          units: m
+      t:
+        altitude:
+          values: [100, ]
+          units: m
+```
+and
+```yaml
+    variables:
+      z:
+        altitude:
+          values: [50]
+          units: m
+      t:
+        altitude:
+          values: [100, ]
+          units: m
+```
+
+Instead you need to split the selection across multiple input datasets. For the first example, you need have two separate input datasets, where you could split it in two separate ways. You could either do
+```yaml
+inputs:
+  danra_height_levels_100m:
+    path: https://object-store.os-api.cci1.ecmwf.int/mllam-testdata/danra_cropped/v0.2.0/height_levels.zarr
+    dims: [time, x, y, altitude]
+    variables:
+      z:
+        altitude:
+          values: [100,]
+          units: m
+      t:
+        altitude:
+          values: [100, ]
+          units: m
+    ...
+
+  danra_height_levels_50m:
+    path: https://object-store.os-api.cci1.ecmwf.int/mllam-testdata/danra_cropped/v0.2.0/height_levels.zarr
+    dims: [time, x, y, altitude]
+    variables:
+      z:
+        altitude:
+          values: [50,]
+          units: m
+    ...
+```
+or
+```yaml
+inputs:
+  danra_height_levels_z:
+    path: https://object-store.os-api.cci1.ecmwf.int/mllam-testdata/danra_cropped/v0.2.0/height_levels.zarr
+    dims: [time, x, y, altitude]
+    variables:
+      z:
+        altitude:
+          values: [100, 50,]
+          units: m
+    ...
+
+  danra_height_levels_t:
+    path: https://object-store.os-api.cci1.ecmwf.int/mllam-testdata/danra_cropped/v0.2.0/height_levels.zarr
+    dims: [time, x, y, altitude]
+    variables:
+      t:
+        altitude:
+          values: [100,]
+          units: m
+    ...
+```
+Similarly, you need to split the selection in the second example across two separate input datasets.
 
 #### Derived Variables
 Variables that are not part of the source dataset but can be derived from variables in the source dataset can also be included. They should be defined in their own section, called `derived_variables` as illustrated in the example config above and in the example config file [example.danra.yaml](example.danra.yaml).

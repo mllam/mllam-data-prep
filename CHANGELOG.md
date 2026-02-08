@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## unreleased
+
+### Changed
+- consider full time information for derived calculation of TOA radiation [\#84](https://github.com/mllam/mllam-data-prep/pull/84) @observingClouds
+
 ## [v0.7.0](https://github.com/mllam/mllam-data-prep/release/tag/v0.7.0)
 
 [All changes](https://github.com/mllam/mllam-data-prep/compare/v0.7.0...v0.6.1)

@@ -105,10 +105,17 @@ def _merge_dataarrays_by_target(dataarrays_by_target):
         ds = xr.merge(dataarrays, join="exact")
     except ValueError as ex:
         if ex.args[0].startswith("cannot align objects with join='exact'"):
+
+            def _summarize(da):
+                dims = ", ".join([f"{k}: {v}" for k, v in da.sizes.items()])
+                return f"{da.name} ({dims})\n{da.coords}"
+
+            coord_summaries = "\n".join([_summarize(da) for da in dataarrays])
             raise InvalidConfigException(
-                f"Couldn't merge together the dataarrays for all targets ({', '.join(dataarrays_by_target.keys())})"
-                f" This is likely because the dataarrays have different dimensions or coordinates."
-                " Maybe you need to give the 'feature' dimension a unique name for each target variable?"
+                f"Couldn't merge together the dataarrays for all targets ({', '.join(dataarrays_by_target.keys())}). "
+                "This is likely because the dataarrays have different dimensions or coordinates. "
+                f"Dataarray coords:\n{coord_summaries}"
+                "Maybe you need to give the 'feature' dimension a unique name for each target variable?"
             ) from ex
         else:
             raise ex

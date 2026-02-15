@@ -1,7 +1,10 @@
+import datetime
+
 import pytest
 from dataclass_wizard.errors import MissingFields, UnknownJSONKey
 
 import mllam_data_prep as mdp
+from mllam_data_prep import config
 
 INVALID_EXTRA_FIELDS_CONFIG_YAML = """
 schema_version: v0.1.0
@@ -110,6 +113,16 @@ inputs:
 """
 
 
+def test_can_load_config_with_datetime_object_in_time_range():
+    fp = "tests/resources/sliced_example.danra.yaml"
+    mdp.Config.from_yaml_file(fp)
+
+
+def test_can_load_config_with_datetime_string_in_time_range():
+    fp = "tests/resources/sliced_example_with_datetime_strings.danra.yaml"
+    mdp.Config.from_yaml_file(fp)
+
+
 def test_get_config_nested():
     config = mdp.Config.from_yaml(VALID_EXAMPLE_CONFIG_YAML)
 
@@ -119,6 +132,14 @@ def test_get_config_nested():
         assert input_config.target_output_variable is not None
         with pytest.raises(AttributeError):
             input_config.foobarfield
+
+
+def test_range_accepts_datetime():
+    start = datetime.datetime(1990, 9, 3, 0, 0)
+    end = datetime.datetime(1990, 9, 4, 0, 0)
+    step = "PT3H"
+
+    config.Range(start=start, end=end, step=step)
 
 
 def test_config_roundtrip():

@@ -54,8 +54,8 @@ inputs:
         start: -50000
         end: -40000
       time:
-        start: 1990-09-03T00:00
-        end: 1990-09-09T00:00
-        step: PT3H
+        start: "1990-09-03T00:00"
+        end: "1990-09-09T00:00"
+        step: "PT3H"
 
     target_output_variable: state

@@ -28,6 +28,7 @@ def distributed():
     "args",
     [
         ["example.danra.yaml", "--dask-distributed-local-core-fraction", "1.0"],
+        ["example.danra.yaml", "--dask-distributed-local-core-fraction", "0.5"],
         ["example.danra.yaml", "--dask-distributed-local-core-fraction", "0.0"],
         ["example.danra.yaml"],
     ],

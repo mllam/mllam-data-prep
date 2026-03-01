@@ -182,9 +182,8 @@ def create_dataset(config: Config):
         if input_config.coord_ranges is not None:
             ds_input = selection.select_by_kwargs(ds_input, **input_config.coord_ranges)
 
-        # Initialize the output dataset
-        ds = xr.Dataset()
-        ds.attrs.update(ds_input.attrs)
+        # Initialize independent output data storage dict
+        ds = {}
 
         if selected_variables:
             logger.info(f"Extracting selected variables from dataset {dataset_name}")
@@ -213,8 +212,9 @@ def create_dataset(config: Config):
                     target_dims=expected_input_var_dims,
                 )
 
+        # Verify attributes on the intact input dataset
         _check_dataset_attributes(
-            ds=ds,
+            ds=ds_input,
             expected_attributes=expected_input_attributes,
             dataset_name=dataset_name,
         )

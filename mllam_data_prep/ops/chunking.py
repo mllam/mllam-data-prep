@@ -1,11 +1,14 @@
+from typing import Dict
+
 import numpy as np
+import xarray as xr
 from loguru import logger
 
 # Max chunk size warning
 CHUNK_MAX_SIZE_WARNING = 1 * 1024**3  # 1GB
 
 
-def check_chunk_size(ds, chunks):
+def check_chunk_size(ds: xr.Dataset, chunks: Dict[str, int]) -> None:
     """
     Check the chunk size and warn if it exceeds CHUNK_MAX_SIZE_WARNING.
 
@@ -44,7 +47,7 @@ def check_chunk_size(ds, chunks):
             )
 
 
-def chunk_dataset(ds, chunks):
+def chunk_dataset(ds: xr.Dataset, chunks: Dict[str, int]) -> xr.Dataset:
     """
     Check the chunk size and chunk the dataset.
 

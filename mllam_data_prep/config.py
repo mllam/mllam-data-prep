@@ -12,7 +12,7 @@ class InvalidConfigException(Exception):
     pass
 
 
-def validate_config(config_inputs):
+def validate_config(config_inputs: Dict[str, "InputDataset"]) -> None:
     """
     Validate that, in the config:
     - either `variables` or `derived_variables` are present in the config

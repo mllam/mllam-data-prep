@@ -26,7 +26,7 @@ python -m pip install mllam-data-prep[dask-distributed]
 
 ## Developing `mllam-data-prep`
 
-To work on developing `mllam-data-prep` it easiest to install and manage the dependencies with [pdm](https://pdm.fming.dev/). To get started clone your fork of [the main repo](https://github.com/mllam/mllam-data-prep) locally:
+To work on developing `mllam-data-prep` it is easiest to install and manage the dependencies with [pdm](https://pdm.fming.dev/). To get started clone your fork of [the main repo](https://github.com/mllam/mllam-data-prep) locally:
 
 ```bash
 git clone https://github.com/<your-github-username>/mllam-data-prep
@@ -41,7 +41,7 @@ pdm use --venv in-project
 pdm install
 ```
 
-All the linting is handelled by `pre-commit` which can be setup to automatically be run on each `git commit` by installing the git commit hook:
+All the linting is handled by `pre-commit` which can be setup to automatically be run on each `git commit` by installing the git commit hook:
 
 ```bash
 pdm run pre-commit install
@@ -93,7 +93,7 @@ When you run the above command the console will print a URL to the dask
 dashboard, which you can open in a browser to monitor the progress of the
 dataset creation (and see the memory usage of the workers).
 
-![example of using mllam-data-prep with dask.distrubted for parallel processing](docs/using_dask_distributed.png)
+![example of using mllam-data-prep with dask.distributed for parallel processing](docs/using_dask_distributed.png)
 
 ### Usage as a python module
 
@@ -395,7 +395,7 @@ The `inputs` section defines the source datasets to extract data from. Each sour
   - `function`: the function used to derive a variable. This should be a string with the full namespace of the function, e.g. `mllam_data_prep.ops.derived_variables.physical_field.calculate_toa_radiation`.
   - `kwargs`: arguments to `function`. This is a dictionary where each key is the named argument to `function` and each value is the input to the function. Here we distinguish between values to be extracted/selected from the input dataset and values supplied by the users themselves. Arguments with values to be extracted from the input dataset need to be prefixed with "ds_input." to distinguish them from other arguments. See the 'Derived Variables' section for more details.
   - `coord_ranges`
-    - `varable` : the variable to extract the coordinate from
+    - `variable` : the variable to extract the coordinate from
         `start`: start value of the variable
         `end`: end value of the variable
 
@@ -439,4 +439,4 @@ Currently, the following derived variables are included as part of `mllam-data-p
 
 The schema version of the configuration file is defined by the `schema_version` attribute at the top of the configuration file. This is used to keep track of changes to the configuration file format. The schema version is used to check that the configuration file is compatible with the version of `mllam-data-prep` that you are using. If the schema version of the configuration file is not compatible with the version of `mllam-data-prep` that you are using you will get an error message telling you that the schema version is not compatible.
 
-The schema version is updated whenever the configuration format changes, with the new schema version matching the minimum version of `mllam-data-prep` that is required to use the new configuration format. As `mllam-data-prep` is still in rapid development (and hasn't reached version `v1.0.0` yet) we unfortunately make no gaurantee about backward compatibility. However, the [CHANGELOG.md](CHANGELOG.md) will always contain migration instructions when the config format changes.
+The schema version is updated whenever the configuration format changes, with the new schema version matching the minimum version of `mllam-data-prep` that is required to use the new configuration format. As `mllam-data-prep` is still in rapid development (and hasn't reached version `v1.0.0` yet) we unfortunately make no guarantee about backward compatibility. However, the [CHANGELOG.md](CHANGELOG.md) will always contain migration instructions when the config format changes.

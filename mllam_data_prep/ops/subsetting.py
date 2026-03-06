@@ -17,7 +17,7 @@ def extract_variable(ds, var_name, coords_to_sample=dict()):
         coordinates
 
     Returns
-    ----------
+    -------
     da: xr.DataArray
         Extracted variable (subsetted along the specified coordinates)
     """

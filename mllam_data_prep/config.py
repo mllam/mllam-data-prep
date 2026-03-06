@@ -22,9 +22,12 @@ def validate_config(config_inputs):
     Parameters
     ----------
     config_inputs: Dict[str, InputDataset]
+        Dictionary mapping input dataset names to their configuration
 
     Returns
     -------
+    None
+        Raises InvalidConfigException if validation fails
     """
 
     for input_dataset_name, input_dataset in config_inputs.items():

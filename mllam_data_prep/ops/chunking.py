@@ -19,8 +19,8 @@ def check_chunk_size(ds, chunks):
 
     Returns
     -------
-    ds: xr.Dataset
-        Dataset with chunking applied
+    None
+        Logs a warning if chunk size exceeds CHUNK_MAX_SIZE_WARNING
     """
 
     for var_name, var_data in ds.data_vars.items():

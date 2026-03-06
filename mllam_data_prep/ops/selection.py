@@ -94,7 +94,21 @@ def select_by_kwargs(ds, **coord_ranges):
 
 def check_point_in_dataset(coord, point, ds):
     """
-    check that the requested point is in the data.
+    Check that the requested point is in the data.
+
+    Parameters
+    ----------
+    coord : str
+        Name of the coordinate to check
+    point : Any
+        The point value to check for in the coordinate
+    ds : xr.Dataset
+        Dataset containing the coordinate to check
+
+    Returns
+    -------
+    None
+        Raises ValueError if point is not found in the coordinate
     """
     if point is not None and point not in ds[coord].values:
         raise ValueError(
@@ -104,7 +118,21 @@ def check_point_in_dataset(coord, point, ds):
 
 def check_step(sel_step, coord, ds):
     """
-    check that the step requested is exactly what the data has
+    Check that the step requested is exactly what the data has.
+
+    Parameters
+    ----------
+    sel_step : pd.Timedelta or datetime.timedelta
+        The requested step size
+    coord : str
+        Name of the coordinate to check
+    ds : xr.Dataset
+        Dataset containing the coordinate to check
+
+    Returns
+    -------
+    None
+        Raises ValueError if step size is not constant or doesn't match requested step
     """
     all_steps = ds[coord].diff(dim=coord).values
     first_step = all_steps[0].astype("timedelta64[s]").astype(datetime.timedelta)

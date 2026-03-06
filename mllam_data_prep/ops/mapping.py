@@ -45,8 +45,6 @@ def map_dims_and_variables(ds, dim_mapping, expected_input_var_dims):
     dim_mapping : dict
         The mapping of the input dimensions to the architecture
         dimensions.
-    arch_dim : str
-        The name of the architecture dimension to map to
     expected_input_var_dims : list
         The list of dimensions that each variable in the input dataset
         should have
@@ -126,7 +124,7 @@ def map_dims_and_variables(ds, dim_mapping, expected_input_var_dims):
                 combined_dim_name=arch_dim,
             )
         else:
-            # TODO: this will have to involved xrarrays MultiIndex, but lets leave
+            # TODO: this will have to involve xarray's MultiIndex, but let's leave
             # this until we need it
             raise NotImplementedError(len(dims))
         # set a flag we can use later to identify which coordinate the variables

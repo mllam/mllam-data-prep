@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - consider full time information for derived calculation of TOA radiation [\#84](https://github.com/mllam/mllam-data-prep/pull/84) @observingClouds
 
 ### Fixes
+- fix bug where `calc_stats` mutates dataset in loop causing incorrect `diff_std` computation [\#102](https://github.com/mllam/mllam-data-prep/issues/102) @RajdeepKushwaha5
 - fix bug where coordinate selection of an unshared dimension isn't applied to subsequent ouput variables when an output variable without this dimension is processed before the others [\#90](https://github.com/mllam/mllam-data-prep/pull/90) @zweihuehner & @leifdenby
 
 ## [v0.7.0](https://github.com/mllam/mllam-data-prep/release/tag/v0.7.0)

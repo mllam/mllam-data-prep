@@ -28,7 +28,7 @@ def _get_latlon_coords(da: xr.DataArray) -> tuple:
         raise Exception("Could not find lat/lon coordinates in DataArray.")
 
 
-def create_convex_hull_mask(ds: xr.Dataset, ds_reference: xr.Dataset) -> xr.DataArray:
+def create_convex_hull_mask(ds: xr.Dataset, ds_reference: xr.Dataset) -> Tuple[xr.DataArray, xr.Dataset]:
     """
     Create a grid-point mask for lat/lon coordinates in `da` indicating which
     points are interior to the convex hull of the lat/lon coordinates of
@@ -334,9 +334,9 @@ def crop_with_convex_hull(
     if margin_thickness == 0.0:
         if not include_interior_points:
             raise Exception(
-                "With no margin and exclude_interior=False, all points would be excluded."
+                "With no margin and include_interior_points=False, all points would be excluded."
             )
-        da_mask = create_convex_hull_mask(ds=ds, ds_reference=ds_reference)
+        da_mask, _ = create_convex_hull_mask(ds=ds, ds_reference=ds_reference)
     else:
         da_min_dist_to_ref, da_ch_mask = distance_to_convex_hull_boundary(
             ds,

@@ -4,6 +4,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+import xarray as xr
 
 import mllam_data_prep as mdp
 import mllam_data_prep.config as mdp_config
@@ -208,3 +209,63 @@ def test_crop_era5_with_generated_lam_domain():
         assert var in ds_cropped.data_vars
         for coord in ds_uncropped[var].coords:
             assert coord in ds_cropped[var].coords
+
+
+def test_crop_with_zero_margin_thickness():
+    """
+    Regression test for https://github.com/mllam/mllam-data-prep/issues/99
+    crop_with_convex_hull should work when margin_thickness=0.0 with
+    include_interior_points=True, returning only the interior points.
+    """
+    tmpdir = tempfile.TemporaryDirectory()
+    domain_size = 500 * 1.0e3
+    N = 50
+    config_lam = testdata.create_input_datasets_and_config(
+        identifier="lam",
+        data_categories=["state"],
+        tmpdir=tmpdir,
+        xlim=[-domain_size / 2.0, domain_size / 2.0],
+        ylim=[-domain_size / 2.0, domain_size / 2.0],
+        nx=N,
+        ny=N,
+        add_latlon=True,
+    )
+    config_global = testdata.create_input_datasets_and_config(
+        identifier="global",
+        data_categories=["state"],
+        tmpdir=tmpdir,
+        xlim=[-domain_size, domain_size],
+        ylim=[-domain_size, domain_size],
+        nx=N // 2,
+        ny=N // 2,
+        add_latlon=True,
+    )
+
+    ds_lam = mdp.create_dataset(config=config_lam)
+    ds_global = mdp.create_dataset(config=config_global)
+
+    # this previously crashed with AttributeError: 'tuple' object has no
+    # attribute 'dims' because create_convex_hull_mask returns a tuple
+    ds_cropped = cropping.crop_with_convex_hull(
+        ds=ds_global,
+        ds_reference=ds_lam,
+        margin_thickness=0.0,
+        include_interior_points=True,
+    )
+
+    assert isinstance(ds_cropped, xr.Dataset)
+    # with zero margin and interior points included, the result should have
+    # fewer points than the full global domain
+    assert ds_cropped.grid_index.size < ds_global.grid_index.size
+    assert ds_cropped.grid_index.size > 0
+
+    # also test the return_mask path
+    _, da_mask = cropping.crop_with_convex_hull(
+        ds=ds_global,
+        ds_reference=ds_lam,
+        margin_thickness=0.0,
+        include_interior_points=True,
+        return_mask=True,
+    )
+    assert isinstance(da_mask, xr.DataArray)
+    assert da_mask.dtype == bool

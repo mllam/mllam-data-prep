@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased](https://github.com/mllam/mllam-data-prep/compare/v0.7.0...HEAD)
 
+### Changed
+- consider full time information for derived calculation of TOA radiation [\#84](https://github.com/mllam/mllam-data-prep/pull/84) @observingClouds
+
 ### Fixes
 - fix bug where coordinate selection of an unshared dimension isn't applied to subsequent ouput variables when an output variable without this dimension is processed before the others [\#90](https://github.com/mllam/mllam-data-prep/pull/90) @zweihuehner & @leifdenby
 

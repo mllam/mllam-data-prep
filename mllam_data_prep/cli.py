@@ -62,8 +62,10 @@ def call(args=None):
         # get the number of system cores
         n_system_cores = os.cpu_count()
         # compute the number of cores to use, using ceil to ensure at least 1
-        # worker is used even on single-core machines (e.g. standard GitHub CI)
-        n_local_cores = math.ceil(args.dask_distributed_local_core_fraction * n_system_cores)
+        # worker is used even on single-core machines
+        n_local_cores = math.ceil(
+            args.dask_distributed_local_core_fraction * n_system_cores
+        )
         # get the total system memory
         total_memory = psutil.virtual_memory().total
         # compute the memory per worker

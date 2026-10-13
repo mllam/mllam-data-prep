@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixes
 - fix bug where coordinate selection of an unshared dimension isn't applied to subsequent ouput variables when an output variable without this dimension is processed before the others [\#90](https://github.com/mllam/mllam-data-prep/pull/90) @zweihuehner & @leifdenby
 - ensure at least one dask.distributed worker is used when the requested core fraction rounds down to zero cores (e.g. on single-core machines) [\#91](https://github.com/mllam/mllam-data-prep/pull/91) @Mani212005
+- pin `dataclass-wizard<1.0` since v1.0.0 no longer exposes `dataclass_wizard.YAMLWizard`, which broke importing `mllam_data_prep` [\#109](https://github.com/mllam/mllam-data-prep/pull/109) @leifdenby
 
 ## [v0.7.0](https://github.com/mllam/mllam-data-prep/release/tag/v0.7.0)
 

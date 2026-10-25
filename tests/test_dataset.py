@@ -1,8 +1,10 @@
 """Tests for the output dataset created by `mllam-data-prep`."""
 import pytest
+import xarray as xr
 import yaml
 
 import mllam_data_prep as mdp
+from mllam_data_prep.create_dataset import _merge_dataarrays_by_target
 
 with open("example.danra.yaml", "r") as file:
     BASE_CONFIG = file.read()
@@ -162,6 +164,49 @@ def update_config(config: str, update: str):
     modified_config = mdp.Config.from_dict(modified_config)
 
     return modified_config
+
+
+def test_merge_error_includes_dataarray_sizes_by_target():
+    state = xr.DataArray(
+        [[[1], [2]]],
+        dims=("state_feature", "time", "grid_index"),
+        coords={
+            "state_feature": ["z"],
+            "time": [0, 1],
+            "grid_index": [0],
+        },
+        name="z",
+        attrs={
+            "source_dataset": "state_source",
+            "variables_mapping_dim": "state_feature",
+        },
+    )
+    forcing = xr.DataArray(
+        [[[1], [2], [3]]],
+        dims=("forcing_feature", "time", "grid_index"),
+        coords={
+            "forcing_feature": ["toa_radiation"],
+            "time": [0, 1, 2],
+            "grid_index": [0],
+        },
+        name="toa_radiation",
+        attrs={
+            "source_dataset": "forcing_source",
+            "variables_mapping_dim": "forcing_feature",
+        },
+    )
+
+    with pytest.raises(mdp.InvalidConfigException) as exc_info:
+        _merge_dataarrays_by_target({"state": [state], "forcing": [forcing]})
+
+    message = str(exc_info.value)
+    assert "Dataarray sizes by target:" in message
+    assert "state:" in message
+    assert "  1. z: state_feature=1, time=2, grid_index=1" in message
+    assert "forcing:" in message
+    assert (
+        "  1. toa_radiation: forcing_feature=1, time=3, grid_index=1" in message
+    )
 
 
 @pytest.mark.parametrize(

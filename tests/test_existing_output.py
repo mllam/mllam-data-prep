@@ -196,3 +196,51 @@ def test_create_dataset_resolves_relative_interior_config_path(
     mock_load_config.assert_called_once_with(
         file=interior_path.resolve()
     )
+
+
+
+def test_create_dataset_loads_interior_config_relative_to_parent_file(
+    mock_config, tmp_path, monkeypatch
+):
+    config_dir = tmp_path / "configs"
+    config_dir.mkdir()
+
+    other_dir = tmp_path / "other"
+    other_dir.mkdir()
+
+    interior_path = config_dir / "interior.yaml"
+    interior_config = mdp_config.Config(
+        schema_version="v0.6.0",
+        dataset_version="v1.0.0",
+        inputs={},
+        output=mdp_config.Output(variables={}),
+    )
+    interior_config.to_yaml_file(interior_path)
+
+    mock_config.output.domain_cropping = mdp_config.ConvexHullCropping(
+        margin_width_degrees=1.0,
+        interior_dataset_config_path="interior.yaml",
+    )
+    parent_path = config_dir / "parent.yaml"
+    mock_config.to_yaml_file(parent_path)
+
+    monkeypatch.chdir(other_dir)
+
+    with patch.object(
+        create_dataset_module,
+        "load_input_dataset",
+        return_value=xr.Dataset(),
+    ), patch.object(
+        create_dataset_module,
+        "crop_with_convex_hull",
+        side_effect=RuntimeError("stop after interior config loaded"),
+    ) as mock_crop:
+        with pytest.raises(
+            RuntimeError, match="stop after interior config loaded"
+        ):
+            create_dataset_module.create_dataset(
+                config=mdp_config.Config.from_yaml_file(parent_path),
+                config_dir=parent_path.parent,
+            )
+
+    mock_crop.assert_called_once()

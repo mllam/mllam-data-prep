@@ -122,7 +122,10 @@ def _merge_dataarrays_by_target(dataarrays_by_target):
     return ds
 
 
-def create_dataset(config: Config):
+def create_dataset(
+    config: Config,
+    config_dir: Optional[Path] = None,
+):
     """
     Create a dataset from the input datasets specified in the config file.
 
@@ -149,14 +152,26 @@ def create_dataset(config: Config):
             "update the schema version used in your config to v0.5.0."
         )
 
-    # parse the interior domain config already here if domain cropping is
-    # enabled, so that we can alert the user quickly if the config is invalid
+    # Parse the interior domain config early if domain cropping is enabled,
+    # so that we can alert the user quickly if the config is invalid.
     ds_interior_domain = None
+    interior_config_dir = None
+    config_interior_domain = None
+
     if config.output.domain_cropping is not None:
-        config_interior_domain = Config.from_yaml_file(
-            file=config.output.domain_cropping.interior_dataset_config_path
+        interior_config_path = Path(
+            config.output.domain_cropping.interior_dataset_config_path
         )
 
+        if not interior_config_path.is_absolute() and config_dir is not None:
+            interior_config_path = config_dir / interior_config_path
+
+        interior_config_path = interior_config_path.resolve()
+
+        config_interior_domain = Config.from_yaml_file(
+            file=interior_config_path
+        )
+        interior_config_dir = interior_config_path.parent
     output_config = config.output
     output_coord_ranges = output_config.coord_ranges
     chunking_config = config.output.chunking
@@ -319,7 +334,11 @@ def create_dataset(config: Config):
 
     if config.output.domain_cropping is not None:
         domain_cropping = config.output.domain_cropping
-        ds_interior_domain = create_dataset(config=config_interior_domain)
+
+        ds_interior_domain = create_dataset(
+            config=config_interior_domain,
+            config_dir=interior_config_dir,
+        )
         logger.info(
             f"Cropping dataset using convex hull "
             f"({'including' if domain_cropping.include_interior_points else 'excluding'} interior points "
@@ -436,7 +455,10 @@ def create_dataset_zarr(
                 f"Unsupported overwrite option {overwrite}. Options are 'always', 'never', or 'on_config_change'"
             )
 
-    ds = create_dataset(config=config)
+    ds = create_dataset(
+        config=config,
+        config_dir=Path(fp_config).resolve().parent,
+    )
 
     logger.info("Writing dataset to zarr")
 

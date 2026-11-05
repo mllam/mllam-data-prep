@@ -6,13 +6,13 @@ import xarray as xr
 from spherical_geometry.polygon import SphericalPolygon
 
 
-def _get_latlon_coords(da: xr.DataArray) -> tuple:
+def _get_latlon_coords(da: Union[xr.Dataset, xr.DataArray]) -> tuple:
     """
-    Get the latlon coordinates of a DataArray.
+    Get the latlon coordinates of a Dataset or DataArray.
 
     Parameters
     ----------
-    da : xarray.DataArray
+    da : xarray.Dataset or xarray.DataArray
         The data.
 
     Returns
@@ -25,7 +25,7 @@ def _get_latlon_coords(da: xr.DataArray) -> tuple:
     elif "lat" in da.coords and "lon" in da.coords:
         return (da.lon, da.lat)
     else:
-        raise Exception("Could not find lat/lon coordinates in DataArray.")
+        raise Exception("Could not find lat/lon coordinates.")
 
 
 def create_convex_hull_mask(ds: xr.Dataset, ds_reference: xr.Dataset) -> xr.DataArray:
@@ -53,8 +53,17 @@ def create_convex_hull_mask(ds: xr.Dataset, ds_reference: xr.Dataset) -> xr.Data
     da_lon, da_lat = _get_latlon_coords(ds)
     da_lon_ref, da_lat_ref = _get_latlon_coords(ds_reference)
 
-    assert da_lat.dims == da_lon.dims
-    assert da_lat_ref.dims == da_lon_ref.dims
+    if da_lat.dims != da_lon.dims:
+        raise ValueError(
+            "Latitude and longitude coordinates in ds must have matching "
+            f"dimensions, got {da_lat.dims!r} and {da_lon.dims!r}."
+        )
+    if da_lat_ref.dims != da_lon_ref.dims:
+        raise ValueError(
+            "Latitude and longitude coordinates in ds_reference must have "
+            f"matching dimensions, got {da_lat_ref.dims!r} and "
+            f"{da_lon_ref.dims!r}."
+        )
 
     # latlon to (x, y, z) on unit sphere
     da_ref_xyz = _latlon_to_unit_sphere_xyz(da_lat=da_lat_ref, da_lon=da_lon_ref)
@@ -65,9 +74,9 @@ def create_convex_hull_mask(ds: xr.Dataset, ds_reference: xr.Dataset) -> xr.Data
     da_interior_mask = xr.apply_ufunc(
         chull_lam.contains_lonlat, da_lon.load(), da_lat.load(), vectorize=True
     ).astype(bool)
-    da_interior_mask.attrs[
-        "long_name"
-    ] = "contained in convex hull of source dataset (da_ref)"
+    da_interior_mask.attrs["long_name"] = (
+        "contained in convex hull of source dataset (da_ref)"
+    )
 
     # Get points at edge of convex hull
     chull_lam_lon, chull_lam_lat = list(chull_lam.to_lonlat())[0]
@@ -254,9 +263,9 @@ def distance_to_convex_hull_boundary(
     da_mindist_to_ref = xr.DataArray(
         mindist_to_ref, coords=ds_exterior_lat.coords, dims=ds_exterior_lat.dims
     )
-    da_mindist_to_ref.attrs[
-        "long_name"
-    ] = "minimum distance to convex hull boundary of reference dataset"
+    da_mindist_to_ref.attrs["long_name"] = (
+        "minimum distance to convex hull boundary of reference dataset"
+    )
     da_mindist_to_ref.attrs["units"] = "radians"
 
     if include_convex_hull_mask:

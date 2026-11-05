@@ -1,7 +1,9 @@
 import xarray as xr
 
 
-def stack_variables_as_coord_values(ds, name_format, combined_dim_name):
+def stack_variables_as_coord_values(
+    ds: xr.Dataset, name_format: str, combined_dim_name: str
+) -> xr.DataArray:
     """
     combine all variables in an xr.Dataset into a single xr.DataArray
     by stacking the variables along a new coordinate with the name given
@@ -50,7 +52,12 @@ def stack_variables_as_coord_values(ds, name_format, combined_dim_name):
     return da_combined
 
 
-def stack_variables_by_coord_values(ds, coord, name_format, combined_dim_name):
+def stack_variables_by_coord_values(
+    ds: xr.Dataset,
+    coord: str,
+    name_format: str,
+    combined_dim_name: str,
+) -> xr.DataArray:
     """
     combine all variables in an xr.Dataset on all coordinate values of `coord`
     into a single xr.DataArray

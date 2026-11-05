@@ -1,7 +1,7 @@
 import xarray as xr
 
 
-def load_input_dataset(fp):
+def load_input_dataset(fp: str) -> xr.Dataset:
     """
     Load the dataset
 

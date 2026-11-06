@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixes
 - fix bug where coordinate selection of an unshared dimension isn't applied to subsequent ouput variables when an output variable without this dimension is processed before the others [\#90](https://github.com/mllam/mllam-data-prep/pull/90) @zweihuehner & @leifdenby
 - pin `dataclass-wizard<1.0` since v1.0.0 no longer exposes `dataclass_wizard.YAMLWizard`, which broke importing `mllam_data_prep` [\#109](https://github.com/mllam/mllam-data-prep/pull/109) @leifdenby
+- fix latitude/longitude argument order passed to `_latlon_to_unit_sphere_xyz` in `distance_to_convex_hull_boundary`, which gave wrong distances for asymmetric convex hull domains [\#116](https://github.com/mllam/mllam-data-prep/pull/116) @srijavuppala
 
 ## [v0.7.0](https://github.com/mllam/mllam-data-prep/release/tag/v0.7.0)
 

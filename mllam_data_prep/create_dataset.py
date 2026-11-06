@@ -168,9 +168,7 @@ def create_dataset(
 
         interior_config_path = interior_config_path.resolve()
 
-        config_interior_domain = Config.from_yaml_file(
-            file=interior_config_path
-        )
+        config_interior_domain = Config.from_yaml_file(file=interior_config_path)
         interior_config_dir = interior_config_path.parent
     output_config = config.output
     output_coord_ranges = output_config.coord_ranges
@@ -334,6 +332,8 @@ def create_dataset(
 
     if config.output.domain_cropping is not None:
         domain_cropping = config.output.domain_cropping
+
+        assert config_interior_domain is not None
 
         ds_interior_domain = create_dataset(
             config=config_interior_domain,

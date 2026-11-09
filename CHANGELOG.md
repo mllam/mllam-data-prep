@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixes
 - fix bug where coordinate selection of an unshared dimension isn't applied to subsequent ouput variables when an output variable without this dimension is processed before the others [\#90](https://github.com/mllam/mllam-data-prep/pull/90) @zweihuehner & @leifdenby
 - pin `dataclass-wizard<1.0` since v1.0.0 no longer exposes `dataclass_wizard.YAMLWizard`, which broke importing `mllam_data_prep` [\#109](https://github.com/mllam/mllam-data-prep/pull/109) @leifdenby
+- handle degenerate arcs in `shortest_distance_to_arc()`: identical arc endpoints are treated as a zero-length arc, antipodal endpoints raise a `ValueError`, and query points at the pole of the great circle no longer produce NaNs. Degenerate cases are detected with a tolerance [\#119](https://github.com/mllam/mllam-data-prep/pull/119) @AnushreeKasturi
 
 ## [v0.7.0](https://github.com/mllam/mllam-data-prep/release/tag/v0.7.0)
 

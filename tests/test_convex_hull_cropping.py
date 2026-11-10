@@ -85,6 +85,18 @@ def test_create_convex_hull_mask():
     n_points_margin_region = da_convex_hull_margin_crop.count()
     assert n_points_margin_region < n_outside
 
+    ds_no_margin, da_no_margin_mask = cropping.crop_with_convex_hull(
+        ds=ds_global,
+        ds_reference=ds_lam,
+        margin_thickness=0.0,
+        return_mask=True,
+    )
+
+    np.testing.assert_array_equal(
+        ds_no_margin.grid_index,
+        ds_global.grid_index.where(da_no_margin_mask, drop=True),
+    )
+
 
 @pytest.mark.parametrize("include_interior_points", [True, False])
 def test_create_cropped_dataset(include_interior_points):

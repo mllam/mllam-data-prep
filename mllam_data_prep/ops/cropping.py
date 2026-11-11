@@ -232,9 +232,10 @@ def distance_to_convex_hull_boundary(
     ds_exterior = ds.where(~da_ch_mask, drop=True)
     ds_exterior_lon, ds_exterior_lat = _get_latlon_coords(ds_exterior)
 
-    da_xyz = _latlon_to_unit_sphere_xyz(ds_exterior_lon, ds_exterior_lat)
+    da_xyz = _latlon_to_unit_sphere_xyz(da_lat=ds_exterior_lat, da_lon=ds_exterior_lon)
 
-    da_xyz_chull = _latlon_to_unit_sphere_xyz(*_get_latlon_coords(ds_chull_lat_lons))
+    chull_lon, chull_lat = _get_latlon_coords(ds_chull_lat_lons)
+    da_xyz_chull = _latlon_to_unit_sphere_xyz(da_lat=chull_lat, da_lon=chull_lon)
 
     # Collect arcs making up chull
     chull_arcs = list(zip(da_xyz_chull[:-1], da_xyz_chull[1:])) + [

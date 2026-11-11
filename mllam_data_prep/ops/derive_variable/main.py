@@ -76,10 +76,14 @@ def derive_variable(ds, derived_variable, chunking, target_dims):
         for coord in required_input_dataset_vars.values()
         if coord in ds_subset.coords
     ]
+    coordinates_to_chunk = [
+        coord
+        for coord in required_coordinates
+        if any(dim in chunks for dim in ds_subset[coord].dims)
+    ]
     ds_subset = ds_subset.drop_indexes(required_coordinates, errors="ignore")
-    for req_coord in required_coordinates:
-        if req_coord in chunks:
-            ds_subset = ds_subset.reset_coords(req_coord)
+    for req_coord in coordinates_to_chunk:
+        ds_subset = ds_subset.reset_coords(req_coord)
 
     # Chunk the dataset
     ds_subset = chunk_dataset(ds_subset, chunks)
@@ -105,9 +109,8 @@ def derive_variable(ds, derived_variable, chunking, target_dims):
         derived_field.attrs.update(derived_field_attrs)
 
         # Return any dropped/reset coordinates
-        for req_coord in required_coordinates:
-            if req_coord in chunks:
-                derived_field.coords[req_coord] = ds_subset[req_coord]
+        for req_coord in coordinates_to_chunk:
+            derived_field.coords[req_coord] = ds_subset[req_coord]
 
         # Align the derived field to the output dataset dimensions (if necessary)
         derived_field = _align_derived_variable(derived_field, ds, target_dims)

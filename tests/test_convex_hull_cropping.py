@@ -127,6 +127,55 @@ def test_create_cropped_dataset(include_interior_points):
     mdp.create_dataset(config=config_global)
 
 
+def test_distance_to_convex_hull_boundary_asymmetric_domain():
+    """
+    Regression test for a bug where `_latlon_to_unit_sphere_xyz()` was called
+    with latitude and longitude swapped inside `distance_to_convex_hull_boundary`.
+
+    A square *in meters* domain (as used by `test_create_convex_hull_mask`
+    above) doesn't reveal this clearly, since the local projection only
+    distorts lat/lon spacing mildly. Here the LAM domain is instead made
+    much wider in x than in y, so the resulting lat/lon domain is clearly
+    asymmetric and the swapped-argument bug shows up as a large shift in the
+    computed distances (verified against the pre-fix code: buggy range was
+    ~0.012-30.2 degrees, fixed range is ~0.03-19.8 degrees for this domain).
+    """
+    tmpdir = tempfile.TemporaryDirectory()
+    config_lam = testdata.create_input_datasets_and_config(
+        identifier="lam",
+        data_categories=["state"],
+        tmpdir=tmpdir,
+        xlim=[-2000e3, 2000e3],
+        ylim=[-250e3, 250e3],
+        nx=80,
+        ny=10,
+        add_latlon=True,
+    )
+    config_global = testdata.create_input_datasets_and_config(
+        identifier="global",
+        data_categories=["state"],
+        tmpdir=tmpdir,
+        xlim=[-4000e3, 4000e3],
+        ylim=[-1000e3, 1000e3],
+        nx=40,
+        ny=20,
+        add_latlon=True,
+    )
+    ds_lam = mdp.create_dataset(config=config_lam)
+    ds_global = mdp.create_dataset(config=config_global)
+
+    da_dist = cropping.distance_to_convex_hull_boundary(
+        ds=ds_global, ds_reference=ds_lam
+    )
+
+    assert not np.isnan(da_dist.values).any()
+    dist_deg = np.degrees(da_dist.values)
+    # with the swapped-argument bug these bounds are violated (max ~30.2
+    # degrees, min ~0.012 degrees for this exact domain)
+    assert dist_deg.max() < 25.0
+    assert dist_deg.min() > 0.02
+
+
 def test_crop_era5_with_generated_lam_domain():
     """
     Test cropping an ERA5 dataset with a generated LAM domain to ensure that

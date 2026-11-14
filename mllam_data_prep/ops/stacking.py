@@ -10,8 +10,8 @@ def stack_variables_as_coord_values(ds, name_format, combined_dim_name):
 
     Parameters
     ----------
-    ds : xr.Dataset
-        source dataset with variables to stack
+    ds : xr.Dataset or dict
+        source dataset or dictionary of variables to stack
     name_format : str
         format string to construct the new coordinate values for the
         stacked variables, e.g. "{var_name}_level"
@@ -31,7 +31,8 @@ def stack_variables_as_coord_values(ds, name_format, combined_dim_name):
             " {var_name} to construct the new coordinate values"
         )
     dataarrays = []
-    for var_name in list(ds.data_vars):
+    data_vars = list(ds.data_vars) if hasattr(ds, "data_vars") else list(ds.keys())
+    for var_name in data_vars:
         da = ds[var_name].expand_dims(combined_dim_name)
         da.coords[combined_dim_name] = [name_format.format(var_name=var_name)]
 
@@ -76,8 +77,8 @@ def stack_variables_by_coord_values(ds, coord, name_format, combined_dim_name):
 
     Parameters
     ----------
-    ds : xr.Dataset
-        dataset with variables as data_vars and `level_dim` as a coordinate
+    ds : xr.Dataset or dict
+        dataset or dict of variables as data_vars and `level_dim` as a coordinate
     coord : str
         name of the coordinate that should mapped over
     name_format : str
@@ -101,14 +102,18 @@ def stack_variables_by_coord_values(ds, coord, name_format, combined_dim_name):
             "The name_format should include the coordinate name as"
             f" {{{coord}}} to construct the new coordinate values"
         )
-    if coord not in ds.coords:
-        raise ValueError(
-            f"The coordinate {coord} is not in the dataset, found coords: {list(ds.coords)}"
-        )
 
+    # Note: validation that the coord exists is slightly harder when we just have a dict
+    # of variables, as not all variables may have the same dimensionality
     datasets = []
-    for var_name in list(ds.data_vars):
+    data_vars = list(ds.data_vars) if hasattr(ds, "data_vars") else list(ds.keys())
+    for var_name in data_vars:
         da = ds[var_name]
+        if coord not in da.coords:
+            raise ValueError(
+                f"The coordinate {coord} is not in the variable {var_name}, found coords: {list(da.coords)}"
+            )
+
         coord_values = da.coords[coord].values
         new_coord_values = [
             name_format.format(var_name=var_name, **{coord: val})

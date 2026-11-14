@@ -129,3 +129,105 @@ def test_config_roundtrip():
     assert original_config == roundtrip_config_dict
     assert original_config == roundtrip_config_yaml
     assert original_config == roundtrip_config_json
+
+
+def test_variable_transformation_parsing():
+    yaml_str = """
+schema_version: v0.7.0
+dataset_version: v0.1.0
+
+output:
+  variables:
+    state: [time, grid_index, state_feature]
+
+inputs:
+  dummy_input:
+    path: dummy.zarr
+    dims: [time]
+    variables:
+      precip:
+        transformation:
+          method: log1p
+      u:
+        altitude:
+          values: [100]
+          units: m
+    dim_mapping:
+      time:
+        method: rename
+        dim: time
+    target_output_variable: state
+"""
+    config = mdp.Config.from_yaml(yaml_str)
+    input_ds = config.inputs["dummy_input"]
+
+    assert "precip" in input_ds.variable_transformations
+    transformation = input_ds.variable_transformations["precip"]
+    assert transformation.method == "log1p"
+    assert transformation.inverse is None
+
+    assert input_ds.variables["precip"] == {}
+    assert isinstance(input_ds.variables["u"]["altitude"], mdp.config.ValueSelection)
+    assert input_ds.variables["u"]["altitude"].values == [100]
+
+
+def test_derived_variable_transformation_parsing():
+    yaml_str = """
+schema_version: v0.7.0
+dataset_version: v0.1.0
+
+output:
+  variables:
+    forcing: [time, grid_index, forcing_feature]
+
+inputs:
+  dummy_input:
+    path: dummy.zarr
+    dims: [time]
+    derived_variables:
+      toa_radiation:
+        kwargs:
+          time: ds_input.time
+        function: mllam_data_prep.ops.derive_variable.physical_field.calculate_toa_radiation
+        transformation:
+          method: log1p
+    dim_mapping:
+      time:
+        method: rename
+        dim: time
+    target_output_variable: forcing
+"""
+    config = mdp.Config.from_yaml(yaml_str)
+    input_ds = config.inputs["dummy_input"]
+
+    derived = input_ds.derived_variables["toa_radiation"]
+    assert derived.transformation is not None
+    assert derived.transformation.method == "log1p"
+
+
+def test_config_roundtrip_with_transformation():
+    yaml_str = """
+schema_version: v0.7.0
+dataset_version: v0.1.0
+
+output:
+  variables:
+    state: [time, grid_index, state_feature]
+
+inputs:
+  dummy_input:
+    path: dummy.zarr
+    dims: [time]
+    variables:
+      precip:
+        transformation:
+          method: log1p
+    dim_mapping:
+      time:
+        method: rename
+        dim: time
+    target_output_variable: state
+"""
+    original_config = mdp.Config.from_yaml(yaml_str)
+    roundtrip_config = mdp.Config.from_dict(original_config.to_dict())
+    assert original_config == roundtrip_config

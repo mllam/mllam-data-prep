@@ -7,10 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased](https://github.com/mllam/mllam-data-prep/compare/v0.7.0...HEAD)
 
+### Added
+- add optional `transformation` key on `variables` and `derived_variables` entries in the `inputs` section, with `log1p` transformation support and auto-inferred inverse (`expm1`) recorded in output variable attributes; statistics (including `diff_` statistics) are computed on transformed values [\#122](https://github.com/mllam/mllam-data-prep/pull/122) @tyrobro
+- add `median`, `min`, `max`, `quantile_{q}` (e.g. `quantile_0.25`), and `iqr` as supported `compute_statistics.ops` [\122](https://github.com/mllam/mllam-data-prep/pull/122) @tyrobro
+
 ### Changed
 - consider full time information for derived calculation of TOA radiation [\#84](https://github.com/mllam/mllam-data-prep/pull/84) @observingClouds
 
 ### Fixes
+- fix `calc_stats` mutating the input dataset in place when computing `diff_*` statistics, which caused non-`diff_` statistics processed later in the `ops` list to be silently computed on the differenced data instead of the raw data [\#122](https://github.com/mllam/mllam-data-prep/pull/122) @tyrobro
 - chunk required multi-dimensional coordinates by their dimensions when deriving variables [\#117](https://github.com/mllam/mllam-data-prep/pull/117) @Vietpr
 - fix bug where coordinate selection of an unshared dimension isn't applied to subsequent ouput variables when an output variable without this dimension is processed before the others [\#90](https://github.com/mllam/mllam-data-prep/pull/90) @zweihuehner & @leifdenby
 - ensure at least one dask.distributed worker is used when the requested core fraction rounds down to zero cores (e.g. on single-core machines) [\#91](https://github.com/mllam/mllam-data-prep/pull/91) @Mani212005

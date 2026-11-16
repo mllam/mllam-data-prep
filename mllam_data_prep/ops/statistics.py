@@ -32,6 +32,7 @@ def calc_stats(
     """
     stats = {}
     for op_split in statistics_config.ops:
+        ds_op = ds
         try:
             pre_op, op = op_split.split("_")
         except ValueError:
@@ -42,11 +43,11 @@ def calc_stats(
             if pre_op == "diff":
                 # subset to select only the variable which have the splitting_dim
                 vars_to_keep = [v for v in ds.data_vars if splitting_dim in ds[v].dims]
-                ds = ds[vars_to_keep].diff(dim=splitting_dim)
+                ds_op = ds[vars_to_keep].diff(dim=splitting_dim)
             else:
                 raise NotImplementedError(pre_op)
 
-        fn = getattr(ds, op)
+        fn = getattr(ds_op, op)
         stats[op_split] = fn(dim=statistics_config.dims)
 
     return stats

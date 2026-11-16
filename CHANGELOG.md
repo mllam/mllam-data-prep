@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - consider full time information for derived calculation of TOA radiation [\#84](https://github.com/mllam/mllam-data-prep/pull/84) @observingClouds
 
 ### Fixes
-- update `actions/setup-python` to v5 and `actions/checkout` to v4 to fix Python 3.9 toolcache resolution on ubuntu-latest CI runners [\#123](https://github.com/mllam/mllam-data-prep/pull/123) @Sharkyii
+- update `actions/setup-python` to v5, `actions/checkout` to v4, and pin test runner to `ubuntu-22.04` to fix Python 3.9 CI failures [\#123](https://github.com/mllam/mllam-data-prep/pull/123) @Sharkyii
 - chunk required multi-dimensional coordinates by their dimensions when deriving variables [\#117](https://github.com/mllam/mllam-data-prep/pull/117) @Vietpr
 - fix bug where coordinate selection of an unshared dimension isn't applied to subsequent ouput variables when an output variable without this dimension is processed before the others [\#90](https://github.com/mllam/mllam-data-prep/pull/90) @zweihuehner & @leifdenby
 - ensure at least one dask.distributed worker is used when the requested core fraction rounds down to zero cores (e.g. on single-core machines) [\#91](https://github.com/mllam/mllam-data-prep/pull/91) @Mani212005

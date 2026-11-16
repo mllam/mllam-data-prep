@@ -100,6 +100,35 @@ class ValueSelection:
 
 
 @dataclass
+class Transformation:
+    """
+    Defines a transformation to apply to a variable's values before statistics
+    are computed and before the variable is written to the output dataset.
+
+    The inverse transformation is inferred automatically from a fixed registry
+    of supported transforms (see `mllam_data_prep.ops.transform.TRANSFORM_REGISTRY`)
+    unless explicitly overridden with `inverse`. Both the forward method name and
+    the (inferred or given) inverse method name are recorded in the output
+    variable's zarr attributes (as `transformation` and `inverse`) so that
+    downstream consumers (e.g. neural-lam) know how to invert the transform
+    when converting predictions back to physical values.
+
+    Attributes
+    ----------
+    method: str
+        The transformation to apply, e.g. "log1p". Must be one of the methods
+        supported in `mllam_data_prep.ops.transform.TRANSFORM_REGISTRY`.
+    inverse: Optional[str]
+        The inverse transformation name to record in the output dataset's
+        attributes, e.g. "expm1". If not given, this is inferred automatically
+        from the registry entry for `method`.
+    """
+
+    method: str
+    inverse: Optional[str] = None
+
+
+@dataclass
 class DerivedVariable:
     """
     Defines a derived variables, where the function (for calculating the variable) and
@@ -123,6 +152,7 @@ class DerivedVariable:
     kwargs: Dict[str, str]
     function: str
     attrs: Optional[Dict[str, str]] = field(default_factory=dict)
+    transformation: Optional[Transformation] = None
 
 
 @dataclass
@@ -226,6 +256,9 @@ class InputDataset:
         or a dictionary where the keys are the variable names and the values are dictionaries
         defining the selection for each variable. E.g. `{"temperature": levels: {"values": [1000, 950, 900]}}`
         would select the "temperature" variable and only the levels 1000, 950, and 900.
+        A variable's dictionary value can also include a `transformation` key (parsed into
+        `variable_transformations`, see below) to apply a value transform to the variable,
+        e.g. {"precip": {"transformation": {"method": "log1p"}}}.
     derived_variables: Dict[str, DerivedVariable]
         Dictionary of variables to derive from the dataset, where the keys are the names variables will be given and
         the values are `DerivedVariable` definitions that specify how to derive a variable.
@@ -235,10 +268,34 @@ class InputDataset:
     dims: List[str]
     dim_mapping: Dict[str, DimMapping]
     target_output_variable: str
-    variables: Optional[Union[List[str], Dict[str, Dict[str, ValueSelection]]]] = None
+    variables: Optional[Union[List[str], Dict[str, Dict[str, Any]]]] = None
     derived_variables: Optional[Dict[str, DerivedVariable]] = None
     attributes: Optional[Dict[str, Any]] = field(default_factory=dict)
     coord_ranges: Optional[Dict[str, Range]] = None
+
+    def __post_init__(self):
+        self.variable_transformations: Dict[str, Transformation] = {}
+        if isinstance(self.variables, dict):
+            cleaned_variables = {}
+            for var_name, var_dict in self.variables.items():
+                var_dict = dict(var_dict)
+                transformation_raw = var_dict.pop("transformation", None)
+                if transformation_raw is not None:
+                    if isinstance(transformation_raw, Transformation):
+                        transformation = transformation_raw
+                    else:
+                        transformation = Transformation(**transformation_raw)
+                    self.variable_transformations[var_name] = transformation
+
+                cleaned_variables[var_name] = {
+                    dim: (
+                        sel
+                        if isinstance(sel, ValueSelection)
+                        else ValueSelection(**sel)
+                    )
+                    for dim, sel in var_dict.items()
+                }
+            self.variables = cleaned_variables
 
 
 @dataclass

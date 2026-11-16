@@ -28,6 +28,7 @@ from .ops.mapping import map_dims_and_variables
 from .ops.selection import select_by_kwargs
 from .ops.statistics import calc_stats
 from .ops.subsetting import extract_variable
+from .ops.transform import apply_transformation
 
 if Version(zarr.__version__) >= Version("3"):
     from zarr.codecs import BloscCodec, BloscShuffle
@@ -37,8 +38,9 @@ else:
 # The config versions defined in SUPPORTED_CONFIG_VERSIONS are the ones currently supported.
 # The `extra` field in the config that was added between v0.2.0 and v0.5.0 is optional, and
 # the `derived_variables` field in the config added in v0.6.0 is also optional, so we can
-# support v0.2.0, v0.5.0, and v0.6.0
-SUPPORTED_CONFIG_VERSIONS = ["v0.2.0", "v0.5.0", "v0.6.0"]
+# support v0.2.0, v0.5.0, and v0.6.0. The new optional transformation field and quantile/iqr
+# stats have been added in v0.7.0
+SUPPORTED_CONFIG_VERSIONS = ["v0.2.0", "v0.5.0", "v0.6.0", "v0.7.0"]
 
 
 def _check_dataset_attributes(ds, expected_attributes, dataset_name):
@@ -203,11 +205,18 @@ def create_dataset(
             logger.info(f"Extracting selected variables from dataset {dataset_name}")
             if isinstance(selected_variables, dict):
                 for var_name, coords_to_sample in selected_variables.items():
-                    ds[var_name] = extract_variable(
+                    da = extract_variable(
                         ds=ds_input,
                         var_name=var_name,
                         coords_to_sample=coords_to_sample,
                     )
+                    transformation = input_config.variable_transformations.get(var_name)
+                    if transformation is not None:
+                        logger.info(
+                            f"Applying '{transformation.method}' transformation to {var_name}"
+                        )
+                        da = apply_transformation(da, transformation)
+                    ds[var_name] = da
             elif isinstance(selected_variables, list):
                 for var_name in selected_variables:
                     ds[var_name] = extract_variable(ds=ds_input, var_name=var_name)
@@ -219,12 +228,18 @@ def create_dataset(
         if derived_variables:
             logger.info(f"Deriving variables from {dataset_name}")
             for var_name, derived_variable in derived_variables.items():
-                ds[var_name] = derive_variable(
+                da = derive_variable(
                     ds=ds_input,
                     derived_variable=derived_variable,
                     chunking=chunking_config,
                     target_dims=expected_input_var_dims,
                 )
+                if derived_variable.transformation is not None:
+                    logger.info(
+                        f"Applying '{derived_variable.transformation.method}' transformation to {var_name}"
+                    )
+                    da = apply_transformation(da, derived_variable.transformation)
+                ds[var_name] = da
 
         _check_dataset_attributes(
             ds=ds,

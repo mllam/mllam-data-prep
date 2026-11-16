@@ -283,7 +283,7 @@ The `output` section defines three things:
 1. `variables`: what input variables the model architecture you are targeting expects, and what the dimensions are for each of these variables.
 2. `coord_ranges`: the range of values for each of the dimensions that the model architecture expects as input. These are optional, but allows you to ensure that the training dataset is created with the correct range of values for each dimension.
 3. `chunking`: the chunk sizes to use when writing the training dataset to zarr. This is optional, but can be used to optimise the performance of the zarr dataset. By default the chunk sizes are set to the size of the dimension, but this can be overridden by setting the chunk size in the configuration file. A common choice is to set the dimension along which you are batching to align with the of each training item (e.g. if you are training a model with time-step roll-out of 10 timesteps, you might choose a chunksize of 10 along the time dimension).
-4. Splitting and calculation of statistics of the output variables, using the `splitting` section. The `output.splitting.splits` attribute defines the individual splits to create (for example `train`, `val` and `test`) and `output.splitting.dim` defines the dimension to split along. The `compute_statistics` can be optionally set for a given split to calculate the statistical properties requested (for example `mean`, `std`) any method available on `xarray.Dataset.{op}` can be used. In addition methods prefixed by `diff_` (so the operational would be listed as `diff_{op}`) to compute a statistic based on difference of consecutive time-steps, e.g. `diff_mean` to compute the `mean` of the difference between consecutive timesteps (these are used for normalisating increments). The `dims` attribute defines the dimensions to calculate the statistics over (for example `grid_index` and `time`).
+4. Splitting and calculation of statistics of the output variables, using the `splitting` section. The `output.splitting.splits` attribute defines the individual splits to create (for example `train`, `val` and `test`) and `output.splitting.dim` defines the dimension to split along. The `compute_statistics` can be optionally set for a given split to calculate the statistical properties requested (for example `mean`, `std`) any method available on `xarray.Dataset.{op}` can be used (this includes `median`, `min`, and `max`). In addition to this, two further kinds of statistic are supported: a quantile, given as `quantile_{q}` where `{q}` is the quantile to compute (for example `quantile_0.25` for the 25th percentile), and `iqr` to compute the interquartile range (`quantile_0.75 - quantile_0.25`), which can be a more robust measure of spread than `std` for skewed variables. Methods can also be prefixed by `diff_` (so the operation would be listed as `diff_{op}`) to compute a statistic based on difference of consecutive time-steps, e.g. `diff_mean` to compute the `mean` of the difference between consecutive timesteps (these are used for normalisating increments). If a `transformation` has been applied to a variable (see below), statistics (including `diff_` statistics) are computed on the *transformed* values, since that is what the model will actually be trained on. The `dims` attribute defines the dimensions to calculate the statistics over (for example `grid_index` and `time`).
 
 In addition the `output` section can also contain a configuration for cropping the output dataset using the convex hull of coordinates from a different dataset. This is used for example when creating training datasets from limited area modelling (LAM) setups, where a separate dataset is used for the boundary data. The example above doesn't include this section, but [see below](#cropping-the-output-dataset-using-convex-hull-of-another-dataset) for an example of how to use this feature.
 
@@ -385,13 +385,13 @@ The `inputs` section defines the source datasets to extract data from. Each sour
 
 - `path`: the path to the source dataset. This can be a local path or a URL to e.g. a zarr dataset or netCDF file, anything that can be read by `xarray.open_dataset(...)`.
 - `dims`: the dimensions that the source dataset is expected to have. This is used to check that the source dataset has the expected dimensions and also makes it clearer in the config file what the dimensions of the source dataset are.
-- `variables`: selects which variables to extract from the source dataset. This may either be a list of variable names, or a dictionary where each key is the variable name and the value defines a dictionary of coordinates to do selection on. When doing selection you may also optionally define the units of the variable to check that the units of the variable match the units of the variable in the model architecture.
+- `variables`: selects which variables to extract from the source dataset. This may either be a list of variable names, or a dictionary where each key is the variable name and the value defines a dictionary of coordinates to do selection on. When doing selection you may also optionally define the units of the variable to check that the units of the variable match the units of the variable in the model architecture. A variable's dictionary value may also include a `transformation` key to apply a value transformation to the variable (for example `log1p` for skewed variables such as precipitation) before it is used — see the ['Transformations' section](#transformations) below for details.
 - `target_output_variable`: the variable in the model architecture that the source dataset should be mapped to.
 - `dim_mapping`: defines how the dimensions of the source dataset should be mapped to the dimensions of the model architecture. This is done by defining a method to apply to each dimension. The methods are:
   - `rename`: simply rename the dimension to the new name
   - `stack`: stack the listed dimension to create the dimension in the output
   - `stack_variables_by_var_name`: stack the dimension into the new dimension, and also stack the variable name into the new variable name. This is useful when you have multiple variables with the same dimensions that you want to stack into a single variable.
-- `derived_variables`: defines the variables to be derived from the variables available in the source dataset. This should be a dictionary where each key is the name of the variable to be derived and the value defines a dictionary with the following additional information. See also the 'Derived Variables' section for more details.
+- `derived_variables`: defines the variables to be derived from the variables available in the source dataset. This should be a dictionary where each key is the name of the variable to be derived and the value defines a dictionary with the following additional information. See also the 'Derived Variables' section for more details. A derived variable may also include a `transformation` key, in the same way as for `variables` above — see the ['Transformations' section](#transformations) for details.
   - `function`: the function used to derive a variable. This should be a string with the full namespace of the function, e.g. `mllam_data_prep.ops.derived_variables.physical_field.calculate_toa_radiation`.
   - `kwargs`: arguments to `function`. This is a dictionary where each key is the named argument to `function` and each value is the input to the function. Here we distinguish between values to be extracted/selected from the input dataset and values supplied by the users themselves. Arguments with values to be extracted from the input dataset need to be prefixed with "ds_input." to distinguish them from other arguments. See the 'Derived Variables' section for more details.
   - `coord_ranges`
@@ -434,9 +434,38 @@ Currently, the following derived variables are included as part of `mllam-data-p
   - function: `mllam_data_prep.ops.derive_variable.time_components.calculate_day_of_year`
   - arguments: `time`, `component`
 
+#### Transformations
+
+Both `variables` and `derived_variables` entries can optionally include a `transformation` key to apply a value transformation to a variable before it is used. This is useful for variables whose distribution isn't well suited to standard z-score normalisation (`mean`/`std`), such as precipitation, which has many near-zero values and a few extreme ones.
+
+```yaml
+inputs:
+  danra_surface:
+    ...
+    variables:
+      precip:
+        transformation:
+          method: log1p
+```
+
+The transformation is applied right after the variable is extracted (or derived), before it is mapped/stacked into the output dataset and before any statistics are computed for it — so both the values written to the output zarr dataset and any statistics computed (including `diff_` statistics, see the `output` section above) are based on the *transformed* values.
+
+Currently, the following transformation is supported:
+- `log1p`: the natural logarithm of one plus the input (`log(1 + x)`), useful for right-skewed, non-negative variables such as precipitation.
+
+The inverse transformation needed to convert values back to their original scale (e.g. `expm1` for `log1p`) is inferred automatically and recorded in the output variable's attributes as `transformation` and `inverse`, so that downstream consumers (for example [neural-lam](https://github.com/mllam/neural-lam)) know how to invert the transformation when converting predictions back to physical values. If needed, the inverse can be overridden explicitly:
+
+```yaml
+transformation:
+  method: log1p
+  inverse: expm1
+```
+
 
 ### Config schema versioning
 
 The schema version of the configuration file is defined by the `schema_version` attribute at the top of the configuration file. This is used to keep track of changes to the configuration file format. The schema version is used to check that the configuration file is compatible with the version of `mllam-data-prep` that you are using. If the schema version of the configuration file is not compatible with the version of `mllam-data-prep` that you are using you will get an error message telling you that the schema version is not compatible.
 
 The schema version is updated whenever the configuration format changes, with the new schema version matching the minimum version of `mllam-data-prep` that is required to use the new configuration format. As `mllam-data-prep` is still in rapid development (and hasn't reached version `v1.0.0` yet) we unfortunately make no gaurantee about backward compatibility. However, the [CHANGELOG.md](CHANGELOG.md) will always contain migration instructions when the config format changes.
+
+`v0.7.0` added the optional `transformation` key on `variables` and `derived_variables` entries (see the ['Transformations' section](#transformations)), and extended `compute_statistics.ops` to support `median`, `min`, `max`, `quantile_{q}`, and `iqr` in addition to the statistics already supported. Configurations using schema version `v0.6.0` remain supported.

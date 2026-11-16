@@ -1,15 +1,45 @@
+import re
 from typing import Dict
 
 import xarray as xr
 
 from ..config import Statistics
 
+_QUANTILE_PATTERN = re.compile(r"^quantile_(?P<q>\d*\.?\d+)$")
+
+
+def _apply_op(ds: xr.Dataset, op: str, dims) -> xr.Dataset:
+    """Apply a single (non diff-prefixed) statistic to `ds`, reducing over `dims`."""
+    if op == "iqr":
+        q75 = ds.quantile(0.75, dim=dims)
+        q25 = ds.quantile(0.25, dim=dims)
+        result = q75 - q25
+        if "quantile" in result.coords:
+            result = result.drop_vars("quantile")
+        return result
+
+    match = _QUANTILE_PATTERN.match(op)
+    if match is not None:
+        q = float(match.group("q"))
+        result = ds.quantile(q, dim=dims)
+        if "quantile" in result.coords:
+            result = result.drop_vars("quantile")
+        return result
+
+    if not hasattr(ds, op):
+        raise NotImplementedError(
+            f"Statistic operation '{op}' is not supported. It must be a no-argument "
+            "method of xarray.Dataset (e.g. 'mean', 'std', 'median', 'min', 'max'), "
+            "'iqr', or a quantile given as 'quantile_<q>' (e.g. 'quantile_0.25')."
+        )
+    return getattr(ds, op)(dim=dims)
+
 
 def calc_stats(
     ds: xr.Dataset, statistics_config: Statistics, splitting_dim: str
 ) -> Dict[str, xr.Dataset]:
     """
-    Calculate statistics for a given DataArray by applying the operations
+    Calculate statistics for a given Dataset by applying the operations
     specified in the Statistics object and reducing over the dimensions
     specified in the Statistics object.
 
@@ -31,22 +61,19 @@ def calc_stats(
         Dictionary with the operation names as keys and the calculated statistics as values
     """
     stats = {}
-    for op_split in statistics_config.ops:
-        try:
-            pre_op, op = op_split.split("_")
-        except ValueError:
-            op = op_split
-            pre_op = None
 
-        if pre_op is not None:
-            if pre_op == "diff":
-                # subset to select only the variable which have the splitting_dim
-                vars_to_keep = [v for v in ds.data_vars if splitting_dim in ds[v].dims]
-                ds = ds[vars_to_keep].diff(dim=splitting_dim)
-            else:
-                raise NotImplementedError(pre_op)
+    # Compute the differenced dataset once, rather than mutating `ds` in the loop
+    # (the old code did `ds = ds[...].diff(...)` inside the loop, which silently
+    # applied the diff to every op processed afterwards too, regardless of whether
+    # it was requested).
+    vars_with_splitting_dim = [v for v in ds.data_vars if splitting_dim in ds[v].dims]
+    ds_diff = ds[vars_with_splitting_dim].diff(dim=splitting_dim)
 
-        fn = getattr(ds, op)
-        stats[op_split] = fn(dim=statistics_config.dims)
+    for op_full in statistics_config.ops:
+        if op_full.startswith("diff_"):
+            op = op_full[len("diff_") :]
+            stats[op_full] = _apply_op(ds_diff, op, statistics_config.dims)
+        else:
+            stats[op_full] = _apply_op(ds, op_full, statistics_config.dims)
 
     return stats

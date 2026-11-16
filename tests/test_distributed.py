@@ -1,4 +1,5 @@
 import importlib
+import os
 import tempfile
 
 import pytest
@@ -28,6 +29,7 @@ def distributed():
     "args",
     [
         ["example.danra.yaml", "--dask-distributed-local-core-fraction", "1.0"],
+        ["example.danra.yaml", "--dask-distributed-local-core-fraction", "0.5"],
         ["example.danra.yaml", "--dask-distributed-local-core-fraction", "0.0"],
         ["example.danra.yaml"],
     ],
@@ -48,3 +50,13 @@ def test_run_distributed(args):
             call_wrapper(args)
     else:
         call_wrapper(args)
+
+
+@pytest.mark.skipif(not distributed(), reason="dask.distributed not installed")
+def test_run_distributed_single_core(monkeypatch):
+    """A core fraction < 1 on a single-core machine must still give >= 1 worker
+    (previously int(0.5 * 1) == 0 led to a ZeroDivisionError)"""
+    monkeypatch.setattr(os, "cpu_count", lambda: 1)
+    call_wrapper(
+        ["example.danra.yaml", "--dask-distributed-local-core-fraction", "0.5"]
+    )

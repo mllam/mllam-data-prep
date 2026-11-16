@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-22.04]
         python-version: ["3.9", "3.10"]
         zarr-version: [">=2,<3", ">2,<=3"]
     steps:

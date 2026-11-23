@@ -62,3 +62,8 @@ dev = [
 ]
 [project.scripts]
 mllam_data_prep = "mllam_data_prep:cli.call"
+
+[tool.pytest.ini_options]
+markers = [
+    "slow: marks tests requiring network access or AWS credentials (deselect with '-m \"not slow\"')",
+]

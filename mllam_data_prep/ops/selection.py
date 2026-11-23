@@ -67,7 +67,11 @@ def select_by_kwargs(ds, **coord_ranges):
             sel_end = _normalize_slice_startstop(selection.end)
             sel_step = _normalize_slice_step(selection.step)
 
-            assert sel_start != sel_end, "Start and end cannot be the same"
+            if sel_start == sel_end:
+                raise ValueError(
+                    f"Start and end cannot be the same for coordinate {coord!r}: "
+                    f"{sel_start!r}"
+                )
 
             # we don't select with the step size for now, but simply check (below) that
             # the step size in the data is the same as the requested step size
@@ -79,9 +83,11 @@ def select_by_kwargs(ds, **coord_ranges):
                 if sel_step is not None:
                     check_step(sel_step, coord, ds)
 
-            assert (
-                len(ds[coord]) > 0
-            ), f"You have selected an empty range {sel_start}:{sel_end} for coordinate {coord}"
+            if len(ds[coord]) == 0:
+                raise ValueError(
+                    f"You have selected an empty range {sel_start}:{sel_end} "
+                    f"for coordinate {coord}"
+                )
 
         elif isinstance(selection, list):
             ds = ds.sel({coord: selection})

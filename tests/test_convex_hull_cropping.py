@@ -4,6 +4,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+import xarray as xr
 
 import mllam_data_prep as mdp
 import mllam_data_prep.config as mdp_config
@@ -84,6 +85,21 @@ def test_create_convex_hull_mask():
     # check that there are fewer points in this margin region
     n_points_margin_region = da_convex_hull_margin_crop.count()
     assert n_points_margin_region < n_outside
+
+
+@pytest.mark.parametrize("bad_dataset", ["ds", "ds_reference"])
+def test_create_convex_hull_mask_requires_matching_lat_lon_dims(bad_dataset):
+    valid_dataset = xr.Dataset(
+        coords={"lat": ("x", [0.0, 1.0]), "lon": ("x", [0.0, 1.0])}
+    )
+    invalid_dataset = xr.Dataset(
+        coords={"lat": ("x", [0.0, 1.0]), "lon": ("y", [0.0, 1.0])}
+    )
+    ds = invalid_dataset if bad_dataset == "ds" else valid_dataset
+    ds_reference = invalid_dataset if bad_dataset == "ds_reference" else valid_dataset
+
+    with pytest.raises(ValueError, match=bad_dataset):
+        cropping.create_convex_hull_mask(ds=ds, ds_reference=ds_reference)
 
 
 @pytest.mark.parametrize("include_interior_points", [True, False])

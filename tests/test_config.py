@@ -1,3 +1,6 @@
+import subprocess
+import sys
+
 import pytest
 from dataclass_wizard.errors import MissingFields, UnknownJSONKey
 
@@ -129,3 +132,15 @@ def test_config_roundtrip():
     assert original_config == roundtrip_config_dict
     assert original_config == roundtrip_config_yaml
     assert original_config == roundtrip_config_json
+
+
+def test_config_main_rejects_non_yaml_path():
+    result = subprocess.run(
+        [sys.executable, "-O", "-m", "mllam_data_prep.config", "-f", "config.json"],
+        capture_output=True,
+        check=False,
+        text=True,
+    )
+
+    assert result.returncode != 0
+    assert ".yaml extension" in result.stderr

@@ -65,6 +65,17 @@ def _check_dataset_attributes(ds, expected_attributes, dataset_name):
         )
 
 
+def _format_dataarray_sizes_by_target(dataarrays_by_target):
+    lines = []
+    for target, dataarrays in dataarrays_by_target.items():
+        lines.append(f"{target}:")
+        for i, da in enumerate(dataarrays, start=1):
+            dims_str = ", ".join(f"{dim}={da.sizes[dim]}" for dim in da.dims)
+            lines.append(f"  {i}. {da.name}: {dims_str}")
+
+    return "\n".join(lines)
+
+
 def _merge_dataarrays_by_target(dataarrays_by_target):
     attrs_to_keep = ["source_dataset"]
     dataarrays = []
@@ -111,9 +122,13 @@ def _merge_dataarrays_by_target(dataarrays_by_target):
                 return f"{da.name} ({dims})\n{da.coords}"
 
             coord_summaries = "\n".join([_summarize(da) for da in dataarrays])
+            dataarray_size_summary = _format_dataarray_sizes_by_target(
+                dataarrays_by_target
+            )
             raise InvalidConfigException(
                 f"Couldn't merge together the dataarrays for all targets ({', '.join(dataarrays_by_target.keys())}). "
                 "This is likely because the dataarrays have different dimensions or coordinates. "
+                f"Dataarray sizes by target:\n{dataarray_size_summary}\n"
                 f"Dataarray coords:\n{coord_summaries}"
                 "Maybe you need to give the 'feature' dimension a unique name for each target variable?"
             ) from ex

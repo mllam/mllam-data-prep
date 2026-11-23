@@ -1,14 +1,23 @@
+from typing import Any, Dict, List
+
+import xarray as xr
+
+from ..config import DimMapping
 from .stacking import stack_variables_as_coord_values, stack_variables_by_coord_values
 
 
-def _check_for_malformed_list_arg(s):
+def _check_for_malformed_list_arg(s: Any) -> None:
     if isinstance(s, str) and "," in s:
         raise Exception(
             "Rather than writing `{s}` to define a list you would `[{s}]` in the config file."
         )
 
 
-def map_dims_and_variables(ds, dim_mapping, expected_input_var_dims):
+def map_dims_and_variables(
+    ds: xr.Dataset,
+    dim_mapping: Dict[str, DimMapping],
+    expected_input_var_dims: List[str],
+) -> xr.DataArray:
     """
     Map the input dimensions to the architecture dimensions
     using the `dim_mapping` dictionary. Each key in the `dim_mapping`

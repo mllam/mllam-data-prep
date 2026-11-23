@@ -1,4 +1,15 @@
-def extract_variable(ds, var_name, coords_to_sample=dict()):
+from typing import Dict, Optional
+
+import xarray as xr
+
+from ..config import ValueSelection
+
+
+def extract_variable(
+    ds: xr.Dataset,
+    var_name: str,
+    coords_to_sample: Optional[Dict[str, ValueSelection]] = None,
+) -> xr.DataArray:
     """
     Extract specified variable from the provided input dataset. If
     coordinates for subsetting are defined, then subset the variable along
@@ -8,19 +19,20 @@ def extract_variable(ds, var_name, coords_to_sample=dict()):
     ----------
     ds : xr.Dataset
         Input dataset
-    var_name : Union[Dict, List]
-        Either a list or dictionary with variables to extract.
-        If a dictionary the keys are the variable name and the values are
-        entries for each coordinate and coordinate values to extract
-    coords_to_sample: Dict
+    var_name : str
+        Name of the variable to extract from the dataset
+    coords_to_sample: Dict[str, ValueSelection], optional
         Optional argument for subsetting/sampling along the specified
-        coordinates
+        coordinates. Keys are coordinate names, values are ValueSelection
+        objects defining the values to select and optionally the units.
 
     Returns
     ----------
     da: xr.DataArray
         Extracted variable (subsetted along the specified coordinates)
     """
+    if coords_to_sample is None:
+        coords_to_sample = {}
 
     try:
         da = ds[var_name]

@@ -1,11 +1,15 @@
 import datetime
+from typing import List, Optional, Union
 
 import pandas as pd
+import xarray as xr
 
 from ..config import Range
 
 
-def _normalize_slice_startstop(s):
+def _normalize_slice_startstop(
+    s: Union[pd.Timestamp, str, int, float]
+) -> Union[pd.Timestamp, str, int, float]:
     if isinstance(s, pd.Timestamp):
         return s
     elif isinstance(s, str):
@@ -17,7 +21,9 @@ def _normalize_slice_startstop(s):
         return s
 
 
-def _normalize_slice_step(s):
+def _normalize_slice_step(
+    s: Optional[Union[pd.Timedelta, str, int, float]]
+) -> Optional[Union[pd.Timedelta, str, int, float]]:
     if isinstance(s, pd.Timedelta):
         return s
     elif isinstance(s, str):
@@ -29,7 +35,9 @@ def _normalize_slice_step(s):
         return s
 
 
-def select_by_kwargs(ds, **coord_ranges):
+def select_by_kwargs(
+    ds: xr.Dataset, **coord_ranges: Union[Range, List[Any]]
+) -> xr.Dataset:
     """
     Do `xr.Dataset.sel` on `ds` using the `coord_ranges` to select the coordinates, for each
     entry in the dictionary, the key is the coordinate name and the value is the selection
@@ -92,7 +100,7 @@ def select_by_kwargs(ds, **coord_ranges):
     return ds
 
 
-def check_point_in_dataset(coord, point, ds):
+def check_point_in_dataset(coord: str, point: Any, ds: xr.Dataset) -> None:
     """
     check that the requested point is in the data.
     """
@@ -102,7 +110,11 @@ def check_point_in_dataset(coord, point, ds):
         )
 
 
-def check_step(sel_step, coord, ds):
+def check_step(
+    sel_step: Union[pd.Timedelta, datetime.timedelta],
+    coord: str,
+    ds: xr.Dataset,
+) -> None:
     """
     check that the step requested is exactly what the data has
     """

@@ -78,7 +78,8 @@ def map_dims_and_variables(ds, dim_mapping, expected_input_var_dims):
         )
 
     # check that none of the variables have dims that are not in the expected_input_var_dims
-    for var_name in ds.data_vars:
+    data_vars = list(ds.data_vars) if hasattr(ds, "data_vars") else list(ds.keys())
+    for var_name in data_vars:
         if not set(ds[var_name].dims).issubset(expected_input_var_dims):
             extra_dims = set(ds[var_name].dims) - set(expected_input_var_dims)
             raise ValueError(
@@ -93,14 +94,26 @@ def map_dims_and_variables(ds, dim_mapping, expected_input_var_dims):
 
         if method == "rename":
             source_dim = input_dim_map.dim
-            ds = ds.rename({source_dim: arch_dim})
+            if hasattr(ds, "data_vars"): # xr.Dataset
+                ds = ds.rename({source_dim: arch_dim})
+            else: # dictionary of DataArrays
+                ds = {
+                    k: (v.rename({source_dim: arch_dim}) if source_dim in v.dims else v)
+                    for k, v in ds.items()
+                }
         elif method == "stack":
             source_dims = input_dim_map.dims
             # when stacking we assume that the input_dims is a list of dimensions
             # in the input dataset that we want to stack to create the architecture
             # dimension, this is for example used for flatting the spatial dimensions
             # into a single dimension representing the grid index
-            ds = ds.stack({arch_dim: source_dims}).reset_index(arch_dim)
+            if hasattr(ds, "data_vars"):
+                ds = ds.stack({arch_dim: source_dims}).reset_index(arch_dim)
+            else:
+                ds = {
+                    k: v.stack({arch_dim: source_dims}).reset_index(arch_dim)
+                    for k, v in ds.items()
+                }
         else:
             raise NotImplementedError(method)
 

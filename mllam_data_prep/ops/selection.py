@@ -106,6 +106,10 @@ def check_step(sel_step, coord, ds):
     """
     check that the step requested is exactly what the data has
     """
+    if len(ds[coord]) < 2:
+        raise ValueError(
+            f"Cannot compute step size for coordinate {coord} with fewer than 2 points"
+        )
     all_steps = ds[coord].diff(dim=coord).values
     first_step = all_steps[0].astype("timedelta64[s]").astype(datetime.timedelta)
 

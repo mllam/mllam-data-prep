@@ -131,10 +131,33 @@ def shortest_distance_to_arc(
     -------
     np.ndarray, shape (num_points,)
         The distances in radians
+
+    Notes
+    -----
+    If the arc endpoints are identical, the arc has zero length and the
+    distance to the endpoint is returned. This happens for every convex hull
+    boundary, since the hull is a closed ring and the arc closing it starts
+    and ends on the same point.
+
+    Antipodal endpoints (two points on exactly opposite sides of the globe)
+    do not define a unique great circle, so the distance to an arc between
+    them is undefined, and these are not detected: their cross product is
+    floating-point noise (~1e-16) rather than zero, so it is normalized into
+    an arbitrary great circle. For cropping this means the regional domain
+    must fit within a hemisphere. A domain that includes antipodal points
+    spans at least half the globe, has no well-defined convex hull, and so
+    cannot be cropped to. For any domain that fits within a hemisphere, every
+    convex hull edge is shorter than half a great circle, so its endpoints
+    are never antipodal.
     """
     # Calculate normal vector to the plane of the great circle
     normal_vector = np.cross(arc_start_cartesian, arc_end_cartesian)
-    normal_vector = normal_vector / np.linalg.norm(normal_vector)  # Normalize
+    with np.errstate(invalid="ignore"):
+        normal_vector = normal_vector / np.linalg.norm(normal_vector)  # Normalize
+
+    # Identical endpoints give a zero cross product, which normalizes to NaNs
+    if np.isnan(normal_vector).any():
+        return np.arccos(np.clip(np.dot(point_cartesian, arc_start_cartesian), -1, 1))
 
     # Project point onto the plane
     point_projection = (

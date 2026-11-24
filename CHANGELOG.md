@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ensure at least one dask.distributed worker is used when the requested core fraction rounds down to zero cores (e.g. on single-core machines) [\#91](https://github.com/mllam/mllam-data-prep/pull/91) @Mani212005
 - pin `dataclass-wizard<1.0` since v1.0.0 no longer exposes `dataclass_wizard.YAMLWizard`, which broke importing `mllam_data_prep` [\#109](https://github.com/mllam/mllam-data-prep/pull/109) @leifdenby
 - fix latitude/longitude argument order passed to `_latlon_to_unit_sphere_xyz` in `distance_to_convex_hull_boundary`, which gave wrong distances for asymmetric convex hull domains [\#116](https://github.com/mllam/mllam-data-prep/pull/116) @srijavuppala
+- handle identical arc endpoints in `shortest_distance_to_arc()` as a zero-length arc instead of normalizing a zero vector into NaNs, and document why antipodal endpoints can't occur when cropping to a regional domain [\#119](https://github.com/mllam/mllam-data-prep/pull/119) @AnushreeKasturi
 
 ## [v0.7.0](https://github.com/mllam/mllam-data-prep/release/tag/v0.7.0)
 

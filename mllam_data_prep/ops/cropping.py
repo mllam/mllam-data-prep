@@ -5,12 +5,6 @@ import spherical_geometry as sg
 import xarray as xr
 from spherical_geometry.polygon import SphericalPolygon
 
-# Absolute tolerance used to decide when a vector computed in
-# `shortest_distance_to_arc` is numerically zero. An exact comparison with zero
-# is not enough, because after converting from lat/lon the cross product of
-# e.g. antipodal points is ~1e-16 rather than exactly zero (cos(90deg) ~ 6e-17)
-_DEGENERATE_VECTOR_ATOL = 1e-12
-
 
 def _get_latlon_coords(da: xr.DataArray) -> tuple:
     """
@@ -138,52 +132,32 @@ def shortest_distance_to_arc(
     np.ndarray, shape (num_points,)
         The distances in radians
 
-    Raises
-    ------
-    ValueError
-        If the arc endpoints are antipodal, since antipodal points do not
-        define a unique great-circle arc.
-
     Notes
     -----
-    Degenerate arcs are detected with a tolerance (`_DEGENERATE_VECTOR_ATOL`
-    on the norm of the cross product of the endpoints) and handled
-    explicitly, instead of normalizing a (near) zero-length vector:
+    If the arc endpoints are identical, the arc has zero length and the
+    distance to the endpoint is returned. This happens for every convex hull
+    boundary, since the hull is a closed ring and the arc closing it starts
+    and ends on the same point.
 
-    - Identical (or numerically identical) endpoints are treated as a
-      zero-length arc, so the distance is the distance to the endpoint.
-    - Antipodal (or numerically antipodal) endpoints raise a `ValueError`.
-
-    Points at the pole of the arc's great circle have no unique projection
-    onto the great circle. They are a quarter circle (pi/2 radians) from
-    every point of the great circle, so the distance to the arc endpoints is
-    used for them.
+    Antipodal endpoints (two points on exactly opposite sides of the globe)
+    do not define a unique great circle, so the distance to an arc between
+    them is undefined, and these are not detected: their cross product is
+    floating-point noise (~1e-16) rather than zero, so it is normalized into
+    an arbitrary great circle. For cropping this means the regional domain
+    must fit within a hemisphere. A domain that includes antipodal points
+    spans at least half the globe, has no well-defined convex hull, and so
+    cannot be cropped to. For any domain that fits within a hemisphere, every
+    convex hull edge is shorter than half a great circle, so its endpoints
+    are never antipodal.
     """
-    # Calculate distances from the point to the start and end points of the arc
-    distance_to_start = np.arccos(
-        np.clip(np.dot(point_cartesian, arc_start_cartesian), -1, 1)
-    )
-    distance_to_end = np.arccos(
-        np.clip(np.dot(point_cartesian, arc_end_cartesian), -1, 1)
-    )
-
     # Calculate normal vector to the plane of the great circle
     normal_vector = np.cross(arc_start_cartesian, arc_end_cartesian)
-    normal_vector_norm = np.linalg.norm(normal_vector)
+    with np.errstate(invalid="ignore"):
+        normal_vector = normal_vector / np.linalg.norm(normal_vector)  # Normalize
 
-    # The cross product is (numerically) zero when the endpoints are identical
-    # or antipodal, and then it can't be normalized to give the normal vector
-    if np.isclose(normal_vector_norm, 0.0, atol=_DEGENERATE_VECTOR_ATOL):
-        if np.dot(arc_start_cartesian, arc_end_cartesian) > 0:
-            # identical endpoints, i.e. a zero-length arc
-            return distance_to_start
-        raise ValueError(
-            f"The arc endpoints {np.asarray(arc_start_cartesian)} and "
-            f"{np.asarray(arc_end_cartesian)} are antipodal, so they do not "
-            "define a unique great-circle arc."
-        )
-
-    normal_vector = normal_vector / normal_vector_norm  # Normalize
+    # Identical endpoints give a zero cross product, which normalizes to NaNs
+    if np.isnan(normal_vector).any():
+        return np.arccos(np.clip(np.dot(point_cartesian, arc_start_cartesian), -1, 1))
 
     # Project point onto the plane
     point_projection = (
@@ -191,16 +165,9 @@ def shortest_distance_to_arc(
         - np.dot(point_cartesian, normal_vector)[:, np.newaxis] * normal_vector
     )
 
-    # Points at the pole of the great circle project onto the zero vector,
-    # which can't be normalized. These are excluded from the "between arc"
-    # check below, so that the distance to the endpoints is used for them
-    point_projection_norm = np.linalg.norm(point_projection, axis=1)
-    is_at_pole = np.isclose(point_projection_norm, 0.0, atol=_DEGENERATE_VECTOR_ATOL)
-
     # Normalize to get the projected point on the sphere's surface
     projected_point = (
-        point_projection
-        / np.where(is_at_pole, 1.0, point_projection_norm)[:, np.newaxis]
+        point_projection / np.linalg.norm(point_projection, axis=1)[:, np.newaxis]
     )
 
     # Calculate the angle between the original point and the projected point
@@ -210,9 +177,15 @@ def shortest_distance_to_arc(
 
     # Check if the projected point is between the start and end points of the arc
     is_between_arc = (
-        ~is_at_pole
-        & (np.dot(np.cross(arc_start_cartesian, projected_point), normal_vector) >= 0)
-        & (np.dot(np.cross(projected_point, arc_end_cartesian), normal_vector) >= 0)
+        np.dot(np.cross(arc_start_cartesian, projected_point), normal_vector) >= 0
+    ) & (np.dot(np.cross(projected_point, arc_end_cartesian), normal_vector) >= 0)
+
+    # Calculate distances from the point to the start and end points of the arc
+    distance_to_start = np.arccos(
+        np.clip(np.dot(point_cartesian, arc_start_cartesian), -1, 1)
+    )
+    distance_to_end = np.arccos(
+        np.clip(np.dot(point_cartesian, arc_end_cartesian), -1, 1)
     )
 
     # Choose the appropriate distance

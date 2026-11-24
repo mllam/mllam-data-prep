@@ -8,9 +8,11 @@ from unittest.mock import MagicMock, patch
 import pytest
 import xarray as xr
 
+from mllam_data_prep.config import DerivedVariable
 from mllam_data_prep.ops.derive_variable.main import (
     _check_and_get_required_attributes,
     _get_derived_variable_function,
+    derive_variable,
 )
 
 
@@ -113,3 +115,47 @@ class TestCheckAndGetRequiredAttributes:
 
         with pytest.raises(KeyError):
             _check_and_get_required_attributes(field, expected_attributes)
+
+
+def test_derive_variable_chunks_curvilinear_coordinates() -> None:
+    """Chunk required coordinates by their dimensions and restore them."""
+    ds = xr.Dataset(
+        coords={
+            "lat": (("x", "y"), [[50.0, 50.1, 50.2], [51.0, 51.1, 51.2]]),
+            "lon": (("x", "y"), [[10.0, 11.0, 12.0], [10.1, 11.1, 12.1]]),
+        }
+    )
+    config = DerivedVariable(
+        kwargs={"lat": "ds_input.lat", "lon": "ds_input.lon"},
+        function="unused",
+        attrs={"units": "degrees", "long_name": "coordinate sum"},
+    )
+    expected_chunks = ((1, 1), (2, 1))
+
+    def chunk_curvilinear_coordinates(dataset, chunks):
+        assert {"lat", "lon"} <= set(dataset.data_vars)
+        chunked = dataset.chunk(chunks)
+        assert chunked["lat"].chunks == expected_chunks
+        assert chunked["lon"].chunks == expected_chunks
+        return chunked
+
+    with (
+        patch(
+            "mllam_data_prep.ops.derive_variable.main.chunk_dataset",
+            side_effect=chunk_curvilinear_coordinates,
+        ),
+        patch(
+            "mllam_data_prep.ops.derive_variable.main._get_derived_variable_function",
+            return_value=lambda lat, lon: lat + lon,
+        ),
+    ):
+        result = derive_variable(
+            ds,
+            config,
+            chunking={"x": 1, "y": 2},
+            target_dims=["x", "y"],
+        )
+
+    assert {"lat", "lon"} <= set(result.coords)
+    assert result.coords["lat"].chunks == expected_chunks
+    assert result.coords["lon"].chunks == expected_chunks

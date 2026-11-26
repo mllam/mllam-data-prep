@@ -21,7 +21,9 @@ run and comparing against them in the second:
         python benchmarks/cropping.py --n-source 100000 1000000 --label <branch> --compare-to results_main.json
 
 The second command exits with a non-zero status if the kept grid points
-differ from the saved results.
+differ from the saved results. With `--max-slowdown-pct` it also exits with
+a non-zero status if the median time is more than that percentage slower than
+in the saved results.
 """
 import argparse
 import json
@@ -29,6 +31,7 @@ import platform
 import sys
 import time
 from pathlib import Path
+from typing import Optional
 
 import numpy as np
 import xarray as xr
@@ -117,35 +120,47 @@ def run_benchmark(
     )
 
 
-def compare_results(results: dict, reference: dict) -> bool:
+def compare_results(
+    results: dict, reference: dict, max_slowdown_pct: Optional[float] = None
+) -> bool:
     """
     Print the timings next to those of `reference` and check that the same
-    grid points were kept. Returns True if all results match.
+    grid points were kept and, if `max_slowdown_pct` is given, that the median
+    time is at most `max_slowdown_pct` percent slower than in `reference`.
+    Returns True if all checks pass.
     """
-    all_match = True
+    all_ok = True
     print(
         f"\n{'n_source':>10} {reference['label'][:12]:>12} "
-        f"{results['label'][:12]:>12} {'speed-up':>9}  result"
+        f"{results['label'][:12]:>12} {'change':>8} {'speed-up':>9}  result"
     )
     for n_source, result in results["runs"].items():
         ref = reference["runs"].get(n_source)
         if ref is None:
             print(
-                f"{n_source:>10} {'-':>12} {result['median']:>11.2f}s {'-':>9}  no reference"
+                f"{n_source:>10} {'-':>12} {result['median']:>11.2f}s {'-':>8} "
+                f"{'-':>9}  no reference"
             )
             continue
-        matches = result["kept_grid_index"] == ref["kept_grid_index"]
-        all_match &= matches
-        status = (
-            "same points kept"
-            if matches
-            else f"DIFFERENT ({result['n_kept']} vs {ref['n_kept']} points kept)"
-        )
+
+        problems = []
+        if result["kept_grid_index"] != ref["kept_grid_index"]:
+            problems.append(
+                f"DIFFERENT points kept ({result['n_kept']} vs {ref['n_kept']})"
+            )
+        change_pct = 100.0 * (result["median"] / ref["median"] - 1.0)
+        if max_slowdown_pct is not None and change_pct > max_slowdown_pct:
+            problems.append(
+                f"SLOWER by {change_pct:.1f}% (limit {max_slowdown_pct:g}%)"
+            )
+        all_ok &= not problems
+
+        status = ", ".join(problems) if problems else "ok, same points kept"
         print(
             f"{n_source:>10} {ref['median']:>11.2f}s {result['median']:>11.2f}s "
-            f"{ref['median'] / result['median']:>8.1f}x  {status}"
+            f"{change_pct:>+7.1f}% {ref['median'] / result['median']:>8.1f}x  {status}"
         )
-    return all_match
+    return all_ok
 
 
 def main(argv=None):
@@ -200,7 +215,17 @@ def main(argv=None):
         type=Path,
         help="JSON file with results of a previous run to compare against",
     )
+    parser.add_argument(
+        "--max-slowdown-pct",
+        type=float,
+        help=(
+            "with --compare-to, fail if the median time is more than this "
+            "percentage slower than in the reference run"
+        ),
+    )
     args = parser.parse_args(argv)
+    if args.max_slowdown_pct is not None and args.compare_to is None:
+        parser.error("--max-slowdown-pct requires --compare-to")
 
     version = getattr(mllam_data_prep, "__version__", "unknown")
     results = dict(
@@ -250,7 +275,9 @@ def main(argv=None):
             f"reference: {reference['label']} "
             f"(mllam-data-prep {reference['mllam_data_prep_version']})"
         )
-        if not compare_results(results, reference):
+        if not compare_results(
+            results, reference, max_slowdown_pct=args.max_slowdown_pct
+        ):
             return 1
     return 0
 

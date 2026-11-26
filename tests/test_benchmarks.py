@@ -39,3 +39,24 @@ def test_cropping_benchmark_save_and_compare(tmp_path):
     ][:-1]
     fp_results.write_text(json.dumps(results))
     assert benchmark.main(args + ["--compare-to", str(fp_results)]) == 1
+
+
+def test_cropping_benchmark_max_slowdown(tmp_path):
+    benchmark = _load_benchmark("cropping")
+    fp_results = tmp_path / "results.json"
+    args = ["--n-source", "2000", "--n-lam", "10", "--margin", "5.0"]
+    assert benchmark.main(args + ["--save", str(fp_results)]) == 0
+    results = json.loads(fp_results.read_text())
+
+    # a reference that was much faster makes this run count as a slowdown
+    results["runs"]["2000"]["median"] /= 100.0
+    fp_results.write_text(json.dumps(results))
+    compare = args + ["--compare-to", str(fp_results)]
+    assert benchmark.main(compare + ["--max-slowdown-pct", "5"]) == 1
+    # without a limit only the kept points are checked
+    assert benchmark.main(compare) == 0
+
+    # a reference that was much slower is within any limit
+    results["runs"]["2000"]["median"] *= 100.0 * 100.0
+    fp_results.write_text(json.dumps(results))
+    assert benchmark.main(compare + ["--max-slowdown-pct", "5"]) == 0

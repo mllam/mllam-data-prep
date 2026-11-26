@@ -60,6 +60,8 @@ uv run --no-project --with "mllam-data-prep @ git+https://github.com/<your-githu
 
 The second command prints the timings of both versions and checks that the same grid points are kept. Run `python benchmarks/cropping.py --help` for all options.
 
+For pull-requests that change `mllam_data_prep/ops/cropping.py` (or the benchmark itself), CI runs this comparison automatically with 100,000 source grid points (see [.github/workflows/benchmark.yml](.github/workflows/benchmark.yml)). The job fails if the pull-request keeps different grid points than `main`, and the timings are shown in the job summary.
+
 Then branch, commit, push and make a pull-request :)
 
 

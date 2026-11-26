@@ -1,0 +1,75 @@
+# Benchmark convex hull cropping on pull-requests that change it, comparing
+# the PR with the base branch.
+#
+# The benchmark script always comes from the PR checkout; only the installed
+# `mllam-data-prep` library is swapped (base branch first, then the PR), and
+# both runs happen back-to-back on the same runner so that the timings can be
+# compared. `python benchmarks/cropping.py` puts `benchmarks/` (not the
+# repository root) on `sys.path`, so the installed library is the one that is
+# imported.
+#
+# The job fails if the PR keeps different grid points than the base branch.
+# The timings are informational and are reported in the job summary.
+
+name: benchmark
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "mllam_data_prep/ops/cropping.py"
+      - "benchmarks/cropping.py"
+      - ".github/workflows/benchmark.yml"
+  workflow_dispatch:
+
+# Only the latest run per PR needs to finish
+concurrency:
+  group: benchmark-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  cropping:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    env:
+      BENCH_ARGS: "--n-source 100000"
+      BASE_REF: ${{ github.event.pull_request.base.ref || 'main' }}
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.11"
+
+      - name: Benchmark base branch and PR, and compare
+        run: |
+          set -euo pipefail
+          uv venv
+          source .venv/bin/activate
+
+          echo "::group::Benchmark '$BASE_REF'"
+          uv pip install "mllam-data-prep @ git+https://github.com/${{ github.repository }}.git@${BASE_REF}"
+          python benchmarks/cropping.py $BENCH_ARGS --label "$BASE_REF" --save base.json
+          echo "::endgroup::"
+
+          echo "::group::Benchmark PR"
+          uv pip install --reinstall-package mllam-data-prep .
+          echo "::endgroup::"
+          python benchmarks/cropping.py $BENCH_ARGS --label PR --compare-to base.json \
+            | tee comparison.txt
+
+      - name: Publish result to the job summary
+        if: always()
+        run: |
+          {
+            echo "### Cropping benchmark (\`$BENCH_ARGS\`)"
+            echo '```'
+            cat comparison.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY" || true

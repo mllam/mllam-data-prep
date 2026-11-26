@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [unreleased](https://github.com/mllam/mllam-data-prep/compare/v0.7.0...HEAD)
 
 ### Added
-- add a benchmark script for convex hull cropping (`benchmarks/cropping.py`) that times `crop_with_convex_hull` and checks that two versions of `mllam-data-prep` keep the same grid points [\#PR_NUMBER](https://github.com/mllam/mllam-data-prep/pull/PR_NUMBER) @observingClouds
+- add a benchmark script for convex hull cropping (`benchmarks/cropping.py`) that times `crop_with_convex_hull` and checks that two versions of `mllam-data-prep` keep the same grid points, and run it in CI for pull-requests that change cropping [\#PR_NUMBER](https://github.com/mllam/mllam-data-prep/pull/PR_NUMBER) @observingClouds
 
 ### Changed
 - consider full time information for derived calculation of TOA radiation [\#84](https://github.com/mllam/mllam-data-prep/pull/84) @observingClouds

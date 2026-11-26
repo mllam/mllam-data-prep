@@ -1,0 +1,81 @@
+# Benchmark convex hull cropping on pull-requests that change it, comparing
+# the PR with the base branch.
+#
+# The benchmark script always comes from the PR checkout; only the installed
+# `mllam-data-prep` library is swapped (base branch first, then the PR), and
+# both runs happen back-to-back on the same runner so that the timings can be
+# compared. `python benchmarks/cropping.py` puts `benchmarks/` (not the
+# repository root) on `sys.path`, so the installed library is the one that is
+# imported.
+#
+# The job fails if the PR keeps different grid points than the base branch,
+# or if the PR's median time is more than MAX_SLOWDOWN_PCT percent slower
+# than the base branch's. Each version is timed several times (`--repeats` in
+# BENCH_ARGS) and the medians are compared, to reduce the effect of runner
+# noise. The comparison is shown in the job summary.
+
+name: benchmark
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "mllam_data_prep/ops/cropping.py"
+      - "benchmarks/cropping.py"
+      - ".github/workflows/benchmark.yml"
+  workflow_dispatch:
+
+# Only the latest run per PR needs to finish
+concurrency:
+  group: benchmark-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  cropping:
+    runs-on: ubuntu-22.04
+    # with the per-point cropping implementation one repeat of 100k points
+    # takes about 5 minutes, with the vectorized one a few seconds
+    timeout-minutes: 60
+    env:
+      BENCH_ARGS: "--n-source 100000 --repeats 3"
+      MAX_SLOWDOWN_PCT: "5"
+      BASE_REF: ${{ github.event.pull_request.base.ref || 'main' }}
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.4.0
+        with:
+          python-version: "3.11"
+
+      - name: Benchmark base branch and PR, and compare
+        run: |
+          set -euo pipefail
+          uv venv
+          source .venv/bin/activate
+
+          echo "::group::Benchmark '$BASE_REF'"
+          uv pip install "mllam-data-prep @ git+https://github.com/${{ github.repository }}.git@${BASE_REF}"
+          python benchmarks/cropping.py $BENCH_ARGS --label "$BASE_REF" --save base.json
+          echo "::endgroup::"
+
+          echo "::group::Benchmark PR"
+          uv pip install --reinstall-package mllam-data-prep .
+          echo "::endgroup::"
+          python benchmarks/cropping.py $BENCH_ARGS --label PR --compare-to base.json \
+            --max-slowdown-pct "$MAX_SLOWDOWN_PCT" | tee comparison.txt
+
+      - name: Publish result to the job summary
+        if: always()
+        run: |
+          {
+            echo "### Cropping benchmark (\`$BENCH_ARGS\`, max slowdown $MAX_SLOWDOWN_PCT%)"
+            echo '```'
+            cat comparison.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY" || true

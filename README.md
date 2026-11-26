@@ -47,6 +47,21 @@ All the linting is handelled by `pre-commit` which can be setup to automatically
 pdm run pre-commit install
 ```
 
+### Benchmarks
+
+Scripts for measuring the performance of parts of `mllam-data-prep` are in [benchmarks/](benchmarks/). For changes that aim to improve performance, run the relevant benchmark against both `main` and your branch, and include the results in the pull-request. For example, for convex hull cropping:
+
+```bash
+uv run --no-project --with "mllam-data-prep @ git+https://github.com/mllam/mllam-data-prep@main" \
+    python benchmarks/cropping.py --n-source 100000 1000000 --label main --save results_main.json
+uv run --no-project --with "mllam-data-prep @ git+https://github.com/<your-github-username>/mllam-data-prep@<your-branch>" \
+    python benchmarks/cropping.py --n-source 100000 1000000 --label <your-branch> --compare-to results_main.json
+```
+
+The second command prints the timings of both versions and checks that the same grid points are kept. Run `python benchmarks/cropping.py --help` for all options.
+
+For pull-requests that change `mllam_data_prep/ops/cropping.py` (or the benchmark itself), CI runs this comparison automatically with 100,000 source grid points (see [.github/workflows/benchmark.yml](.github/workflows/benchmark.yml)). The job fails if the pull-request keeps different grid points than `main`, or if its median time (over 3 repeats) is more than 5% slower. The timings are shown in the job summary. Locally you can apply the same limit with `--max-slowdown-pct 5`.
+
 Then branch, commit, push and make a pull-request :)
 
 

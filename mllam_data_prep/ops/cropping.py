@@ -228,9 +228,18 @@ def distance_to_convex_hull_boundary(
         ds=ds, ds_reference=ds_reference_separate_gridindex
     )
 
-    # only consider points that are external to the convex hull
-    ds_exterior = ds.where(~da_ch_mask, drop=True)
-    ds_exterior_lon, ds_exterior_lat = _get_latlon_coords(ds_exterior)
+    # only consider points that are external to the convex hull. Only the
+    # lat/lon coordinates are selected (rather than the whole dataset) to
+    # avoid masking all the data variables
+    da_lon, da_lat = _get_latlon_coords(ds)
+    if da_lat.ndim != 1:
+        raise NotImplementedError(
+            "Calculating the distance to the convex hull boundary is only "
+            f"supported for 1D lat/lon coordinates, got dims {da_lat.dims}"
+        )
+    exterior_idx = np.flatnonzero(~da_ch_mask.values)
+    ds_exterior_lat = da_lat.isel({da_lat.dims[0]: exterior_idx})
+    ds_exterior_lon = da_lon.isel({da_lon.dims[0]: exterior_idx})
 
     da_xyz = _latlon_to_unit_sphere_xyz(da_lat=ds_exterior_lat, da_lon=ds_exterior_lon)
 

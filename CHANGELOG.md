@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [unreleased](https://github.com/mllam/mllam-data-prep/compare/v0.7.0...HEAD)
 
 ### Changed
+- only select the lat/lon coordinates of points outside the convex hull in `distance_to_convex_hull_boundary` instead of masking the whole dataset [\#125](https://github.com/mllam/mllam-data-prep/pull/125) @observingClouds
 - consider full time information for derived calculation of TOA radiation [\#84](https://github.com/mllam/mllam-data-prep/pull/84) @observingClouds
 
 ### Fixes

@@ -46,10 +46,10 @@ jobs:
       BASE_REF: ${{ github.event.pull_request.base.ref || 'main' }}
     steps:
       - name: Checkout PR
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v10.4.0
         with:
           python-version: "3.11"
 
